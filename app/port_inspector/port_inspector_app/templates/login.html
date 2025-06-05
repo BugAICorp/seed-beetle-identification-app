@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Login</title>
+  <style>
+    * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+    }
+
+    body {
+        font-family: Arial, sans-serif;
+        background-color: #f3f4f6;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        height: 100vh;
+    }
+
+    .login-container {
+        width: 100%;
+        max-width: 400px;
+        padding: 20px;
+        background-color: #ffffff;
+        box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
+        border-radius: 8px;
+        text-align: center;
+    }
+
+    h1 {
+        margin-bottom: 20px;
+        font-size: 24px;
+        color: #333;
+    }
+
+    .form-with-validation {
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+    }
+
+    .form-with-validation input[type="text"],
+    .form-with-validation input[type="password"] {
+        width: 100%;
+        padding: 10px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        font-size: 16px;
+    }
+
+    .form-with-validation input:focus {
+        border-color: #007bff;
+        outline: none;
+    }
+
+    .errorlist {
+      border: 1px solid #f00;
+      padding: 10px;
+      background-color: #ffe6e6;
+      color: #a00;
+      border-radius: 5px;
+    }
+    .errorlist ul,
+    .errorlist li {
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    .button {
+        padding: 10px;
+        font-size: 16px;
+        color: #fff;
+        background-color: #007bff;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+    }
+
+    .button:hover {
+        background-color: #0056b3;
+    }
+  </style>
+</head>
+<body>
+  <div class="login-container">
+    <h1>Login</h1>
+    <form class="form-with-validation" action="{% url 'login' %}" method="post">
+      {% csrf_token %}
+      {{ form }}
+      <button class="button">Login</button>
+    </form>
+
+    <p style="margin-top: 15px;">
+      Don't have an account?
+      <a href="{% url 'signup' %}" style="color: #007bff; text-decoration: none;">Sign up</a>
+    </p>
+  </div>
+</body>
+</html>
