@@ -35,6 +35,7 @@ class TrainingDataConverter:
                 Species TEXT,
                 UniqueID TEXT PRIMARY KEY,
                 View TEXT,
+                SpecimenID TEXT,
                 Image BLOB
             )
         ''')
@@ -50,12 +51,14 @@ class TrainingDataConverter:
         cursor = table.cursor()
         try:
             # ensure array contains correct data
-            if len(image_data) != 4:
-                raise ValueError("image_data invalid, needs: [genus, species, unique_id, view]")
+            if len(image_data) != 5:
+                raise ValueError(
+                    "image_data invalid, needs: [genus, species, unique_id, view, specimen_id]"
+                    )
 
             cursor.execute('''
-            INSERT INTO TrainingData (Genus, Species, UniqueID, View, Image) 
-            VALUES (?, ?, ?, ?, ?)
+            INSERT INTO TrainingData (Genus, Species, UniqueID, View, SpecimenID, Image) 
+            VALUES (?, ?, ?, ?, ?, ?)
             ''', image_data + (image_binary,))
 
             table.commit()
@@ -68,21 +71,22 @@ class TrainingDataConverter:
     def parse_name(self, name: str):
         """
         Parses file name into column values
-        Returns: Tuple (Genus, Species, UniqueID, View)
+        Returns: Tuple (Genus, Species, UniqueID, View, SpecimenID)
         """
         name_parts = name.split(' ')
-        if len(name_parts) < 5:
+        if len(name_parts) != 5:
             return None
         cur_index= len(name_parts)-1
         view = name_parts[cur_index][:name_parts[cur_index].find('.')]
         cur_index -= 2
-        unique_id = name_parts[cur_index]
+        unique_id = name_parts[cur_index] + view
+        specimen_id = name_parts[cur_index]
         cur_index -= 1
         species = name_parts[cur_index]
         cur_index -= 1
         genus = name_parts[cur_index][name_parts[cur_index].find('/')+1:]
 
-        return (genus, species, unique_id, view)
+        return (genus, species, unique_id, view, specimen_id)
 
     def conversion(self, db_name):
         """
@@ -101,11 +105,11 @@ class TrainingDataConverter:
             # loop through image files
             if filename.lower().endswith(('png', 'jpg', 'jpeg', 'bmp', 'gif')):
                 file_path = os.path.join(self.dir_path, filename)
-
-                name_parts = self.parse_name(file_path) # placeholder parsing
-
+                print(filename)
+                name_parts = self.parse_name(filename) # placeholder parsing
+                print(name_parts)
                 if name_parts:
-                    image_data = name_parts[:4]
+                    image_data = name_parts[:5]
                     image_binary = self.img_to_binary(file_path)
                     self.add_img(image_data, image_binary)
                 else:

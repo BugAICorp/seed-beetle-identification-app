@@ -5,17 +5,21 @@ the loaded trained models and creates a combined classification output
 import sys
 import os
 import json
-from torchvision import transforms
 import torch
+import dill
+from transformation_classes import HistogramEqualization
+
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../')))
 
+# pylint: disable=too-many-arguments, too-many-positional-arguments
 class GenusEvaluationMethod:
     """
     Takes image input and creates a classification by running the image through
     loaded CNN models
     """
 
-    def __init__(self, height_filename, models_dict, eval_method, genus_filename):
+    def __init__(self, height_filename, models_dict, eval_method,
+                 genus_filename, accuracies_filename=None):
         """
         Load the trained models for usage and have the class prepared for user input.
         During testing phases, determining which evaluation method defined below will 
@@ -23,8 +27,8 @@ class GenusEvaluationMethod:
         """
         self.use_method = eval_method     #1 = heaviest, 2 = weighted, 3 = stacked
 
-        #weights for use in weighted eval. Can be tweaked later to optimize evaluation accuracy
-        self.weights = [0.25, 0.25, 0.25, 0.25]
+        self.accuracies_filename = accuracies_filename
+
         self.trained_models = models_dict
 
         self.genus_idx_dict = self.open_class_dictionary(genus_filename)
@@ -32,6 +36,9 @@ class GenusEvaluationMethod:
         self.height = None
         with open("src/models/" + height_filename, 'r', encoding='utf-8') as file:
             self.height = int(file.readline().strip())
+
+        #load transformations to a list for use in the program
+        self.transformations = self.get_transformations()
 
     def open_class_dictionary(self, filename):
         """
@@ -52,6 +59,29 @@ class GenusEvaluationMethod:
 
         return class_dict
 
+    def get_transformations(self):
+        """
+        Create and return a list of transformations for each angle using
+        the pre-made transformation files
+
+        Returns: list of transformations
+        """
+        transformations = []
+
+        with open("caud_transformation.pth", "rb") as f:
+            transformations.append(dill.load(f))
+
+        with open("dors_transformation.pth", "rb") as f:
+            transformations.append(dill.load(f))
+
+        with open("fron_transformation.pth", "rb") as f:
+            transformations.append(dill.load(f))
+
+        with open("late_transformation.pth", "rb") as f:
+            transformations.append(dill.load(f))
+
+        return transformations
+
     def evaluate_image(self, late=None, dors=None, fron=None, caud=None):
         """
         Create an evaluation of the input image(s) by running each given image through
@@ -61,7 +91,12 @@ class GenusEvaluationMethod:
         Returns: Classification of input images and confidence score. 
                 A return of None, -1 indicates an error
         """
-        device = torch.device('mps' if torch.backends.mps.is_built() else 'cpu')
+        # Set device to a CUDA-compatible gpu
+        # Else use CPU to allow general usability and MPS if user has Apple Silicon
+        device = torch.device(
+            'cuda' if torch.cuda.is_available() 
+            else 'mps' if torch.backends.mps.is_built()
+            else 'cpu')
 
         #define variables outside the if statements so they can be used in other method calls
         predictions = {
@@ -71,8 +106,11 @@ class GenusEvaluationMethod:
             "caud" : {"score" : 0, "genus" : None},
         }
 
+        view_count = 0
+
         if late:
-            late_image = self.transform_input(late).to(device)
+            view_count += 1
+            late_image = self.transform_input(late, self.transformations[3]).to(device)
 
             with torch.no_grad():
                 late_output = self.trained_models["late"].to(device)(late_image)
@@ -84,8 +122,9 @@ class GenusEvaluationMethod:
             predictions["late"]["genus"] = predicted_index.item()
 
         if dors:
+            view_count += 1
             #mirrors above usage but for the dors angle
-            dors_image = self.transform_input(dors).to(device)
+            dors_image = self.transform_input(dors, self.transformations[1]).to(device)
 
             with torch.no_grad():
                 dors_output = self.trained_models["dors"].to(device)(dors_image)
@@ -96,8 +135,9 @@ class GenusEvaluationMethod:
             predictions["dors"]["genus"] = predicted_index.item()
 
         if fron:
+            view_count += 1
             #mirrors above usage but for the fron angle
-            fron_image = self.transform_input(fron).to(device)
+            fron_image = self.transform_input(fron, self.transformations[2]).to(device)
 
             with torch.no_grad():
                 fron_output = self.trained_models["fron"].to(device)(fron_image)
@@ -108,8 +148,9 @@ class GenusEvaluationMethod:
             predictions["fron"]["genus"] = predicted_index.item()
 
         if caud:
+            view_count += 1
             #mirrors above usage but for the caud angle
-            caud_image = self.transform_input(caud).to(device)
+            caud_image = self.transform_input(caud, self.transformations[0]).to(device)
 
             with torch.no_grad():
                 caud_output = self.trained_models["caud"].to(device)(caud_image)
@@ -118,6 +159,20 @@ class GenusEvaluationMethod:
             predictions["caud"]["score"] = torch.nn.functional.softmax(
                 caud_output, dim=1)[0, predicted_index].item()
             predictions["caud"]["genus"] = predicted_index.item()
+
+        return self.evaluation_handler(predictions, view_count)
+
+    def evaluation_handler(self, predictions, view_count):
+        """
+        Creates an evaluation by taking the predictions from the models and creating two
+        nested lists of each angle and their top scores and species. With these lists
+        created and the view count the method correctly calls the desired evaluation
+        method and returns the predicted list.
+
+        Returns: List of tuples [(species_name, confidence_score), ...]
+            sorted by confidence(index 0 being the highest).
+            A return of None, -1 indicates an error
+        """
 
         if self.use_method == 1:
             #match uses the index returned from the method to decide which prediction to return
@@ -131,14 +186,26 @@ class GenusEvaluationMethod:
                                        predictions["caud"]["genus"]])
 
         if self.use_method == 2:
-            return self.weighted_eval([predictions["fron"]["score"],
-                                       predictions["dors"]["score"],
-                                       predictions["late"]["score"],
-                                       predictions["caud"]["score"]],
-                                      [predictions["fron"]["genus"],
-                                       predictions["dors"]["genus"],
-                                       predictions["late"]["genus"],
-                                       predictions["caud"]["genus"]])
+            # Initialize weights for use in weighted eval, using the genus models accuracies
+            weights = []
+            score_list = []
+            genus_list = []
+            if self.accuracies_filename:
+                with open(self.accuracies_filename, 'r', encoding='utf-8') as f:
+                    accuracy_dict = json.load(f)
+
+                for key in ["fron", "dors", "late", "caud"]:
+                    if predictions[key]["genus"]:
+                        weights.append(accuracy_dict[key])
+                        score_list.append(predictions[key]["score"])
+                        genus_list.append(predictions[key]["genus"])
+                # adjust weight percentages by normalizing to sum to 1
+                weights_sum = sum(weights)
+                weights = [weight / weights_sum for weight in weights]
+            else:
+                weights = [0.25 for i in range(view_count)]
+
+            return self.weighted_eval(score_list, genus_list, weights, view_count)
 
         if self.use_method == 3:
             return self.stacked_eval()
@@ -152,49 +219,61 @@ class GenusEvaluationMethod:
 
         Returns: specifies most certain model
         """
-        highest = 0
-        index = 0
-        ind_tracker = 0
-        for i in conf_scores:
-            if i > highest:
-                highest = i
-                index = ind_tracker
+        accs = []
+        use_angle = None
+        if self.accuracies_filename:
+            with open(self.accuracies_filename, 'r', encoding='utf-8') as f:
+                accuracy_dict = json.load(f)
 
-            ind_tracker += 1
+            angle_list = ["fron", "dors", "late", "caud"]
+            acc_dict_reverse = {v:k for k, v in accuracy_dict.items()}
+            for i in conf_scores:
+                if i != 0:
+                    accs.append(accuracy_dict[angle_list[conf_scores.index(i)]])
+            use_angle = acc_dict_reverse[max(accs)]
 
-        match index:
-            case 0:
+        elif genus_predictions[1] is not None:
+            use_angle = "dors"
+        elif genus_predictions[3] is not None:
+            use_angle = "caud"
+        elif genus_predictions[0] is not None:
+            use_angle = "fron"
+        elif genus_predictions[2] is not None:
+            use_angle = "late"
+
+        match use_angle:
+            case "fron":
                 return self.genus_idx_dict[genus_predictions[0]], conf_scores[0]
-            case 1:
+            case "dors":
                 return self.genus_idx_dict[genus_predictions[1]], conf_scores[1]
-            case 2:
+            case "late":
                 return self.genus_idx_dict[genus_predictions[2]], conf_scores[2]
-            case 3:
+            case "caud":
                 return self.genus_idx_dict[genus_predictions[3]], conf_scores[3]
 
 
-    def weighted_eval(self, conf_scores, genus_predictions):
+    def weighted_eval(self, conf_scores, genus_predictions, weights, view_count):
         """
         Takes the classifications of the models and combines them based on programmer determined
         weights to create a single output
 
         Returns: classification of combined models
         """
-        species_scores = {}
 
-        for i in range(4):
-            weighted_score = self.weights[i] * conf_scores[i]
+        genus_scores = {}
+        for i in range(view_count):
+            weighted_score = weights[i] * conf_scores[i]
 
-            if genus_predictions[i] in species_scores:
-                species_scores[genus_predictions[i]] += weighted_score
+            if genus_predictions[i] in genus_scores:
+                genus_scores[genus_predictions[i]] += weighted_score
 
             else:
-                species_scores[genus_predictions[i]] = weighted_score
+                genus_scores[genus_predictions[i]] = weighted_score
 
         highest_score = -1
         highest_species = None
 
-        for i, j in species_scores.items():
+        for i, j in genus_scores.items():
             if j > highest_score:
                 highest_score = j
                 highest_species = i
@@ -211,18 +290,12 @@ class GenusEvaluationMethod:
         Returns: classification of combined models
         """
 
-    def transform_input(self, image_input):
+    def transform_input(self, image_input, transformation):
         """
         Takes the app side's image and transforms it to fit our model
 
         Returns: transformed image for classification
         """
-        transformation = transforms.Compose([
-            transforms.Resize((self.height, self.height)), #ResNet expects 224x224 images
-            transforms.ToTensor(),
-            transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
-        ])
-
         transformed_image = transformation(image_input)
         transformed_image = transformed_image.unsqueeze(0)
 
