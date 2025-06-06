@@ -185,10 +185,13 @@ class TrainingProgram:
         if total != 0:
             accuracy = correct / total
             print(f"Accuracy: {100 * accuracy:.2f}%")
-            # Compute and print F1 score
-            f1 = f1_score(all_labels, all_predictions, average='weighted')
-            self.model_accuracies["caud"] = f1
-            print(f"Weighted F1 Score: {100 * f1:.2f}%")
+
+            # Compute and print F1 scores
+            weighted_f1 = f1_score(all_labels, all_predictions, average='weighted')
+            macro_f1 = f1_score(all_labels, all_predictions, average='macro')
+            self.model_accuracies["caud"] = macro_f1
+            print(f"Weighted F1 Score: {100 * weighted_f1:.2f}%")
+            print(f"Macro F1 Score: {100 * macro_f1:.2f}%")
 
     def training_evaluation_dorsal(self, num_epochs, train_loader, test_loader):
         """
@@ -239,10 +242,13 @@ class TrainingProgram:
         if total != 0:
             accuracy = correct / total
             print(f"Accuracy: {100 * accuracy:.2f}%")
-            # Compute and print F1 score
-            f1 = f1_score(all_labels, all_predictions, average='weighted')
-            self.model_accuracies["dors"] = f1
-            print(f"Weighted F1 Score: {100 * f1:.2f}%")
+
+            # Compute and print F1 scores
+            weighted_f1 = f1_score(all_labels, all_predictions, average='weighted')
+            macro_f1 = f1_score(all_labels, all_predictions, average='macro')
+            self.model_accuracies["dors"] = macro_f1
+            print(f"Weighted F1 Score: {100 * weighted_f1:.2f}%")
+            print(f"Macro F1 Score: {100 * macro_f1:.2f}%")
 
     def training_evaluation_frontal(self, num_epochs, train_loader, test_loader):
         """
@@ -293,10 +299,13 @@ class TrainingProgram:
         if total != 0:
             accuracy = correct / total
             print(f"Accuracy: {100 * accuracy:.2f}%")
-            # Compute and print F1 score
-            f1 = f1_score(all_labels, all_predictions, average='weighted')
-            self.model_accuracies["fron"] = f1
-            print(f"Weighted F1 Score: {100 * f1:.2f}%")
+
+            # Compute and print F1 scores
+            weighted_f1 = f1_score(all_labels, all_predictions, average='weighted')
+            macro_f1 = f1_score(all_labels, all_predictions, average='macro')
+            self.model_accuracies["fron"] = macro_f1
+            print(f"Weighted F1 Score: {100 * weighted_f1:.2f}%")
+            print(f"Macro F1 Score: {100 * macro_f1:.2f}%")
 
     def training_evaluation_lateral(self, num_epochs, train_loader, test_loader):
         """
@@ -347,10 +356,13 @@ class TrainingProgram:
         if total != 0:
             accuracy = correct / total
             print(f"Accuracy: {100 * accuracy:.2f}%")
-            # Compute and print F1 score
-            f1 = f1_score(all_labels, all_predictions, average='weighted')
-            self.model_accuracies["late"] = f1
-            print(f"Weighted F1 Score: {100 * f1:.2f}%")
+
+            # Compute and print F1 scores
+            weighted_f1 = f1_score(all_labels, all_predictions, average='weighted')
+            macro_f1 = f1_score(all_labels, all_predictions, average='macro')
+            self.model_accuracies["late"] = macro_f1
+            print(f"Weighted F1 Score: {100 * weighted_f1:.2f}%")
+            print(f"Macro F1 Score: {100 * macro_f1:.2f}%")
 
     def train_caudal(self, num_epochs):
         """
