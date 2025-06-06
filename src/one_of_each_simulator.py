@@ -8,7 +8,7 @@ from evaluation_method import EvaluationMethod
 from genus_evaluation_method import GenusEvaluationMethod
 import globals
 
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../identification/')))
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../')))
 
 def evaluate_images(species_eval,
                     genus_eval,
@@ -98,30 +98,33 @@ if __name__ == '__main__':
                        "GEM_187673626", "GEM_1002205459", "WIBF_025200", "GEM_1002205468"]
     for imagename in specimen_inputs:
         filtered_images = dbr.dataframe[dbr.dataframe['SpecimenID'] == imagename]
-        file_name_substring = (
-            "dataset/" +
-            filtered_images.iloc[0]['Genus'] + " " +
-            filtered_images.iloc[0]['Species'] + " " +
-            filtered_images.iloc[0]['SpecimenID'] + " 5XEXT "
-                            )
-        LATE_PATH = file_name_substring + "LATE.jpg"
-        DORS_PATH = file_name_substring + "DORS.jpg"
-        FRON_PATH = file_name_substring + "FRON.jpg"
-        CAUD_PATH = file_name_substring + "CAUD.jpg"
+        if not filtered_images.empty:
+            file_name_substring = (
+                "dataset/" +
+                filtered_images.iloc[0]['Genus'] + " " +
+                filtered_images.iloc[0]['Species'] + " " +
+                filtered_images.iloc[0]['SpecimenID'] + " 5XEXT "
+                                )
+            LATE_PATH = file_name_substring + "LATE.jpg"
+            DORS_PATH = file_name_substring + "DORS.jpg"
+            FRON_PATH = file_name_substring + "FRON.jpg"
+            CAUD_PATH = file_name_substring + "CAUD.jpg"
 
-        # Genus and Species Evaluation
-        top_species, top_genus, genus_conf_score = evaluate_images(
-            species_eval=species_evaluator,
-            genus_eval=genus_evaluator,
-            late_path=LATE_PATH if os.path.exists(LATE_PATH) else None,
-            dors_path=DORS_PATH if os.path.exists(DORS_PATH) else None,
-            fron_path=FRON_PATH if os.path.exists(FRON_PATH) else None,
-            caud_path=CAUD_PATH if os.path.exists(CAUD_PATH) else None)
+            print(f"Results for {file_name_substring}:\n")
 
-        print(f"1. Predicted Species: {top_species[0][0]}, Confidence: {top_species[0][1]:.2f}\n")
-        print(f"2. Predicted Species: {top_species[1][0]}, Confidence: {top_species[1][1]:.2f}\n")
-        print(f"3. Predicted Species: {top_species[2][0]}, Confidence: {top_species[2][1]:.2f}\n")
-        print(f"4. Predicted Species: {top_species[3][0]}, Confidence: {top_species[3][1]:.2f}\n")
-        print(f"5. Predicted Species: {top_species[4][0]}, Confidence: {top_species[4][1]:.2f}\n\n")
+            # Genus and Species Evaluation
+            top_species, top_genus, genus_conf_score = evaluate_images(
+                species_eval=species_evaluator,
+                genus_eval=genus_evaluator,
+                late_path=LATE_PATH if os.path.exists(LATE_PATH) else None,
+                dors_path=DORS_PATH if os.path.exists(DORS_PATH) else None,
+                fron_path=FRON_PATH if os.path.exists(FRON_PATH) else None,
+                caud_path=CAUD_PATH if os.path.exists(CAUD_PATH) else None)
 
-        print(f"Top Genus: {top_genus}, Confidence: {genus_conf_score:.2f}\n")
+            print(f"1. Predicted Species: {top_species[0][0]}, Confidence: {top_species[0][1]:.2f}\n")
+            print(f"2. Predicted Species: {top_species[1][0]}, Confidence: {top_species[1][1]:.2f}\n")
+            print(f"3. Predicted Species: {top_species[2][0]}, Confidence: {top_species[2][1]:.2f}\n")
+            print(f"4. Predicted Species: {top_species[3][0]}, Confidence: {top_species[3][1]:.2f}\n")
+            print(f"5. Predicted Species: {top_species[4][0]}, Confidence: {top_species[4][1]:.2f}\n\n")
+
+            print(f"Top Genus: {top_genus}, Confidence: {genus_conf_score:.2f}\n\n")
