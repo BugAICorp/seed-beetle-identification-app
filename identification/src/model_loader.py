@@ -1,5 +1,6 @@
 """ model_loader.py """
 
+import json
 from torchvision import models
 import torch
 
@@ -25,9 +26,13 @@ class ModelLoader:
             "fron" : None,
             "late" : None
         }
-
-        # use CPU to allow general usability and Metal Performance Shader if user has Apple Silicon
+        # Set device to a CUDA-compatible gpu
+        # Else use CPU to allow general usability and MPS if user has Apple Silicon
         self.device = torch.device("mps" if torch.backends.mps.is_built() else "cpu")
+        self.device = torch.device(
+            'cuda' if torch.cuda.is_available()
+            else 'mps' if torch.backends.mps.is_built()
+            else 'cpu')
 
         if not test:
             self.model_initializer()
@@ -52,6 +57,9 @@ class ModelLoader:
             self.models[key] = self.models[key].to(self.device)
 
             self.load_model_weights(key)
+
+            # set models to evaluation mode
+            self.models[key].eval()
 
     def load_model_weights(self, key):
         """
@@ -93,3 +101,24 @@ class ModelLoader:
             torch.nn.Module: The corresponding ResNet model.
         """
         return self.models[key]
+
+    def load_stack_model(self, label, df, dict_file):
+        """
+        Args:
+            label: "Genus" or "Species" depending on which is being loaded
+            df: pandas dataframe used for finding proper model dimensions
+            dict_file: associated dictionary filename to find the output dimension
+        Returns:                torch.nn.Module: stack model loaded from input file
+        """
+        with open("src/models/" + dict_file, 'r', encoding='utf-8') as json_file:
+            class_dict = json.load(json_file)
+
+        #generate dataframe is needed for getting proper dimensions for the model
+        x = df.drop(columns=[label]).values
+        input_dim = x.shape[1]
+        output_dim = len(class_dict)
+        model = torch.nn.Linear(input_dim, output_dim)
+        model.load_state_dict(torch.load(f"src/models/{label}_meta.pth"))
+        model.eval()
+
+        return model
