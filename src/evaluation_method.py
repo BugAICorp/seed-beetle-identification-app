@@ -229,10 +229,10 @@ class EvaluationMethod:
             for key in ["fron", "dors", "late", "caud"]:
                 if predictions[key]["scores"]:
                     accs.append(accuracy_dict[key])
-            
+
             if not accs:
                 return [(None, 0), (None, 0), (None, 0), (None, 0), (None, 0)]
-            
+
             use_angle = acc_dict_reverse[max(accs)]
 
         #base case if accuracies aren't found based on best model from experience

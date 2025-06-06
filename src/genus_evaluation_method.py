@@ -230,7 +230,7 @@ class GenusEvaluationMethod:
             for i in conf_scores:
                 if i != 0:
                     accs.append(accuracy_dict[angle_list[conf_scores.index(i)]])
-            
+
             if not accs:
                 return None, 0
             use_angle = acc_dict_reverse[max(accs)]
