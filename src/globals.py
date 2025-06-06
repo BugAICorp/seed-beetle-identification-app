@@ -1,7 +1,7 @@
 """ globals.py """
 
-training_database = "training.db"
-class_list = "src/models/class_list.txt"
+training_database = "identification/training.db"
+class_list = "identification/src/models/class_list.txt"
 img_height = "height.txt"
 
 # Species Files
