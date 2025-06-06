@@ -10,10 +10,15 @@ if "runserver" in sys.argv:
     from .genus_evaluation_method import GenusEvaluationMethod
     from django.conf import settings
 
+    BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
     # read json to see size of outputs
-    with open("./port_inspector/beetle_detection/spec_dict.json", 'r', encoding='utf-8') as spec_dict:
+    spec_dict_path = os.path.join(BASE_DIR, "spec_dict.json")
+    with open(spec_dict_path, 'r', encoding='utf-8') as spec_dict:
         SPECIES_OUTPUTS = len(json.load(spec_dict))
-    with open("./port_inspector/beetle_detection/gen_dict.json", 'r', encoding='utf-8') as gen_dict:
+
+    gen_dict_path = os.path.join(BASE_DIR, "gen_dict.json")
+    with open(gen_dict_path, 'r', encoding='utf-8') as gen_dict:
         GENUS_OUTPUTS = len(json.load(gen_dict))
 
     # Load species models
