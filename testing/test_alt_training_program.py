@@ -222,7 +222,7 @@ class TestAltTrainingProgram(unittest.TestCase):
 
         # Verify torch.save is called for each model, ignoring exact state_dict() content
         expected_calls = [
-            ((unittest.mock.ANY, "all.pth"),)
+            ((unittest.mock.ANY, os.path.join("src/models", all.pth)),)
         ]
         mock_torch_save.assert_has_calls(expected_calls, any_order=True)
 
