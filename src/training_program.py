@@ -143,11 +143,12 @@ class TrainingProgram:
         Code for training algorithm and evaluating model
         """
         # Model Training
-        self.caud_model.train()
-         # define loss function, optimization function, and image transformation
+        # define loss function, optimization function, and image transformation
         criterion = torch.nn.CrossEntropyLoss()
         optimizer = torch.optim.Adam(self.caud_model.parameters(), lr=0.001)
+        best_epoch = 0
         for epoch in range(num_epochs):
+            self.caud_model.train()
             running_loss = 0.0
             for inputs, labels in train_loader:
                 inputs, labels = inputs.to(self.device), labels.to(self.device)
@@ -166,43 +167,52 @@ class TrainingProgram:
                 running_loss += loss.item()
             print(f"Epoch {epoch+1}/{num_epochs}, Loss: {running_loss/len(train_loader):.4f}")
 
-        # evaluate testing machine
-        self.caud_model.eval()
-        correct = 0
-        total = 0
-        all_predictions = []
-        all_labels = []
-        with torch.no_grad():
-            for inputs, labels in test_loader:
-                inputs, labels = inputs.to(self.device), labels.to(self.device)
+            # evaluate testing machine
+            self.caud_model.eval()
+            correct = 0
+            total = 0
+            all_predictions = []
+            all_labels = []
+            with torch.no_grad():
+                for inputs, labels in test_loader:
+                    inputs, labels = inputs.to(self.device), labels.to(self.device)
 
-                outputs = self.caud_model(inputs)
-                _, predicted = torch.max(outputs, 1)
-                total += labels.size(0)
-                correct += (predicted == labels).sum().item()
-                all_predictions.extend(predicted.cpu().numpy())
-                all_labels.extend(labels.cpu().numpy())
-        if total != 0:
-            accuracy = correct / total
-            print(f"Accuracy: {100 * accuracy:.2f}%")
+                    outputs = self.caud_model(inputs)
+                    _, predicted = torch.max(outputs, 1)
+                    total += labels.size(0)
+                    correct += (predicted == labels).sum().item()
+                    all_predictions.extend(predicted.cpu().numpy())
+                    all_labels.extend(labels.cpu().numpy())
+            if total != 0:
+                accuracy = correct / total
+                print(f"Accuracy: {100 * accuracy:.2f}%")
 
-            # Compute and print F1 scores
-            weighted_f1 = f1_score(all_labels, all_predictions, average='weighted')
-            macro_f1 = f1_score(all_labels, all_predictions, average='macro')
-            self.model_accuracies["caud"] = macro_f1
-            print(f"Weighted F1 Score: {100 * weighted_f1:.2f}%")
-            print(f"Macro F1 Score: {100 * macro_f1:.2f}%")
+                # Compute and print F1 scores
+                weighted_f1 = f1_score(all_labels, all_predictions, average='weighted')
+                macro_f1 = f1_score(all_labels, all_predictions, average='macro')
+                print(f"Weighted F1 Score: {100 * weighted_f1:.2f}%")
+                print(f"Macro F1 Score: {100 * macro_f1:.2f}%")
+
+                # Save model if macro_f1 improves
+                if macro_f1 > self.model_accuracies.get("caud", 0):
+                    best_epoch = epoch
+                    self.model_accuracies["caud"] = macro_f1
+                    print(f"Model accuracy improved after epoch {best_epoch}, updated best model.")
+                else:
+                    print(f"No improvement to model, the best epoch is {best_epoch}.")
 
     def training_evaluation_dorsal(self, num_epochs, train_loader, test_loader):
         """
         Code for training algorithm and evaluating model
         """
         # Model Training
-        self.dors_model.train()
-         # define loss function, optimization function, and image transformation
+        # define loss function, optimization function, and image transformation
         criterion = torch.nn.CrossEntropyLoss()
         optimizer = torch.optim.Adam(self.dors_model.parameters(), lr=0.001)
+
+        best_epoch = 0
         for epoch in range(num_epochs):
+            self.dors_model.train()
             running_loss = 0.0
             for inputs, labels in train_loader:
                 inputs, labels = inputs.to(self.device), labels.to(self.device)
@@ -222,44 +232,53 @@ class TrainingProgram:
 
             print(f"Epoch {epoch+1}/{num_epochs}, Loss: {running_loss/len(train_loader):.4f}")
 
-        # evaluate testing machine
-        self.dors_model.eval()
-        correct = 0
-        total = 0
-        all_predictions = []
-        all_labels = []
-        with torch.no_grad():
-            for inputs, labels in test_loader:
-                inputs, labels = inputs.to(self.device), labels.to(self.device)
+            # evaluate testing machine
+            self.dors_model.eval()
+            correct = 0
+            total = 0
+            all_predictions = []
+            all_labels = []
+            with torch.no_grad():
+                for inputs, labels in test_loader:
+                    inputs, labels = inputs.to(self.device), labels.to(self.device)
 
-                outputs = self.dors_model(inputs)
-                _, predicted = torch.max(outputs, 1)
-                total += labels.size(0)
-                correct += (predicted == labels).sum().item()
-                all_predictions.extend(predicted.cpu().numpy())
-                all_labels.extend(labels.cpu().numpy())
+                    outputs = self.dors_model(inputs)
+                    _, predicted = torch.max(outputs, 1)
+                    total += labels.size(0)
+                    correct += (predicted == labels).sum().item()
+                    all_predictions.extend(predicted.cpu().numpy())
+                    all_labels.extend(labels.cpu().numpy())
 
-        if total != 0:
-            accuracy = correct / total
-            print(f"Accuracy: {100 * accuracy:.2f}%")
+            if total != 0:
+                accuracy = correct / total
+                print(f"Accuracy: {100 * accuracy:.2f}%")
 
-            # Compute and print F1 scores
-            weighted_f1 = f1_score(all_labels, all_predictions, average='weighted')
-            macro_f1 = f1_score(all_labels, all_predictions, average='macro')
-            self.model_accuracies["dors"] = macro_f1
-            print(f"Weighted F1 Score: {100 * weighted_f1:.2f}%")
-            print(f"Macro F1 Score: {100 * macro_f1:.2f}%")
+                # Compute and print F1 scores
+                weighted_f1 = f1_score(all_labels, all_predictions, average='weighted')
+                macro_f1 = f1_score(all_labels, all_predictions, average='macro')
+                print(f"Weighted F1 Score: {100 * weighted_f1:.2f}%")
+                print(f"Macro F1 Score: {100 * macro_f1:.2f}%")
+
+                # Save model if macro_f1 improves
+                if macro_f1 > self.model_accuracies.get("dors", 0):
+                    best_epoch = epoch
+                    self.model_accuracies["dors"] = macro_f1
+                    print(f"Model accuracy improved after epoch {best_epoch}, updated best model.")
+                else:
+                    print(f"No improvement to model, the best epoch is {best_epoch}.")
 
     def training_evaluation_frontal(self, num_epochs, train_loader, test_loader):
         """
         Code for training algorithm and evaluating model
         """
         # Model Training
-        self.fron_model.train()
-         # define loss function, optimization function, and image transformation
+        # define loss function, optimization function, and image transformation
         criterion = torch.nn.CrossEntropyLoss()
         optimizer = torch.optim.Adam(self.fron_model.parameters(), lr=0.001)
+
+        best_epoch = 0
         for epoch in range(num_epochs):
+            self.fron_model.train()
             running_loss = 0.0
             for inputs, labels in train_loader:
                 inputs, labels = inputs.to(self.device), labels.to(self.device)
@@ -279,44 +298,53 @@ class TrainingProgram:
 
             print(f"Epoch {epoch+1}/{num_epochs}, Loss: {running_loss/len(train_loader):.4f}")
 
-        # evaluate testing machine
-        self.fron_model.eval()
-        correct = 0
-        total = 0
-        all_predictions = []
-        all_labels = []
-        with torch.no_grad():
-            for inputs, labels in test_loader:
-                inputs, labels = inputs.to(self.device), labels.to(self.device)
+            # evaluate testing machine
+            self.fron_model.eval()
+            correct = 0
+            total = 0
+            all_predictions = []
+            all_labels = []
+            with torch.no_grad():
+                for inputs, labels in test_loader:
+                    inputs, labels = inputs.to(self.device), labels.to(self.device)
 
-                outputs = self.fron_model(inputs)
-                _, predicted = torch.max(outputs, 1)
-                total += labels.size(0)
-                correct += (predicted == labels).sum().item()
-                all_predictions.extend(predicted.cpu().numpy())
-                all_labels.extend(labels.cpu().numpy())
+                    outputs = self.fron_model(inputs)
+                    _, predicted = torch.max(outputs, 1)
+                    total += labels.size(0)
+                    correct += (predicted == labels).sum().item()
+                    all_predictions.extend(predicted.cpu().numpy())
+                    all_labels.extend(labels.cpu().numpy())
 
-        if total != 0:
-            accuracy = correct / total
-            print(f"Accuracy: {100 * accuracy:.2f}%")
+            if total != 0:
+                accuracy = correct / total
+                print(f"Accuracy: {100 * accuracy:.2f}%")
 
-            # Compute and print F1 scores
-            weighted_f1 = f1_score(all_labels, all_predictions, average='weighted')
-            macro_f1 = f1_score(all_labels, all_predictions, average='macro')
-            self.model_accuracies["fron"] = macro_f1
-            print(f"Weighted F1 Score: {100 * weighted_f1:.2f}%")
-            print(f"Macro F1 Score: {100 * macro_f1:.2f}%")
+                # Compute and print F1 scores
+                weighted_f1 = f1_score(all_labels, all_predictions, average='weighted')
+                macro_f1 = f1_score(all_labels, all_predictions, average='macro')
+                print(f"Weighted F1 Score: {100 * weighted_f1:.2f}%")
+                print(f"Macro F1 Score: {100 * macro_f1:.2f}%")
+
+                # Save model if macro_f1 improves
+                if macro_f1 > self.model_accuracies.get("fron", 0):
+                    best_epoch = epoch
+                    self.model_accuracies["fron"] = macro_f1
+                    print(f"Model accuracy improved after epoch {best_epoch}, updated best model.")
+                else:
+                    print(f"No improvement to model, the best epoch is {best_epoch}.")
 
     def training_evaluation_lateral(self, num_epochs, train_loader, test_loader):
         """
         Code for training algorithm and evaluating model
         """
         # Model Training
-        self.late_model.train()
-         # define loss function, optimization function, and image transformation
+        # define loss function, optimization function, and image transformation
         criterion = torch.nn.CrossEntropyLoss()
         optimizer = torch.optim.Adam(self.late_model.parameters(), lr=0.001)
+
+        best_epoch = 0
         for epoch in range(num_epochs):
+            self.late_model.train()
             running_loss = 0.0
             for inputs, labels in train_loader:
                 inputs, labels = inputs.to(self.device), labels.to(self.device)
@@ -336,33 +364,40 @@ class TrainingProgram:
 
             print(f"Epoch {epoch+1}/{num_epochs}, Loss: {running_loss/len(train_loader):.4f}")
 
-        # evaluate testing machine
-        self.late_model.eval()
-        correct = 0
-        total = 0
-        all_predictions = []
-        all_labels = []
-        with torch.no_grad():
-            for inputs, labels in test_loader:
-                inputs, labels = inputs.to(self.device), labels.to(self.device)
+            # evaluate testing machine
+            self.late_model.eval()
+            correct = 0
+            total = 0
+            all_predictions = []
+            all_labels = []
+            with torch.no_grad():
+                for inputs, labels in test_loader:
+                    inputs, labels = inputs.to(self.device), labels.to(self.device)
 
-                outputs = self.late_model(inputs)
-                _, predicted = torch.max(outputs, 1)
-                total += labels.size(0)
-                correct += (predicted == labels).sum().item()
-                all_predictions.extend(predicted.cpu().numpy())
-                all_labels.extend(labels.cpu().numpy())
+                    outputs = self.late_model(inputs)
+                    _, predicted = torch.max(outputs, 1)
+                    total += labels.size(0)
+                    correct += (predicted == labels).sum().item()
+                    all_predictions.extend(predicted.cpu().numpy())
+                    all_labels.extend(labels.cpu().numpy())
 
-        if total != 0:
-            accuracy = correct / total
-            print(f"Accuracy: {100 * accuracy:.2f}%")
+            if total != 0:
+                accuracy = correct / total
+                print(f"Accuracy: {100 * accuracy:.2f}%")
 
-            # Compute and print F1 scores
-            weighted_f1 = f1_score(all_labels, all_predictions, average='weighted')
-            macro_f1 = f1_score(all_labels, all_predictions, average='macro')
-            self.model_accuracies["late"] = macro_f1
-            print(f"Weighted F1 Score: {100 * weighted_f1:.2f}%")
-            print(f"Macro F1 Score: {100 * macro_f1:.2f}%")
+                # Compute and print F1 scores
+                weighted_f1 = f1_score(all_labels, all_predictions, average='weighted')
+                macro_f1 = f1_score(all_labels, all_predictions, average='macro')
+                print(f"Weighted F1 Score: {100 * weighted_f1:.2f}%")
+                print(f"Macro F1 Score: {100 * macro_f1:.2f}%")
+
+                # Save model if macro_f1 improves
+                if macro_f1 > self.model_accuracies.get("late", 0):
+                    best_epoch = epoch
+                    self.model_accuracies["late"] = macro_f1
+                    print(f"Model accuracy improved after epoch {best_epoch}, updated best model.")
+                else:
+                    print(f"No improvement to model, the best epoch is {best_epoch}.")
 
     def train_caudal(self, num_epochs):
         """
