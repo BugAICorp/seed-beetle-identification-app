@@ -40,7 +40,8 @@ if __name__ == '__main__':
 
         while not can_continue:
             print("Dorsal: 1\nCaudal: 2\nFrontal: 3\nLateral: 4")
-            input = int(input("Choose a model you would like to run stratified k-fold validation on (type corresponding number): "))
+            input = int(input(
+                "Choose a model you would like to run stratified k-fold validation on (type corresponding number): "))
             if input == 1:
                 k_fold_dors = True
             elif input == 2:
