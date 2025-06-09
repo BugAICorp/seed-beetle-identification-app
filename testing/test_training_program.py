@@ -229,6 +229,106 @@ class TestTrainingProgram(unittest.TestCase):
         # Ensure training_evaluation_caudal was called once
         self.training_program.training_evaluation_lateral.assert_called_once()
 
+    def test_k_fold_caudal(self):
+        """ Test the k_fold_caudal method with mocked components. """
+        # Repeat labels so that each class has at least k=2 samples
+        mock_labels = ["GenusA", "GenusA", "GenusB", "GenusB", "GenusA", "GenusA", "GenusB", "GenusB"]
+        mock_images = [f"img{i}.jpg" for i in range(len(mock_labels))]
+
+        self.training_program.class_column = 0
+        self.training_program.class_string_dictionary = {"GenusA": 0, "GenusB": 1}
+
+        self.training_program.get_caudal_view = MagicMock(return_value=pd.DataFrame({
+            "Label": mock_labels,
+            "Image": mock_images
+        }))
+
+        # Mocks for transformations and model methods
+        self.training_program.transformations = {"caud": MagicMock()}
+        self.training_program.load_caud_model = MagicMock(return_value=MagicMock())
+        self.training_program.training_evaluation_caudal = MagicMock()
+        self.training_program.model_accuracies = {}
+
+        self.training_program.k_fold_caudal(num_epochs=1, k_folds=2)
+
+        assert self.training_program.training_evaluation_caudal.call_count == 2
+        assert self.training_program.load_caud_model.call_count == 2
+
+    def test_k_fold_dorsal(self):
+        """ Test the k_fold_dorsal method with mocked components. """
+        # Repeat labels so that each class has at least k=2 samples
+        mock_labels = ["GenusA", "GenusA", "GenusB", "GenusB", "GenusA", "GenusA", "GenusB", "GenusB"]
+        mock_images = [f"img{i}.jpg" for i in range(len(mock_labels))]
+
+        self.training_program.class_column = 0
+        self.training_program.class_string_dictionary = {"GenusA": 0, "GenusB": 1}
+
+        self.training_program.get_dorsal_view = MagicMock(return_value=pd.DataFrame({
+            "Label": mock_labels,
+            "Image": mock_images
+        }))
+
+        # Mocks for transformations and model methods
+        self.training_program.transformations = {"dors": MagicMock()}
+        self.training_program.load_dors_model = MagicMock(return_value=MagicMock())
+        self.training_program.training_evaluation_dorsal = MagicMock()
+        self.training_program.model_accuracies = {}
+
+        self.training_program.k_fold_dorsal(num_epochs=1, k_folds=2)
+
+        assert self.training_program.training_evaluation_dorsal.call_count == 2
+        assert self.training_program.load_dors_model.call_count == 2
+
+    def test_k_fold_frontal(self):
+        """ Test the k_fold_frontal method with mocked components. """
+        # Repeat labels so that each class has at least k=2 samples
+        mock_labels = ["GenusA", "GenusA", "GenusB", "GenusB", "GenusA", "GenusA", "GenusB", "GenusB"]
+        mock_images = [f"img{i}.jpg" for i in range(len(mock_labels))]
+
+        self.training_program.class_column = 0
+        self.training_program.class_string_dictionary = {"GenusA": 0, "GenusB": 1}
+
+        self.training_program.get_frontal_view = MagicMock(return_value=pd.DataFrame({
+            "Label": mock_labels,
+            "Image": mock_images
+        }))
+
+        # Mocks for transformations and model methods
+        self.training_program.transformations = {"fron": MagicMock()}
+        self.training_program.load_fron_model = MagicMock(return_value=MagicMock())
+        self.training_program.training_evaluation_frontal = MagicMock()
+        self.training_program.model_accuracies = {}
+
+        self.training_program.k_fold_frontal(num_epochs=1, k_folds=2)
+
+        assert self.training_program.training_evaluation_frontal.call_count == 2
+        assert self.training_program.load_fron_model.call_count == 2
+
+    def test_k_fold_lateral(self):
+        """ Test the k_fold_lateral method with mocked components. """
+        # Repeat labels so that each class has at least k=2 samples
+        mock_labels = ["GenusA", "GenusA", "GenusB", "GenusB", "GenusA", "GenusA", "GenusB", "GenusB"]
+        mock_images = [f"img{i}.jpg" for i in range(len(mock_labels))]
+
+        self.training_program.class_column = 0
+        self.training_program.class_string_dictionary = {"GenusA": 0, "GenusB": 1}
+
+        self.training_program.get_lateral_view = MagicMock(return_value=pd.DataFrame({
+            "Label": mock_labels,
+            "Image": mock_images
+        }))
+
+        # Mocks for transformations and model methods
+        self.training_program.transformations = {"late": MagicMock()}
+        self.training_program.load_late_model = MagicMock(return_value=MagicMock())
+        self.training_program.training_evaluation_lateral = MagicMock()
+        self.training_program.model_accuracies = {}
+
+        self.training_program.k_fold_lateral(num_epochs=1, k_folds=2)
+
+        assert self.training_program.training_evaluation_lateral.call_count == 2
+        assert self.training_program.load_late_model.call_count == 2
+
     @patch("torch.save")
     def test_save_models(self, mock_torch_save):
         """ Test that save_models writes to proper files """
