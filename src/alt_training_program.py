@@ -196,7 +196,7 @@ class AltTrainingProgram:
 
                 # Save model if macro_f1 improves
                 if macro_f1 > best_macro_f1:
-                    best_epoch = epoch
+                    best_epoch = epoch + 1
                     best_macro_f1 = macro_f1
                     best_state_dict = copy.deepcopy(self.dors_caud_model.state_dict())
                     print(f"Model accuracy improved after epoch {best_epoch}.")
@@ -271,7 +271,7 @@ class AltTrainingProgram:
 
                 # Save model if macro_f1 improves
                 if macro_f1 > best_macro_f1:
-                    best_epoch = epoch
+                    best_epoch = epoch + 1
                     best_macro_f1 = macro_f1
                     best_state_dict = copy.deepcopy(self.all_model.state_dict())
                     print(f"Model accuracy improved after epoch {best_epoch}.")
@@ -344,7 +344,7 @@ class AltTrainingProgram:
 
                 # Save model if macro_f1 improves
                 if macro_f1 > best_macro_f1:
-                    best_epoch = epoch
+                    best_epoch = epoch + 1
                     best_macro_f1 = macro_f1
                     best_state_dict = copy.deepcopy(self.dors_late_model.state_dict())
                     print(f"Model accuracy improved after epoch {best_epoch}.")
