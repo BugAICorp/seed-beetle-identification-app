@@ -2,6 +2,7 @@
 import os
 import sys
 import json
+import copy
 from io import BytesIO
 import pandas as pd
 from PIL import Image
@@ -146,7 +147,10 @@ class TrainingProgram:
         # define loss function, optimization function, and image transformation
         criterion = torch.nn.CrossEntropyLoss()
         optimizer = torch.optim.Adam(self.caud_model.parameters(), lr=0.001)
+
         best_epoch = 0
+        best_macro_f1 = 0.0
+        best_state_dict = None
         for epoch in range(num_epochs):
             self.caud_model.train()
             running_loss = 0.0
@@ -196,10 +200,17 @@ class TrainingProgram:
                 # Save model if macro_f1 improves
                 if macro_f1 > self.model_accuracies.get("caud", 0):
                     best_epoch = epoch
-                    self.model_accuracies["caud"] = macro_f1
-                    print(f"Model accuracy improved after epoch {best_epoch}, updated best model.")
+                    best_macro_f1 = macro_f1
+                    best_state_dict = copy.deepcopy(self.caud_model.state_dict())
+                    print(f"Model accuracy improved after epoch {best_epoch}.")
                 else:
                     print(f"No improvement to model, the best epoch is {best_epoch}.")
+
+        # Set model to the best model after training
+        if best_state_dict is not None:
+            self.caud_model.load_state_dict(best_state_dict)
+            self.model_accuracies["caud"] = best_macro_f1
+            print(f"Best Macro F1: {100 * best_macro_f1:.2f}% — model loaded.")
 
     def training_evaluation_dorsal(self, num_epochs, train_loader, test_loader):
         """
@@ -211,6 +222,8 @@ class TrainingProgram:
         optimizer = torch.optim.Adam(self.dors_model.parameters(), lr=0.001)
 
         best_epoch = 0
+        best_macro_f1 = 0.0
+        best_state_dict = None
         for epoch in range(num_epochs):
             self.dors_model.train()
             running_loss = 0.0
@@ -262,10 +275,17 @@ class TrainingProgram:
                 # Save model if macro_f1 improves
                 if macro_f1 > self.model_accuracies.get("dors", 0):
                     best_epoch = epoch
-                    self.model_accuracies["dors"] = macro_f1
-                    print(f"Model accuracy improved after epoch {best_epoch}, updated best model.")
+                    best_macro_f1 = macro_f1
+                    best_state_dict = copy.deepcopy(self.dors_model.state_dict())
+                    print(f"Model accuracy improved after epoch {best_epoch}.")
                 else:
                     print(f"No improvement to model, the best epoch is {best_epoch}.")
+
+        # Set model to the best model after training
+        if best_state_dict is not None:
+            self.dors_model.load_state_dict(best_state_dict)
+            self.model_accuracies["dors"] = best_macro_f1
+            print(f"Best Macro F1: {100 * best_macro_f1:.2f}% — model loaded.")
 
     def training_evaluation_frontal(self, num_epochs, train_loader, test_loader):
         """
@@ -277,6 +297,8 @@ class TrainingProgram:
         optimizer = torch.optim.Adam(self.fron_model.parameters(), lr=0.001)
 
         best_epoch = 0
+        best_macro_f1 = 0.0
+        best_state_dict = None
         for epoch in range(num_epochs):
             self.fron_model.train()
             running_loss = 0.0
@@ -328,10 +350,17 @@ class TrainingProgram:
                 # Save model if macro_f1 improves
                 if macro_f1 > self.model_accuracies.get("fron", 0):
                     best_epoch = epoch
-                    self.model_accuracies["fron"] = macro_f1
-                    print(f"Model accuracy improved after epoch {best_epoch}, updated best model.")
+                    best_macro_f1 = macro_f1
+                    best_state_dict = copy.deepcopy(self.fron_model.state_dict())
+                    print(f"Model accuracy improved after epoch {best_epoch}.")
                 else:
                     print(f"No improvement to model, the best epoch is {best_epoch}.")
+
+        # Set model to the best model after training
+        if best_state_dict is not None:
+            self.fron_model.load_state_dict(best_state_dict)
+            self.model_accuracies["fron"] = best_macro_f1
+            print(f"Best Macro F1: {100 * best_macro_f1:.2f}% — model loaded.")
 
     def training_evaluation_lateral(self, num_epochs, train_loader, test_loader):
         """
@@ -343,6 +372,8 @@ class TrainingProgram:
         optimizer = torch.optim.Adam(self.late_model.parameters(), lr=0.001)
 
         best_epoch = 0
+        best_macro_f1 = 0.0
+        best_state_dict = None
         for epoch in range(num_epochs):
             self.late_model.train()
             running_loss = 0.0
@@ -394,10 +425,17 @@ class TrainingProgram:
                 # Save model if macro_f1 improves
                 if macro_f1 > self.model_accuracies.get("late", 0):
                     best_epoch = epoch
-                    self.model_accuracies["late"] = macro_f1
-                    print(f"Model accuracy improved after epoch {best_epoch}, updated best model.")
+                    best_macro_f1 = macro_f1
+                    best_state_dict = copy.deepcopy(self.late_model.state_dict())
+                    print(f"Model accuracy improved after epoch {best_epoch}.")
                 else:
                     print(f"No improvement to model, the best epoch is {best_epoch}.")
+
+        # Set model to the best model after training
+        if best_state_dict is not None:
+            self.late_model.load_state_dict(best_state_dict)
+            self.model_accuracies["late"] = best_macro_f1
+            print(f"Best Macro F1: {100 * best_macro_f1:.2f}% — model loaded.")
 
     def train_caudal(self, num_epochs):
         """
