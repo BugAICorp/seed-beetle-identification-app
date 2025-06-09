@@ -201,7 +201,7 @@ class AltTrainingProgram:
                     print(f"Model accuracy improved after epoch {best_epoch}.")
                 else:
                     print(f"No improvement to model, the best epoch is {best_epoch}.")
-        
+
         # Set model to the best model after training
         if best_state_dict is not None:
             self.dors_caud_model.load_state_dict(best_state_dict)
@@ -276,7 +276,7 @@ class AltTrainingProgram:
                     print(f"Model accuracy improved after epoch {best_epoch}.")
                 else:
                     print(f"No improvement to model, the best epoch is {best_epoch}.")
-        
+
         # Set model to the best model after training
         if best_state_dict is not None:
             self.all_model.load_state_dict(best_state_dict)
@@ -349,7 +349,7 @@ class AltTrainingProgram:
                     print(f"Model accuracy improved after epoch {best_epoch}.")
                 else:
                     print(f"No improvement to model, the best epoch is {best_epoch}.")
-        
+
         # Set model to the best model after training
         if best_state_dict is not None:
             self.dors_late_model.load_state_dict(best_state_dict)
