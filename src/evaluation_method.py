@@ -32,7 +32,7 @@ class EvaluationMethod:
         self.species_idx_dict = self.open_class_dictionary(species_filename)
 
         self.height = None
-        with open("src/models/" + height_filename, 'r', encoding='utf-8') as file:
+        with open(height_filename, 'r', encoding='utf-8') as file:
             self.height = int(file.readline().strip())
 
         #load transformations to a list for use in the program
@@ -48,7 +48,7 @@ class EvaluationMethod:
 
         Returns: dictionary defined by file
         """
-        with open("src/models/" + filename, 'r', encoding='utf-8') as json_file:
+        with open(filename, 'r', encoding='utf-8') as json_file:
             class_dict = json.load(json_file)
 
         # Convert string keys to integers(because of how the dictionary was saved with json)

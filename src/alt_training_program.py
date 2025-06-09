@@ -11,6 +11,7 @@ import torch
 import dill
 from sklearn.model_selection import train_test_split
 from transformation_classes import HistogramEqualization
+import globals
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../')))
 
@@ -383,15 +384,13 @@ class AltTrainingProgram:
             model_filenames["dors_caud"] and
             update_flags["dors_caud"]
         ):
-            dors_caud_file = model_filenames["dors_caud"]
-            dors_caud_filename = os.path.join("src/models", dors_caud_file)
+            dors_caud_filename = model_filenames["dors_caud"]
             torch.save(self.dors_caud_model.state_dict(), dors_caud_filename)
             self.save_transformation(self.transformations["dors_caud"], 0)
             print(f"Dorsal Caudal Model weights saved to {dors_caud_filename}")
 
         if "all" in model_filenames and model_filenames["all"] and update_flags["all"]:
-            all_file = model_filenames["all"]
-            all_filename = os.path.join("src/models", all_file)
+            all_filename = model_filenames["all"]
             torch.save(self.all_model.state_dict(), all_filename)
             self.save_transformation(self.transformations["all"], 1)
             print(f"All Model weights saved to {all_filename}")
@@ -401,21 +400,18 @@ class AltTrainingProgram:
             model_filenames["dors_late"] and
             update_flags["dors_late"]
         ):
-            dors_late_file = model_filenames["dors_late"]
-            dors_late_filename = os.path.join("src/models", dors_late_file)
+            dors_late_filename = model_filenames["dors_late"]
             torch.save(self.dors_late_model.state_dict(), dors_late_filename)
             self.save_transformation(self.transformations["dors_late"], 2)
             print(f"Dorsal Lateral Model weights saved to {dors_late_filename}")
 
         # Handle dict_filename similarly if needed
         if class_dict_filename:
-            class_dict_filename = os.path.join("src/models", class_dict_filename)
             with open(class_dict_filename, "w") as file:
                 json.dump(self.class_index_dictionary, file, indent=4)
             print(f"Dictionary saved to {class_dict_filename}")
 
         if height_filename:
-            height_filename = os.path.join("src/models", height_filename)
             with open(height_filename, "w") as file:
                 file.write(str(self.height))
             print(f"Height saved to {height_filename}.")
@@ -467,15 +463,15 @@ class AltTrainingProgram:
         Returns: None
         """
         if angle == 0:
-            with open("dors_caud_transformation.pth", "wb") as f:
+            with open(globals.dors_caud_transformation, "wb") as f:
                 dill.dump(transformation, f)
 
         elif angle == 1:
-            with open("all_transformation.pth", "wb") as f:
+            with open(globals.all_transformations, "wb") as f:
                 dill.dump(transformation, f)
 
         elif angle == 2:
-            with open("dors_late_transformation.pth", "wb") as f:
+            with open(globals.dors_late_transformation, "wb") as f:
                 dill.dump(transformation, f)
 
 # Custom Dataset class for loading images from binary data

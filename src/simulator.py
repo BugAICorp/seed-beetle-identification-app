@@ -104,7 +104,7 @@ if __name__ == '__main__':
         genus_tp.train_lateral(20)
 
     # Save models
-    genus_model_filenmaes = {
+    genus_model_filenames = {
         "caud" : globals.gen_caud_model if train_caud else None, 
         "dors" : globals.gen_dors_model if train_dors else None,
         "fron" : globals.gen_fron_model if train_fron else None,
@@ -112,17 +112,17 @@ if __name__ == '__main__':
     }
 
     genus_tp.save_models(
-        genus_model_filenmaes,
+        genus_model_filenames,
         globals.img_height,
         globals.gen_class_dictionary,
         globals.gen_accuracy_list)
 
     # Load Genus models
     genus_model_paths = {
-            "caud" : "src/models/" + globals.gen_caud_model, 
-            "dors" : "src/models/" + globals.gen_dors_model,
-            "fron" : "src/models/" + globals.gen_fron_model,
-            "late" : "src/models/" + globals.gen_late_model
+            "caud" : globals.gen_caud_model, 
+            "dors" : globals.gen_dors_model,
+            "fron" : globals.gen_fron_model,
+            "late" : globals.gen_late_model
         }
 
     genus_ml = ModelLoader(genus_model_paths, GENUS_OUTPUTS)
@@ -158,10 +158,10 @@ if __name__ == '__main__':
 
     # Load species models
     species_model_paths = {
-            "caud" : "src/models/" + globals.spec_caud_model, 
-            "dors" : "src/models/" + globals.spec_dors_model,
-            "fron" : "src/models/" + globals.spec_fron_model,
-            "late" : "src/models/" + globals.spec_late_model
+            "caud" : globals.spec_caud_model, 
+            "dors" : globals.spec_dors_model,
+            "fron" : globals.spec_fron_model,
+            "late" : globals.spec_late_model
         }
     species_ml = ModelLoader(species_model_paths, SPECIES_OUTPUTS)
     species_models = species_ml.get_models()

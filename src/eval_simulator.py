@@ -48,17 +48,17 @@ if __name__ == '__main__':
 
     # Get Model Files
     species_model_paths = {
-            "caud" : "src/models/spec_caud.pth",
-            "dors" : "src/models/spec_dors.pth",
-            "fron" : "src/models/spec_fron.pth",
-            "late" : "src/models/spec_late.pth"
+            "caud" : globals.spec_caud_model,
+            "dors" : globals.spec_dors_model,
+            "fron" : globals.spec_fron_model,
+            "late" : globals.spec_late_model
         }
 
     genus_model_paths = {
-            "caud" : "src/models/gen_caud.pth",
-            "dors" : "src/models/gen_dors.pth",
-            "fron" : "src/models/gen_fron.pth",
-            "late" : "src/models/gen_late.pth"
+            "caud" : globals.gen_caud_model,
+            "dors" : globals.gen_dors_model,
+            "fron" : globals.gen_fron_model,
+            "late" : globals.gen_late_model
         }
 
     # Load Genus Evaluator
