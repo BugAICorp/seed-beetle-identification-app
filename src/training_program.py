@@ -12,6 +12,7 @@ import torch
 import dill
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import f1_score
+from sklearn.model_selection import StratifiedKFold
 from transformation_classes import HistogramEqualization
 import globals
 
@@ -513,6 +514,170 @@ class TrainingProgram:
         testing_loader = DataLoader(test_dataset, batch_size=32, shuffle=False)
 
         self.training_evaluation_lateral(num_epochs, training_loader, testing_loader)
+
+    def k_fold_caudal(self, num_epochs, k_folds=5):
+        """
+        Trains the caudal model using Stratified K-Fold Cross Validation.
+        """
+        # Get caudal dataset(images and labels)
+        caud_df = self.get_caudal_view()
+
+        images = caud_df.iloc[:, -1].values
+        classes = caud_df.iloc[:, self.class_column].values
+        labels = [self.class_string_dictionary[label] for label in classes]
+
+        transformation = self.transformations["caud"]
+        skf = StratifiedKFold(n_splits=k_folds, shuffle=True, random_state=42)
+
+        all_fold_f1s = []
+
+        for fold, (train_idx, val_idx) in enumerate(skf.split(images, labels)):
+            print(f"\nFold {fold+1}/{k_folds}:")
+
+            train_x = [images[i] for i in train_idx]
+            train_y = [labels[i] for i in train_idx]
+            val_x = [images[i] for i in val_idx]
+            val_y = [labels[i] for i in val_idx]
+
+            train_dataset = ImageDataset(train_x, train_y, transform=transformation)
+            val_dataset = ImageDataset(val_x, val_y, transform=transformation)
+            train_loader = DataLoader(train_dataset, batch_size=32, shuffle=True)
+            val_loader = DataLoader(val_dataset, batch_size=32, shuffle=False)
+
+            # Reinitialize model before each fold
+            self.model_accuracies["caud"] = 0.0
+            self.caud_model = self.load_caud_model()
+
+            self.training_evaluation_caudal(num_epochs, train_loader, val_loader)
+
+            fold_f1 = self.model_accuracies.get("caud", 0.0)
+            all_fold_f1s.append(fold_f1)
+
+        average_macro_f1 = 100 * sum(all_fold_f1s)/k_folds
+        print(f"\nAverage Macro F1 over {k_folds} folds: {average_macro_f1:.2f}%")
+
+    def k_fold_dorsal(self, num_epochs, k_folds=5):
+        """
+        Trains the dorsal model using Stratified K-Fold Cross Validation.
+        """
+        # Get dorsal dataset(images and labels)
+        dors_df = self.get_dorsal_view()
+
+        images = dors_df.iloc[:, -1].values
+        classes = dors_df.iloc[:, self.class_column].values
+        labels = [self.class_string_dictionary[label] for label in classes]
+
+        transformation = self.transformations["dors"]
+        skf = StratifiedKFold(n_splits=k_folds, shuffle=True, random_state=42)
+
+        all_fold_f1s = []
+
+        for fold, (train_idx, val_idx) in enumerate(skf.split(images, labels)):
+            print(f"\nFold {fold+1}/{k_folds}:")
+
+            train_x = [images[i] for i in train_idx]
+            train_y = [labels[i] for i in train_idx]
+            val_x = [images[i] for i in val_idx]
+            val_y = [labels[i] for i in val_idx]
+
+            train_dataset = ImageDataset(train_x, train_y, transform=transformation)
+            val_dataset = ImageDataset(val_x, val_y, transform=transformation)
+            train_loader = DataLoader(train_dataset, batch_size=32, shuffle=True)
+            val_loader = DataLoader(val_dataset, batch_size=32, shuffle=False)
+
+            # Reinitialize model before each fold
+            self.model_accuracies["dors"] = 0.0
+            self.dors_model = self.load_dors_model()
+
+            self.training_evaluation_dorsal(num_epochs, train_loader, val_loader)
+
+            fold_f1 = self.model_accuracies.get("dors", 0.0)
+            all_fold_f1s.append(fold_f1)
+
+        average_macro_f1 = 100 * sum(all_fold_f1s)/k_folds
+        print(f"\nAverage Macro F1 over {k_folds} folds: {average_macro_f1:.2f}%")
+
+    def k_fold_frontal(self, num_epochs, k_folds=5):
+        """
+        Trains the frontal model using Stratified K-Fold Cross Validation.
+        """
+        # Get frontal dataset(images and labels)
+        fron_df = self.get_frontal_view()
+
+        images = fron_df.iloc[:, -1].values
+        classes = fron_df.iloc[:, self.class_column].values
+        labels = [self.class_string_dictionary[label] for label in classes]
+
+        transformation = self.transformations["fron"]
+        skf = StratifiedKFold(n_splits=k_folds, shuffle=True, random_state=42)
+
+        all_fold_f1s = []
+
+        for fold, (train_idx, val_idx) in enumerate(skf.split(images, labels)):
+            print(f"\nFold {fold+1}/{k_folds}:")
+
+            train_x = [images[i] for i in train_idx]
+            train_y = [labels[i] for i in train_idx]
+            val_x = [images[i] for i in val_idx]
+            val_y = [labels[i] for i in val_idx]
+
+            train_dataset = ImageDataset(train_x, train_y, transform=transformation)
+            val_dataset = ImageDataset(val_x, val_y, transform=transformation)
+            train_loader = DataLoader(train_dataset, batch_size=32, shuffle=True)
+            val_loader = DataLoader(val_dataset, batch_size=32, shuffle=False)
+
+            # Reinitialize model before each fold
+            self.model_accuracies["fron"] = 0.0
+            self.fron_model = self.load_fron_model()
+
+            self.training_evaluation_frontal(num_epochs, train_loader, val_loader)
+
+            fold_f1 = self.model_accuracies.get("fron", 0.0)
+            all_fold_f1s.append(fold_f1)
+
+        average_macro_f1 = 100 * sum(all_fold_f1s)/k_folds
+        print(f"\nAverage Macro F1 over {k_folds} folds: {average_macro_f1:.2f}%")
+
+    def k_fold_lateral(self, num_epochs, k_folds=5):
+        """
+        Trains the lateral model using Stratified K-Fold Cross Validation.
+        """
+        # Get lateral dataset(images and labels)
+        late_df = self.get_lateral_view()
+
+        images = late_df.iloc[:, -1].values
+        classes = late_df.iloc[:, self.class_column].values
+        labels = [self.class_string_dictionary[label] for label in classes]
+
+        transformation = self.transformations["late"]
+        skf = StratifiedKFold(n_splits=k_folds, shuffle=True, random_state=42)
+
+        all_fold_f1s = []
+
+        for fold, (train_idx, val_idx) in enumerate(skf.split(images, labels)):
+            print(f"\nFold {fold+1}/{k_folds}:")
+
+            train_x = [images[i] for i in train_idx]
+            train_y = [labels[i] for i in train_idx]
+            val_x = [images[i] for i in val_idx]
+            val_y = [labels[i] for i in val_idx]
+
+            train_dataset = ImageDataset(train_x, train_y, transform=transformation)
+            val_dataset = ImageDataset(val_x, val_y, transform=transformation)
+            train_loader = DataLoader(train_dataset, batch_size=32, shuffle=True)
+            val_loader = DataLoader(val_dataset, batch_size=32, shuffle=False)
+
+            # Reinitialize model before each fold
+            self.model_accuracies["late"] = 0.0
+            self.late_model = self.load_late_model()
+
+            self.training_evaluation_lateral(num_epochs, train_loader, val_loader)
+
+            fold_f1 = self.model_accuracies.get("late", 0.0)
+            all_fold_f1s.append(fold_f1)
+
+        average_macro_f1 = 100 * sum(all_fold_f1s)/k_folds
+        print(f"\nAverage Macro F1 over {k_folds} folds: {average_macro_f1:.2f}%")
 
     def load_caud_model(self):
         """
