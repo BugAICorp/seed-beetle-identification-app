@@ -34,7 +34,7 @@ class GenusEvaluationMethod:
         self.genus_idx_dict = self.open_class_dictionary(genus_filename)
 
         self.height = None
-        with open("src/models/" + height_filename, 'r', encoding='utf-8') as file:
+        with open(height_filename, 'r', encoding='utf-8') as file:
             self.height = int(file.readline().strip())
 
         #load transformations to a list for use in the program
@@ -47,7 +47,7 @@ class GenusEvaluationMethod:
 
         Returns: dictionary defined by file
         """
-        with open("src/models/" + filename, 'r', encoding='utf-8') as json_file:
+        with open(filename, 'r', encoding='utf-8') as json_file:
             class_dict_read = json.load(json_file)
 
         #Convert string keys to integers(keys automatically switched by json save)

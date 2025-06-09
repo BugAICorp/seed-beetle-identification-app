@@ -13,6 +13,7 @@ import dill
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import f1_score
 from transformation_classes import HistogramEqualization
+import globals
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../')))
 
@@ -579,41 +580,35 @@ class TrainingProgram:
 
         if "caud" in model_filenames and model_filenames["caud"] and update_flags["caud"]:
             caud_file = model_filenames["caud"]
-            caud_filename = os.path.join("src/models", caud_file)
-            torch.save(self.caud_model.state_dict(), caud_filename)
+            torch.save(self.caud_model.state_dict(), caud_file)
             self.save_transformation(self.transformations["caud"], 0)
-            print(f"Caudal Model weights saved to {caud_filename}")
+            print(f"Caudal Model weights saved to {caud_file}")
 
         if "dors" in model_filenames and model_filenames["dors"] and update_flags["dors"]:
             dors_file = model_filenames["dors"]
-            dors_filename = os.path.join("src/models", dors_file)
-            torch.save(self.dors_model.state_dict(), dors_filename)
+            torch.save(self.dors_model.state_dict(), dors_file)
             self.save_transformation(self.transformations["dors"], 1)
-            print(f"Dorsal Model weights saved to {dors_filename}")
+            print(f"Dorsal Model weights saved to {dors_file}")
 
         if "fron" in model_filenames and model_filenames["fron"] and update_flags["fron"]:
             fron_file = model_filenames["fron"]
-            fron_filename = os.path.join("src/models", fron_file)
-            torch.save(self.fron_model.state_dict(), fron_filename)
+            torch.save(self.fron_model.state_dict(), fron_file)
             self.save_transformation(self.transformations["fron"], 2)
-            print(f"Frontal Model weights saved to {fron_filename}")
+            print(f"Frontal Model weights saved to {fron_file}")
 
         if "late" in model_filenames and model_filenames["late"] and update_flags["late"]:
             late_file = model_filenames["late"]
-            late_filename = os.path.join("src/models", late_file)
-            torch.save(self.late_model.state_dict(), late_filename)
+            torch.save(self.late_model.state_dict(), late_file)
             self.save_transformation(self.transformations["late"], 3)
-            print(f"Lateral Model weights saved to {late_filename}")
+            print(f"Lateral Model weights saved to {late_file}")
 
         # Handle dict_filename similarly if needed
         if class_dict_filename:
-            class_dict_filename = os.path.join("src/models", class_dict_filename)
             with open(class_dict_filename, "w") as file:
                 json.dump(self.class_index_dictionary, file, indent=4)
             print(f"Dictionary saved to {class_dict_filename}")
 
         if height_filename:
-            height_filename = os.path.join("src/models", height_filename)
             with open(height_filename, "w") as file:
                 file.write(str(self.height))
             print(f"Height saved to {height_filename}.")
@@ -665,19 +660,19 @@ class TrainingProgram:
         Returns: None
         """
         if angle == 0:
-            with open("caud_transformation.pth", "wb") as f:
+            with open(globals.caud_transformation, "wb") as f:
                 dill.dump(transformation, f)
 
         elif angle == 1:
-            with open("dors_transformation.pth", "wb") as f:
+            with open(globals.dors_transformation, "wb") as f:
                 dill.dump(transformation, f)
 
         elif angle == 2:
-            with open("fron_transformation.pth", "wb") as f:
+            with open(globals.fron_transformation, "wb") as f:
                 dill.dump(transformation, f)
 
         elif angle == 3:
-            with open("late_transformation.pth", "wb") as f:
+            with open(globals.late_transformation, "wb") as f:
                 dill.dump(transformation, f)
 
 # Custom Dataset class for loading images from binary data

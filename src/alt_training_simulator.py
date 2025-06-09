@@ -81,14 +81,14 @@ if __name__ == '__main__':
     alt_genus_tp.train_dorsal_lateral(20)
 
     # Save models
-    alt_genus_model_filenmaes = {
+    alt_genus_model_filenames = {
         "dors_caud" : globals.gen_dors_caud_model, 
         "all" : globals.gen_all_model,
         "dors_late" : globals.gen_dors_late_model
     }
 
     alt_genus_tp.save_models(
-        alt_genus_model_filenmaes,
+        alt_genus_model_filenames,
         globals.alt_img_height,
         globals.alt_gen_class_dictionary,
         globals.alt_gen_accuracy_list)
