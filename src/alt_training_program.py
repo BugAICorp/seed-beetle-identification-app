@@ -195,8 +195,8 @@ class AltTrainingProgram:
                 print(f"Macro F1 Score: {100 * macro_f1:.2f}%")
 
                 # Save model if macro_f1 improves
-                if macro_f1 > self.model_accuracies.get("dors_caud", 0):
-                    best_epoch = epoch
+                if macro_f1 > best_macro_f1:
+                    best_epoch = epoch + 1
                     best_macro_f1 = macro_f1
                     best_state_dict = copy.deepcopy(self.dors_caud_model.state_dict())
                     print(f"Model accuracy improved after epoch {best_epoch}.")
@@ -270,8 +270,8 @@ class AltTrainingProgram:
                 print(f"Macro F1 Score: {100 * macro_f1:.2f}%")
 
                 # Save model if macro_f1 improves
-                if macro_f1 > self.model_accuracies.get("all", 0):
-                    best_epoch = epoch
+                if macro_f1 > best_macro_f1:
+                    best_epoch = epoch + 1
                     best_macro_f1 = macro_f1
                     best_state_dict = copy.deepcopy(self.all_model.state_dict())
                     print(f"Model accuracy improved after epoch {best_epoch}.")
@@ -343,8 +343,8 @@ class AltTrainingProgram:
                 print(f"Macro F1 Score: {100 * macro_f1:.2f}%")
 
                 # Save model if macro_f1 improves
-                if macro_f1 > self.model_accuracies.get("dors_late", 0):
-                    best_epoch = epoch
+                if macro_f1 > best_macro_f1:
+                    best_epoch = epoch + 1
                     best_macro_f1 = macro_f1
                     best_state_dict = copy.deepcopy(self.dors_late_model.state_dict())
                     print(f"Model accuracy improved after epoch {best_epoch}.")
