@@ -190,5 +190,41 @@ class TestAltTrainingProgram(unittest.TestCase):
         # Ensure training_evaluation_caudal was called once
         self.training_program.training_evaluation_dorsal_lateral.assert_called_once()
 
+    @patch("torch.save")
+    def test_save_models(self, mock_torch_save):
+        """ Test that save_models writes to proper files """
+
+        # Mock previous model accuracies
+        mock_accuracy_dict = {
+            "dors_caud": 0.6,
+            "all": 0.4,
+            "dors_late": 0.9
+        }
+
+        self.training_program.model_accuracies = {
+            "dors_caud": 0.5, # worse than previous
+            "all": 0.6, # improved
+            "dors_late": 0.1 # worse
+        }
+
+        # Call the function with mocked json accuracy dump
+        with patch("builtins.open", mock_open(read_data=json.dumps(mock_accuracy_dict))):
+            self.training_program.save_models(
+                {
+                    "dors_caud": "dors_caud.pth",
+                    "all": "all.pth",
+                    "dors_late": "dors_late.pth"
+                },
+                "height.txt",
+                "alt_dict.json",
+                "alt_test_accuracies.json"
+            )
+
+        # Verify torch.save is called for each model, ignoring exact state_dict() content
+        expected_calls = [
+            ((unittest.mock.ANY, "all.pth"),)
+        ]
+        mock_torch_save.assert_has_calls(expected_calls, any_order=True)
+
 if __name__ == "__main__":
     unittest.main()
