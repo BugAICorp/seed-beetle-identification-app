@@ -200,7 +200,7 @@ class TrainingProgram:
                 print(f"Macro F1 Score: {100 * macro_f1:.2f}%")
 
                 # Save model if macro_f1 improves
-                if macro_f1 > self.model_accuracies.get("caud", 0):
+                if macro_f1 > best_macro_f1:
                     best_epoch = epoch
                     best_macro_f1 = macro_f1
                     best_state_dict = copy.deepcopy(self.caud_model.state_dict())
@@ -275,7 +275,7 @@ class TrainingProgram:
                 print(f"Macro F1 Score: {100 * macro_f1:.2f}%")
 
                 # Save model if macro_f1 improves
-                if macro_f1 > self.model_accuracies.get("dors", 0):
+                if macro_f1 > best_macro_f1:
                     best_epoch = epoch
                     best_macro_f1 = macro_f1
                     best_state_dict = copy.deepcopy(self.dors_model.state_dict())
@@ -350,7 +350,7 @@ class TrainingProgram:
                 print(f"Macro F1 Score: {100 * macro_f1:.2f}%")
 
                 # Save model if macro_f1 improves
-                if macro_f1 > self.model_accuracies.get("fron", 0):
+                if macro_f1 > best_macro_f1:
                     best_epoch = epoch
                     best_macro_f1 = macro_f1
                     best_state_dict = copy.deepcopy(self.fron_model.state_dict())
@@ -425,7 +425,7 @@ class TrainingProgram:
                 print(f"Macro F1 Score: {100 * macro_f1:.2f}%")
 
                 # Save model if macro_f1 improves
-                if macro_f1 > self.model_accuracies.get("late", 0):
+                if macro_f1 > best_macro_f1:
                     best_epoch = epoch
                     best_macro_f1 = macro_f1
                     best_state_dict = copy.deepcopy(self.late_model.state_dict())
