@@ -1,6 +1,5 @@
-""" globals.py """
+""" globals.py 
 
-"""
 When adding new files to the project in the categories of: Models, Transformations, Model Trackers;
 Add a variable here with the full path of the file so that the code will only show a simple variable
 rather than joining the path in the code.
