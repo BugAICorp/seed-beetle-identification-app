@@ -50,3 +50,6 @@ alt_gen_accuracy_list =  "src/models/alt_gen_accuracies.json"
 all_transformations = "src/models/all_transformation.pth"
 dors_caud_transformation = "src/models/dors_caud_transformation.pth"
 dors_late_transformation = "src/models/dors_late_transformation.pth"
+
+#Genus Model Tracked Files
+genus_specific_accuracies = "src/genus_models/genus_specific_accuracies.json"
