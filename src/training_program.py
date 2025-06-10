@@ -34,9 +34,21 @@ class TrainingProgram:
             num_classes (int): Number of classes/outputs for the models
             image_column (str): Column header used to determine the image column
         """
-        self.dataframe = dataframe
         self.height = 300
         self.num_classes = num_classes
+        # Dataframe variables
+        self.image_column = image_column
+        self.class_column = class_column
+
+        # Data Augmentation - Add images for rare classes
+        augmenter = DataAugmenter(dataframe, self.class_column, self.image_column, threshold=50)
+
+        minor_rotation = transforms.Compose([
+            transforms.RandomRotation(degrees=5)
+        ])
+
+        self.dataframe = augmenter.augment_rare_classes(minor_rotation, num_augments_per_image=5)
+
         # subsets to save database reading to
         self.caud_subset = self.get_subset("CAUD", self.dataframe)
         self.dors_subset = self.get_subset("DORS", self.dataframe)
@@ -51,9 +63,6 @@ class TrainingProgram:
         self.dors_model = self.load_dors_model()
         self.fron_model = self.load_fron_model()
         self.late_model = self.load_late_model()
-        # Dataframe variables
-        self.image_column = image_column
-        self.class_column = class_column
         # Dictionary variables
         self.class_index_dictionary = {}
         self.class_string_dictionary = {}
