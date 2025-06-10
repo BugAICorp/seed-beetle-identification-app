@@ -16,6 +16,7 @@ class TestDataAugmentor(unittest.TestCase):
     """
     @staticmethod
     def create_dummy_image(color=(255, 0, 0), size=(100, 100)):
+        """ Dummy image creator method for testing methods """
         img = Image.new('RGB', size, color)
         with BytesIO() as output:
             img.save(output, format='PNG')
@@ -23,9 +24,11 @@ class TestDataAugmentor(unittest.TestCase):
 
     @staticmethod
     def dummy_augmentation(pil_img):
+        """ Fake transformation that returns the same image """
         return pil_img.rotate(90)
 
     def setUp(self):
+        """ Set up fake dataframe for testing """
         blobs = [self.create_dummy_image() for _ in range(5)]
         self.df = pd.DataFrame({
             'Species': ['rare1', 'rare1', 'common', 'common', 'common'],
@@ -74,6 +77,7 @@ class TestDataAugmentor(unittest.TestCase):
         self.assertIn('id2_aug1', new_ids)
 
     def test_no_augmentation_for_common_classes(self):
+        """ Test that augment_rare_classes doesn't augment if threshold isn't met. """
         augmenter = DataAugmenter(self.df, class_column='Species', threshold=2)
         augmented_df = augmenter.augment_rare_classes(self.dummy_augmentation, num_augments_per_image=1)
         # No augmentations should have been preformed, so size doesn't change
