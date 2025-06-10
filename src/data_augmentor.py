@@ -1,8 +1,8 @@
 """ data_augmentor.py """
 
+from io import BytesIO
 import pandas as pd
 from PIL import Image
-from io import BytesIO
 
 class DataAugmentor:
     """
