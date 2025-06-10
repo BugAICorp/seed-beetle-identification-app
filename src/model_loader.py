@@ -122,7 +122,7 @@ class ModelLoader:
         model.eval()
 
         return model
-    
+
     def load_genus_specific_model(self, genus):
         """
         Load the species classification model associated with the genus input

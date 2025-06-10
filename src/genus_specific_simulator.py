@@ -26,7 +26,7 @@ if __name__ == '__main__':
             "fron" : globals.gen_fron_model,
             "late" : globals.gen_late_model
         }
-    
+
     GENUS_OUTPUTS = dbr.get_num_genus()
     genus_ml = ModelLoader(genus_model_paths, GENUS_OUTPUTS)
     genus_models = genus_ml.get_models()
