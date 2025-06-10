@@ -1,10 +1,10 @@
-""" data_augmentor.py """
+""" data_augmenter.py """
 
 from io import BytesIO
 import pandas as pd
 from PIL import Image
 
-class DataAugmentor:
+class DataAugmenter:
     """
     Takes in a dataframe and augments more images for rare classes using the passed
     class column, image column, and threshold.
