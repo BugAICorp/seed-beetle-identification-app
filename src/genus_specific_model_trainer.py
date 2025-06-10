@@ -93,8 +93,8 @@ class GenusSpecificModelTrainer:
         num_species = genus_subset['Species'].nunique()
         print(f"Number of species in {genus} in dataset: {num_species}")
         if num_species < 1:
-            return None
-        
+            return
+
         genus_model = self.load_model(num_species)
 
         #Set up index tracking for classifications
