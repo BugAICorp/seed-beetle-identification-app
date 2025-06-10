@@ -51,7 +51,7 @@ class GenusSpecificModelTrainer:
 
         Returns: pd.Dataframe : Subset of database if genus column is valid
         """
-        return dataframe[dataframe["Genus"] == genus_type] if not dataframe.empty() else pd.DataFrame()
+        return dataframe[dataframe["Genus"] == genus_type] if not dataframe.empty else pd.DataFrame()
     
     def load_model(self, num_classes):
         """
@@ -72,7 +72,7 @@ class GenusSpecificModelTrainer:
         Returns: list of train and test data
         """
         image_binaries = dataframe.iloc[:, -1].values
-        classes = dataframe.iloc[:, 'Species'].values
+        classes = dataframe.iloc[:, 1].values
         labels = [class_string_dictionary[label] for label in classes]
         train_x, test_x, train_y, test_y = train_test_split(
             image_binaries, labels, test_size=0.2, random_state=42
@@ -91,14 +91,17 @@ class GenusSpecificModelTrainer:
         #Pull the Genus' subset, count num of species in subset, and prep model/dict
         genus_subset = self.get_subset(genus, self.dataframe)
         num_species = genus_subset['Species'].nunique()
-        print(f"Number of species in genus in dataset: {num_species}")
+        print(f"Number of species in {genus} in dataset: {num_species}")
+        if num_species < 1:
+            return None
+        
         genus_model = self.load_model(num_species)
 
         #Set up index tracking for classifications
         class_index_dictionary = {}
         class_string_dictionary = {}
         class_set = set()
-        classes =genus_subset.iloc[:, 'Species'].values
+        classes = genus_subset.iloc[:, 1].values
         class_to_idx = {label: idx for idx, label in enumerate(sorted(set(classes)))}
         for class_values in classes:
             if class_to_idx[class_values] not in class_set:
@@ -184,10 +187,10 @@ class GenusSpecificModelTrainer:
         """
         Saves trained models and their files
         """
-        torch.save(model.state_dict(), f"{genus}_species.pth")
+        torch.save(model.state_dict(), f"src/genus_models/{genus}_species.pth")
         print(f"Model saved to {genus}_species.pth")
 
-        with open(f"{genus}_dict.json", "w") as file:
+        with open(f"src/genus_models/{genus}_dict.json", "w") as file:
             json.dump(class_dict, file, indent=4)
         print(f"Dictionary saved to {genus}_dict.json")
 
@@ -206,16 +209,18 @@ class GenusSpecificModelTrainer:
                 acc_dict = json.load(f)
 
                 cur_acc = self.model_accuracies[genus]
-                prev_acc = acc_dict.get(genus)
+                prev_acc = 0
+                if genus in acc_dict:
+                    prev_acc = acc_dict.get(genus)
 
-                if prev_acc is not None or cur_acc > prev_acc:
+                if cur_acc > prev_acc:
                     update = True
                     acc_dict[genus] = cur_acc
 
         except FileNotFoundError:
             update = True
             acc_dict = {genus: self.model_accuracies[genus]}
-            print(f"Acuracy file not found")
+            print(f"Accuracy file not found")
 
         with open(accuracy_dict, 'w') as file:
             json.dump(acc_dict, file, indent=4)

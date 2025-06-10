@@ -17,4 +17,4 @@ if __name__ == '__main__':
     df = dbr.get_dataframe()
 
     genus_specific_tp = GenusSpecificModelTrainer(df)
-    genus_specific_tp.train_genus("Callosobruchus", 5)
+    genus_specific_tp.train_genus("Specularius", 5)
