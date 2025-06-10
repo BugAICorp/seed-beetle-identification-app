@@ -64,7 +64,7 @@ if __name__ == '__main__':
     GENUS_OUTPUTS = dbr.get_num_genus()
 
     # Run training with dataframe
-    species_tp = TrainingProgram(df, 1, SPECIES_OUTPUTS)
+    species_tp = TrainingProgram(df, "Species", SPECIES_OUTPUTS)
 
     # Training
     if train_caud:
@@ -91,7 +91,7 @@ if __name__ == '__main__':
         globals.spec_accuracy_list)
 
     # Run training with dataframe
-    genus_tp = TrainingProgram(df, 0, GENUS_OUTPUTS)
+    genus_tp = TrainingProgram(df, "Genus", GENUS_OUTPUTS)
 
     # Training
     if train_caud:

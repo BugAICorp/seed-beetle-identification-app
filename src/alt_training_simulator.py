@@ -52,7 +52,7 @@ if __name__ == '__main__':
     GENUS_OUTPUTS = dbr.get_num_genus()
 
     # Run training with dataframe
-    alt_species_tp = AltTrainingProgram(df, 1, SPECIES_OUTPUTS)
+    alt_species_tp = AltTrainingProgram(df, "Species", SPECIES_OUTPUTS)
 
     # Training
     alt_species_tp.train_dorsal_caudal(20)
@@ -73,7 +73,7 @@ if __name__ == '__main__':
         globals.alt_spec_accuracy_list)
 
     # Run training with dataframe
-    alt_genus_tp = AltTrainingProgram(df, 0, GENUS_OUTPUTS)
+    alt_genus_tp = AltTrainingProgram(df, "Genus", GENUS_OUTPUTS)
 
     # Training
     alt_genus_tp.train_dorsal_caudal(20)
