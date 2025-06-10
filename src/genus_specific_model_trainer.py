@@ -36,7 +36,7 @@ class GenusSpecificModelTrainer:
             'cuda' if torch.cuda.is_available()
             else 'mps' if torch.backends.mps.is_built()
             else 'cpu')
-        
+
         self.transformation = transforms.Compose([
             transforms.Resize((self.height, self.height)),
             transforms.ToTensor(),
@@ -52,7 +52,7 @@ class GenusSpecificModelTrainer:
         Returns: pd.Dataframe : Subset of database if genus column is valid
         """
         return dataframe[dataframe["Genus"] == genus_type] if not dataframe.empty else pd.DataFrame()
-    
+
     def load_model(self, num_classes):
         """
         Loads a model to be used in training
@@ -65,7 +65,7 @@ class GenusSpecificModelTrainer:
         model = model.to(self.device)
 
         return model
-    
+
     def get_train_test_split(self, dataframe, class_string_dictionary):
         """
         Gets train and test split for given dataframe
@@ -78,7 +78,7 @@ class GenusSpecificModelTrainer:
             image_binaries, labels, test_size=0.2, random_state=42
         )
         return [train_x, test_x, train_y, test_y]
-    
+
     def train_genus(self, genus, num_epochs):
         """
         Handles isolation of and training of species under a specified genus
@@ -118,10 +118,10 @@ class GenusSpecificModelTrainer:
         self.training_evaluation(num_epochs, training_loader, testing_loader, genus_model, genus)
 
         update_model = self.update_accuracies(genus, globals.genus_specific_accuracies)
-        
+
         if update_model:
             self.save_model(genus_model, genus, class_index_dictionary)
-        
+
 
     def training_evaluation(self, num_epochs, train_loader, test_loader, model, genus):
         """
@@ -144,7 +144,7 @@ class GenusSpecificModelTrainer:
                 loss.backward()
                 optimizer.step()
                 running_loss += loss.item()
-            
+
             print(f"Epoch {epoch+1}/{num_epochs}, Loss: {running_loss/len(train_loader): .4f}")
 
             model.eval()
@@ -161,7 +161,7 @@ class GenusSpecificModelTrainer:
                     correct += (predicted == labels).sum().item()
                     all_predictions.extend(predicted.cpu().numpy())
                     all_labels.extend(labels.cpu().numpy())
-            
+
             if total != 0:
                 accuracy = correct / total
                 print(f"Accuracy: {100 * accuracy:.2f}%")
@@ -177,7 +177,7 @@ class GenusSpecificModelTrainer:
                     print(f"Model accuracy improved after epoch {best_epoch}")
                 else:
                     print(f"No improvement this epoch, best epoch: {best_epoch}")
-        
+
         if best_state_dict is not None:
             model.load_state_dict(best_state_dict)
             self.model_accuracies[genus] = best_macro_f1
@@ -220,7 +220,7 @@ class GenusSpecificModelTrainer:
         except FileNotFoundError:
             update = True
             acc_dict = {genus: self.model_accuracies[genus]}
-            print(f"Accuracy file not found")
+            print("Accuracy file not found")
 
         with open(accuracy_dict, 'w') as file:
             json.dump(acc_dict, file, indent=4)
