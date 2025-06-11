@@ -179,7 +179,7 @@ class TrainingProgram:
                 if macro_f1 > best_macro_f1:
                     best_epoch = epoch + 1
                     best_macro_f1 = macro_f1
-                    best_state_dict = copy.deepcopy(self.caud_model.state_dict())
+                    best_state_dict = copy.deepcopy(self.models[view].state_dict())
                     print(f"Model accuracy improved after epoch {best_epoch}.")
                 else:
                     print(f"No improvement to model, the best epoch is {best_epoch}.")
