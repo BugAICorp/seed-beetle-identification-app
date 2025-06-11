@@ -8,6 +8,7 @@ from training_program import TrainingProgram
 from model_loader import ModelLoader
 from evaluation_method import EvaluationMethod
 from genus_evaluation_method import GenusEvaluationMethod
+from data_augmenter import DataAugmenter
 import globals
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../')))
@@ -37,7 +38,7 @@ if __name__ == '__main__':
         del input
         continue_input = int(
             input(
-                "Press 1 to choose more models to train, anything other number to start training: "
+                "Press 1 to choose more models to train, anything other number to continue: "
                 )
                 )
         if continue_input != 1:
@@ -45,6 +46,18 @@ if __name__ == '__main__':
             if not train_dors and not train_late and not train_caud and not train_fron:
                 print("No Training Requested")
                 sys.exit(0)
+
+    while True:
+        print("\nWould you like to augment the dataset?")
+        user_input = int(input("Enter 1 for YES, and 2 for NO: "))
+        if user_input == 1:
+            augment = True
+            break
+        if user_input == 2:
+            augment = False
+            break
+        print("Invalid Input. Please enter 1 or 2.")
+
     # Set up data converter
     tdc = TrainingDataConverter("dataset")
     tdc.conversion(globals.training_database)
@@ -53,18 +66,31 @@ if __name__ == '__main__':
     df = dbr.get_dataframe()
 
     # Display how many images we have for each angle
-    print("Number of Images for Each Angle:")
+    print("Number of Images for Each Angle in the Original Dataset:")
     print(f"CAUD: {(df['View'] == 'CAUD').sum()}")
     print(f"DORS: {(df['View'] == 'DORS').sum()}")
     print(f"FRON: {(df['View'] == 'FRON').sum()}")
     print(f"LATE: {(df['View'] == 'LATE').sum()}")
+
+    if augment:
+        # Data Augmentation - Add images for rare classes
+        augmenter = DataAugmenter(df, class_column="Species", threshold=50)
+
+        df = augmenter.augment_rare_classes(num_augments_per_image=5)
+
+        # Display how many images we have for each angle after augmenting the data
+        print("\nNumber of Images for Each Angle After Augmentation:")
+        print(f"CAUD: {(df['View'] == 'CAUD').sum()}")
+        print(f"DORS: {(df['View'] == 'DORS').sum()}")
+        print(f"FRON: {(df['View'] == 'FRON').sum()}")
+        print(f"LATE: {(df['View'] == 'LATE').sum()}")
 
     # initialize number of outputs
     SPECIES_OUTPUTS = dbr.get_num_species()
     GENUS_OUTPUTS = dbr.get_num_genus()
 
     # Run training with dataframe
-    species_tp = TrainingProgram(df, 1, SPECIES_OUTPUTS)
+    species_tp = TrainingProgram(df, "Species", SPECIES_OUTPUTS)
 
     # Training
     if train_caud:
@@ -91,7 +117,7 @@ if __name__ == '__main__':
         globals.spec_accuracy_list)
 
     # Run training with dataframe
-    genus_tp = TrainingProgram(df, 0, GENUS_OUTPUTS)
+    genus_tp = TrainingProgram(df, "Genus", GENUS_OUTPUTS)
 
     # Training
     if train_caud:

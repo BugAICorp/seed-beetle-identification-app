@@ -4,6 +4,7 @@ import os
 from training_data_converter import TrainingDataConverter
 from training_database_reader import DatabaseReader
 from alt_training_program import AltTrainingProgram
+from data_augmenter import DataAugmenter
 import globals
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../')))
@@ -38,10 +39,22 @@ if __name__ == '__main__':
     tdc.conversion(globals.training_database)
     # Read converted data
     dbr = DatabaseReader(globals.training_database, class_file_path=globals.class_list)
-    df = dbr.get_dataframe()
+    original_df = dbr.get_dataframe()
 
     # Display how many images we have for each angle
-    print("Number of Images for Each Angle:")
+    print("Number of Images for Each Angle in the Original Dataset:")
+    print(f"CAUD: {(original_df['View'] == 'CAUD').sum()}")
+    print(f"DORS: {(original_df['View'] == 'DORS').sum()}")
+    print(f"FRON: {(original_df['View'] == 'FRON').sum()}")
+    print(f"LATE: {(original_df['View'] == 'LATE').sum()}")
+
+    # Data Augmentation - Add images for rare classes
+    augmenter = DataAugmenter(original_df, class_column="Species", threshold=50)
+
+    df = augmenter.augment_rare_classes(num_augments_per_image=5)
+
+    # Display how many images we have for each angle after augmenting the data
+    print("\nNumber of Images for Each Angle After Augmentation:")
     print(f"CAUD: {(df['View'] == 'CAUD').sum()}")
     print(f"DORS: {(df['View'] == 'DORS').sum()}")
     print(f"FRON: {(df['View'] == 'FRON').sum()}")
@@ -52,7 +65,7 @@ if __name__ == '__main__':
     GENUS_OUTPUTS = dbr.get_num_genus()
 
     # Run training with dataframe
-    alt_species_tp = AltTrainingProgram(df, 1, SPECIES_OUTPUTS)
+    alt_species_tp = AltTrainingProgram(df, "Species", SPECIES_OUTPUTS)
 
     # Training
     alt_species_tp.train_dorsal_caudal(20)
@@ -73,7 +86,7 @@ if __name__ == '__main__':
         globals.alt_spec_accuracy_list)
 
     # Run training with dataframe
-    alt_genus_tp = AltTrainingProgram(df, 0, GENUS_OUTPUTS)
+    alt_genus_tp = AltTrainingProgram(df, "Genus", GENUS_OUTPUTS)
 
     # Training
     alt_genus_tp.train_dorsal_caudal(20)
