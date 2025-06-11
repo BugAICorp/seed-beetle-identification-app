@@ -122,3 +122,37 @@ class ModelLoader:
         model.eval()
 
         return model
+
+    def load_genus_specific_model(self, genus):
+        """
+        Load the species classification model associated with the genus input
+        Returns: torch.nn.Module: genus' species classification model
+        """
+        #attempt to open the associated dictionary to get number of outputs
+        genus_dict = None
+        try:
+            with open(f"src/genus_models/{genus}_dict.json", 'r', encoding='utf-8') as dict_file:
+                genus_dict = json.load(dict_file)
+
+        except FileNotFoundError:
+            print(f"{genus} model not found")
+            return None
+
+        #initialize the model based on number of outputs found
+        num_classes = len(genus_dict)
+        model = models.resnet50()
+        num_features = model.fc.in_features
+        model.fc = torch.nn.Linear(num_features, num_classes)
+        model = model.to(self.device)
+
+        #load the model's weights from the weight file or inform if they do not exist
+        try:
+            model.load_state_dict(
+                torch.load(f"src/genus_models/{genus}_species.pth", map_location=self.device, weights_only=True))
+        except FileNotFoundError:
+            print(f"Weights File for {genus} Model Does Not Exist.")
+
+        #set model to evaluate and return
+        model.eval()
+        print("Finished!")
+        return model
