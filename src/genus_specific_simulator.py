@@ -33,6 +33,3 @@ if __name__ == '__main__':
     GENUS_OUTPUTS = dbr.get_num_genus()
     genus_ml = ModelLoader(genus_model_paths, GENUS_OUTPUTS)
     genus_models = genus_ml.get_models()
-
-    #test specific model loader to ensure working as intended
-    cal_model = genus_ml.load_genus_specific_model("Callosobruchus")

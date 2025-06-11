@@ -7,6 +7,7 @@ import dill
 from model_loader import load_genus_specific_model
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../')))
 
+# pylint: disable=too-many-arguments, too-many-positional-arguments
 class EvalSpeciesByGenus:
     """
     Takes image input and evaluate species and genus. Uses genus eval to specify which species
@@ -46,7 +47,7 @@ class EvalSpeciesByGenus:
         self.load_species_models(genus_class)
         if self.species_model is None or self.species_idx_dict is None:
             return (None, 0), [(None, 0)]
-        
+
         species_class = self.get_species(caud=caud, dors=dors, fron=fron, late=late)
 
         return (genus_class, genus_score), species_class
@@ -89,7 +90,7 @@ class EvalSpeciesByGenus:
             transformations.append(dill.load(f))
 
         return transformations
-    
+
     def get_genus(self, caud=None, dors=None, fron=None, late=None):
         """
         Return the top genus evaluated by the genus models
@@ -163,10 +164,10 @@ class EvalSpeciesByGenus:
         for key in ["caud", "dors", "fron", "late"]:
             certainties.append(predictions[key]["score"])
             genera.append(predictions[key]["genus"])
-        
+
         i = certainties.index(max(certainties))
         return self.genus_idx_dict[genera[i]], certainties[i]
-    
+
     def get_species(self, caud=None, dors=None, fron=None, late=None):
         """
         Get the species classification based on the loaded species models
@@ -209,15 +210,15 @@ class EvalSpeciesByGenus:
 
         top_five_scores = [0, 0, 0, 0, 0]
         top_five_names = [None, None, None, None, None]
-        for i in len(species):
-            for j in len(species[i]):
+        for i in range(len(species)):
+            for j in range(len(species[i])):
                 if (scores[i][j] > min(top_five_scores)):
                     index_of_lowest = top_five_scores.index(min(top_five_scores))
                     top_five_scores[index_of_lowest] = scores[i][j]
                     top_five_names[index_of_lowest] = species[i][j]
 
         top_classes = {}
-        for i in len(top_five_scores):
+        for i in range(len(top_five_scores)):
             top_classes[top_five_names[i]] = top_five_scores[i]
         sorted_scores = sorted(top_classes.items(), key=lambda item: item[1], reverse=True)
 
