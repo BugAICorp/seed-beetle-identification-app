@@ -65,13 +65,13 @@ if __name__ == '__main__':
                     print("No Training Requested")
                     sys.exit(0)
 
-        while(True):
+        while True:
             print("\nWould you like to augment the dataset?")
             user_input = int(input("Enter 1 for YES, and 2 for NO: "))
             if user_input == 1:
                 augment = True
                 break
-            elif user_input == 2:
+            if user_input == 2:
                 augment = False
                 break
             else:
