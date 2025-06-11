@@ -41,13 +41,20 @@ if __name__ == '__main__':
     dbr = DatabaseReader(globals.training_database, class_file_path=globals.class_list)
     original_df = dbr.get_dataframe()
 
+    # Display how many images we have for each angle
+    print("Number of Images for Each Angle in the Original Dataset:")
+    print(f"CAUD: {(original_df['View'] == 'CAUD').sum()}")
+    print(f"DORS: {(original_df['View'] == 'DORS').sum()}")
+    print(f"FRON: {(original_df['View'] == 'FRON').sum()}")
+    print(f"LATE: {(original_df['View'] == 'LATE').sum()}")
+
     # Data Augmentation - Add images for rare classes
     augmenter = DataAugmenter(original_df, class_column="Species", threshold=50)
 
     df = augmenter.augment_rare_classes(num_augments_per_image=5)
 
-    # Display how many images we have for each angle
-    print("Number of Images for Each Angle:")
+    # Display how many images we have for each angle after augmenting the data
+    print("\nNumber of Images for Each Angle After Augmentation:")
     print(f"CAUD: {(df['View'] == 'CAUD').sum()}")
     print(f"DORS: {(df['View'] == 'DORS').sum()}")
     print(f"FRON: {(df['View'] == 'FRON').sum()}")
