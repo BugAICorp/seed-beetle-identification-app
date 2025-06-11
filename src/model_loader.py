@@ -102,57 +102,59 @@ class ModelLoader:
         """
         return self.models[key]
 
-    def load_stack_model(self, label, df, dict_file):
-        """
-        Args:
-            label: "Genus" or "Species" depending on which is being loaded
-            df: pandas dataframe used for finding proper model dimensions
-            dict_file: associated dictionary filename to find the output dimension
-        Returns:                torch.nn.Module: stack model loaded from input file
-        """
-        with open("src/models/" + dict_file, 'r', encoding='utf-8') as json_file:
-            class_dict = json.load(json_file)
+def load_stack_model(label, df, dict_file):
+    """
+    Args:
+        label: "Genus" or "Species" depending on which is being loaded
+        df: pandas dataframe used for finding proper model dimensions
+        dict_file: associated dictionary filename to find the output dimension
+    Returns:                torch.nn.Module: stack model loaded from input file
+    """
+    with open("src/models/" + dict_file, 'r', encoding='utf-8') as json_file:
+        class_dict = json.load(json_file)
 
-        #generate dataframe is needed for getting proper dimensions for the model
-        x = df.drop(columns=[label]).values
-        input_dim = x.shape[1]
-        output_dim = len(class_dict)
-        model = torch.nn.Linear(input_dim, output_dim)
-        model.load_state_dict(torch.load(f"src/models/{label}_meta.pth"))
-        model.eval()
+    #generate dataframe is needed for getting proper dimensions for the model
+    x = df.drop(columns=[label]).values
+    input_dim = x.shape[1]
+    output_dim = len(class_dict)
+    model = torch.nn.Linear(input_dim, output_dim)
+    model.load_state_dict(torch.load(f"src/models/{label}_meta.pth"))
+    model.eval()
 
-        return model
+    return model
 
-    def load_genus_specific_model(self, genus):
-        """
-        Load the species classification model associated with the genus input
-        Returns: torch.nn.Module: genus' species classification model
-        """
-        #attempt to open the associated dictionary to get number of outputs
-        genus_dict = None
-        try:
-            with open(f"src/genus_models/{genus}_dict.json", 'r', encoding='utf-8') as dict_file:
-                genus_dict = json.load(dict_file)
+def load_genus_specific_model(genus, device):
+    """
+    Load the species classification model associated with the genus input
+    Returns: torch.nn.Module: genus' species classification model
+             dict: idx dictionary of the classifications of species under the genus
+    """
+    #attempt to open the associated dictionary to get number of outputs
+    genus_dict = None
+    try:
+        with open(f"src/genus_models/{genus}_dict.json", 'r', encoding='utf-8') as dict_file:
+            genus_dict = json.load(dict_file)
 
-        except FileNotFoundError:
-            print(f"{genus} model not found")
-            return None
+    except FileNotFoundError:
+        print(f"{genus} model not found")
+        return None, None
 
-        #initialize the model based on number of outputs found
-        num_classes = len(genus_dict)
-        model = models.resnet50()
-        num_features = model.fc.in_features
-        model.fc = torch.nn.Linear(num_features, num_classes)
-        model = model.to(self.device)
+    #initialize the model based on number of outputs found
+    num_classes = len(genus_dict)
+    model = models.resnet50()
+    num_features = model.fc.in_features
+    model.fc = torch.nn.Linear(num_features, num_classes)
+    model = model.to(device)
 
-        #load the model's weights from the weight file or inform if they do not exist
-        try:
-            model.load_state_dict(
-                torch.load(f"src/genus_models/{genus}_species.pth", map_location=self.device, weights_only=True))
-        except FileNotFoundError:
-            print(f"Weights File for {genus} Model Does Not Exist.")
+    #load the model's weights from the weight file or inform if they do not exist
+    try:
+        model.load_state_dict(
+            torch.load(f"src/genus_models/{genus}_species.pth", map_location=device, weights_only=True))
+    except FileNotFoundError:
+        print(f"Weights File for {genus} Model Does Not Exist.")
+        return None, None
 
-        #set model to evaluate and return
-        model.eval()
-        print("Finished!")
-        return model
+    #set model to evaluate and return
+    model.eval()
+    print("Finished!")
+    return model, genus_dict
