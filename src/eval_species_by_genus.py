@@ -15,7 +15,7 @@ class EvalSpeciesByGenus:
     models to use when evaluating
     """
 
-    def __init__(self, height_filename, models_dict, genus_filename):
+    def __init__(self, models_dict, genus_filename):
         self.trained_models = models_dict
         self.species_model = None
         self.species_idx_dict = None
@@ -164,6 +164,7 @@ class EvalSpeciesByGenus:
         i = certainties.index(max(certainties))
         return self.genus_idx_dict[genera[i]], certainties[i]
 
+    # pylint: disable=too-many-branches
     def get_species(self, caud=None, dors=None, fron=None, late=None):
         """
         Get the species classification based on the loaded species models
@@ -206,7 +207,7 @@ class EvalSpeciesByGenus:
 
         top_five_scores = [0, 0, 0, 0, 0]
         top_five_names = [None, None, None, None, None]
-        for i, item in enumerate(species):
+        for i, _ in enumerate(species):
             for j in range(len(species[i])):
                 if species[i][j] in top_five_names:
                     species_index = top_five_names.index(species[i][j])
@@ -217,7 +218,7 @@ class EvalSpeciesByGenus:
                     top_five_names[index_of_lowest] = species[i][j]
 
         top_classes = {}
-        for i, item in enumerate(top_five_scores):
+        for i, _ in enumerate(top_five_scores):
             top_classes[top_five_names[i]] = top_five_scores[i]
         sorted_scores = sorted(top_classes.items(), key=lambda item: item[1], reverse=True)
 
@@ -230,6 +231,7 @@ class EvalSpeciesByGenus:
 
         return list_to_return
 
+    # pylint: enable=too-many-branches
     def load_species_models(self, genus):
         """
         Load the species classification model based on the determined

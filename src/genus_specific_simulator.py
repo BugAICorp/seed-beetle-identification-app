@@ -36,7 +36,7 @@ if __name__ == '__main__':
     genus_ml = ModelLoader(genus_model_paths, GENUS_OUTPUTS)
     genus_models = genus_ml.get_models()
 
-    pic_evaluator = EvalSpeciesByGenus(globals.img_height, genus_models, globals.gen_class_dictionary)
+    pic_evaluator = EvalSpeciesByGenus(genus_models, globals.gen_class_dictionary)
 
     # Get the images to be evaluated through user input
 
