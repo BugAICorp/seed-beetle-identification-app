@@ -100,7 +100,8 @@ class TrainingProgram:
         transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])])
         }
 
-        self.train_transformations = self.form_train_transformations(rotation_degree=5, brightness=0.1, contrast=0.1)
+        self.train_transformations = self.form_train_transformations(
+            rotation_degree=5,brightness=0.1, contrast=0.1, erasing=(0.5, (0.02, 0.15)))
 
     def get_subset(self, view_type, dataframe):
         """
@@ -112,17 +113,34 @@ class TrainingProgram:
         """
         return dataframe[dataframe["View"] == view_type] if not dataframe.empty else pd.DataFrame()
 
-    def form_train_transformations(self, rotation_degree=5, brightness=0.1, contrast=0.1):
+    def form_train_transformations(self, rotation_degree=5, brightness=0.1, contrast=0.1, erasing=(0.5, (0.02, 0.15))):
         """
         Takes the self.transformations dictionary and forms training transformations. This allows for
-        data augmention while training(rotation, noise, etc.)
+        data augmention while training(rotation, noise, etc.). This transformation contains random rotation,
+        random brightness and contrast adjustments, and random pixel erasing.
+
+        Args:
+            rotation_degree (int): Maximum degree of random rotation applied to training images.
+            brightness (float): Maximum brightness jitter factor; the image brightness is adjusted.
+            contrast (float): Maximum contrast jitter factor.
+            erasing (tuple): A tuple (p, scale), where:
+                             - p (float): Probability of applying random erasing.
+                             - scale (tuple of float): Range of proportion of erased area against input image.
+        
+        Returns:
+            dict: A dictionary of transformation pipelines with keys corresponding to their respective image views.
         """
+        # Variables used for random erasing
+        p = erasing[0]
+        scale = erasing[1]
+
         train_transformations = {}
         for key in ["caud", "dors", "fron", "late"]:
             train_transformations[key] = transforms.Compose([
                 # Add augmentations here for testing
                 transforms.RandomRotation(degrees=rotation_degree),
                 transforms.ColorJitter(brightness=brightness, contrast=contrast),
+                transforms.RandomErasing(p=p, scale=scale),
                 *self.transformations[key].transforms
             ])
         
