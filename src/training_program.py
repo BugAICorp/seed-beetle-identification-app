@@ -24,7 +24,7 @@ class TrainingProgram:
     Reads 4 subsets of pandas database from DatabaseReader, and trains and saves 4 models
     according to their respective image angles.
     """
-    def __init__(self, dataframe, class_column, num_classes, image_column='Image', rotation_degree=5):
+    def __init__(self, dataframe, class_column, num_classes, image_column='Image'):
         """
         Initialize dataset, image height, and individual model training
         Args:
@@ -100,7 +100,7 @@ class TrainingProgram:
         transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])])
         }
 
-        self.train_transformations = self.form_train_transformations(rotation_degree)
+        self.train_transformations = self.form_train_transformations(rotation_degree=5, brightness=0.1, contrast=0.1)
 
     def get_subset(self, view_type, dataframe):
         """
@@ -112,7 +112,7 @@ class TrainingProgram:
         """
         return dataframe[dataframe["View"] == view_type] if not dataframe.empty else pd.DataFrame()
 
-    def form_train_transformations(self, rotation_degree):
+    def form_train_transformations(self, rotation_degree=5, brightness=0.1, contrast=0.1):
         """
         Takes the self.transformations dictionary and forms training transformations. This allows for
         data augmention while training(rotation, noise, etc.)
@@ -122,6 +122,7 @@ class TrainingProgram:
             train_transformations[key] = transforms.Compose([
                 # Add augmentations here for testing
                 transforms.RandomRotation(degrees=rotation_degree),
+                transforms.ColorJitter(brightness=brightness, contrast=contrast),
                 *self.transformations[key].transforms
             ])
         
