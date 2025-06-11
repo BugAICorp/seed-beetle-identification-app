@@ -100,7 +100,7 @@ class TrainingProgram:
         transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])])
         }
 
-        self.train_transformations = self.form_train_transformations(
+        self.train_transformations = self.create_train_transformations(
             rotation_degree=5,brightness=0.1, contrast=0.1, erasing=(0.5, (0.02, 0.15)))
 
     def get_subset(self, view_type, dataframe):
@@ -113,7 +113,7 @@ class TrainingProgram:
         """
         return dataframe[dataframe["View"] == view_type] if not dataframe.empty else pd.DataFrame()
 
-    def form_train_transformations(self, rotation_degree=5, brightness=0.1, contrast=0.1, erasing=(0.5, (0.02, 0.15))):
+    def create_train_transformations(self, rotation_degree=5, brightness=0.1, contrast=0.1, erasing=(0.5, (0.02, 0.15))):
         """
         Takes the self.transformations dictionary and forms training transformations. This allows for
         data augmention while training(rotation, noise, etc.). This transformation contains random rotation,
