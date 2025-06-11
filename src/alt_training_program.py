@@ -35,6 +35,9 @@ class AltTrainingProgram:
         self.dataframe = dataframe
         self.height = 300
         self.num_classes = num_classes
+        # Dataframe variables
+        self.class_column = class_column
+        self.image_column = image_column
         # subsets to save database reading to
         self.dors_caud_subset = pd.concat(
             [
@@ -59,9 +62,6 @@ class AltTrainingProgram:
         self.dors_caud_model = self.load_dors_caud_model()
         self.all_model = self.load_all_model()
         self.dors_late_model = self.load_dors_late_model()
-        # Dataframe variables
-        self.class_column = class_column
-        self.image_column = image_column
         # Dictionary variables
         self.class_index_dictionary = {}
         self.class_string_dictionary = {}

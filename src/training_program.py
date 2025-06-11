@@ -14,7 +14,6 @@ from sklearn.model_selection import train_test_split
 from sklearn.metrics import f1_score
 from sklearn.model_selection import StratifiedKFold
 from transformation_classes import HistogramEqualization
-from data_augmenter import DataAugmenter
 import globals
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../')))
@@ -34,21 +33,12 @@ class TrainingProgram:
             num_classes (int): Number of classes/outputs for the models
             image_column (str): Column header used to determine the image column
         """
+        self.dataframe = dataframe
         self.height = 300
         self.num_classes = num_classes
         # Dataframe variables
         self.image_column = image_column
         self.class_column = class_column
-
-        # Data Augmentation - Add images for rare classes
-        augmenter = DataAugmenter(dataframe, self.class_column, self.image_column, threshold=50)
-
-        minor_rotation = transforms.Compose([
-            transforms.RandomRotation(degrees=5)
-        ])
-
-        self.dataframe = augmenter.augment_rare_classes(minor_rotation, num_augments_per_image=5)
-
         # subsets to save database reading to
         self.caud_subset = self.get_subset("CAUD", self.dataframe)
         self.dors_subset = self.get_subset("DORS", self.dataframe)
