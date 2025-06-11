@@ -40,19 +40,23 @@ class TrainingProgram:
         self.image_column = image_column
         self.class_column = class_column
         # subsets to save database reading to
-        self.caud_subset = self.get_subset("CAUD", self.dataframe)
-        self.dors_subset = self.get_subset("DORS", self.dataframe)
-        self.fron_subset = self.get_subset("FRON", self.dataframe)
-        self.late_subset = self.get_subset("LATE", self.dataframe)
+        self.subsets = {
+            "caud" : self.get_subset("CAUD", self.dataframe),
+            "dors" : self.get_subset("DORS", self.dataframe),
+            "fron" : self.get_subset("FRON", self.dataframe),
+            "late" : self.get_subset("LATE", self.dataframe)
+        }
         # Set device to a CUDA-compatible gpu, else mps, else cpu
         self.device = torch.device(
             'cuda' if torch.cuda.is_available()
             else 'mps' if torch.backends.mps.is_built()
             else 'cpu')
-        self.caud_model = self.load_caud_model()
-        self.dors_model = self.load_dors_model()
-        self.fron_model = self.load_fron_model()
-        self.late_model = self.load_late_model()
+        self.models = {
+            "caud" : self.load_model(),
+            "dors" : self.load_model(),
+            "fron" : self.load_model(),
+            "late" : self.load_model()
+        }
         # Dictionary variables
         self.class_index_dictionary = {}
         self.class_string_dictionary = {}
@@ -106,34 +110,6 @@ class TrainingProgram:
         """
         return dataframe[dataframe["View"] == view_type] if not dataframe.empty else pd.DataFrame()
 
-    def get_caudal_view(self):
-        """
-        Getter method for caudal view
-        Return: previously read caudal subset
-        """
-        return self.caud_subset
-
-    def get_dorsal_view(self):
-        """
-        Getter method for dorsal view
-        Return: previously read dorsal subset
-        """
-        return self.dors_subset
-
-    def get_frontal_view(self):
-        """
-        Getter method for frontal view
-        Return: previously read frontal subset
-        """
-        return self.fron_subset
-
-    def get_lateral_view(self):
-        """
-        Getter method for lateral view
-        Return: previously read lateral subset
-        """
-        return self.late_subset
-
     def get_train_test_split(self, df):
         """
         Gets train and test split for given dataframe
@@ -148,20 +124,20 @@ class TrainingProgram:
         image_binaries, labels, test_size=0.2, random_state=42)
         return [train_x, test_x, train_y, test_y]
 
-    def training_evaluation_caudal(self, num_epochs, train_loader, test_loader):
+    def training_evaluation_resnet(self, num_epochs, train_loader, test_loader, view):
         """
         Code for training algorithm and evaluating model
         """
         # Model Training
         # define loss function, optimization function, and image transformation
         criterion = torch.nn.CrossEntropyLoss()
-        optimizer = torch.optim.Adam(self.caud_model.parameters(), lr=0.001)
+        optimizer = torch.optim.Adam(self.models[view].parameters(), lr=0.001)
 
         best_epoch = 0
         best_macro_f1 = 0.0
         best_state_dict = None
         for epoch in range(num_epochs):
-            self.caud_model.train()
+            self.models[view].train()
             running_loss = 0.0
             for inputs, labels in train_loader:
                 inputs, labels = inputs.to(self.device), labels.to(self.device)
@@ -170,7 +146,7 @@ class TrainingProgram:
                 optimizer.zero_grad()
 
                 # Forward pass
-                outputs = self.caud_model(inputs)
+                outputs = self.models[view](inputs)
                 loss = criterion(outputs, labels)
 
                 # Backpropagation pass
@@ -181,7 +157,7 @@ class TrainingProgram:
             print(f"Epoch {epoch+1}/{num_epochs}, Loss: {running_loss/len(train_loader):.4f}")
 
             # evaluate testing machine
-            self.caud_model.eval()
+            self.models[view].eval()
             correct = 0
             total = 0
             all_predictions = []
@@ -190,7 +166,7 @@ class TrainingProgram:
                 for inputs, labels in test_loader:
                     inputs, labels = inputs.to(self.device), labels.to(self.device)
 
-                    outputs = self.caud_model(inputs)
+                    outputs = self.models[view](inputs)
                     _, predicted = torch.max(outputs, 1)
                     total += labels.size(0)
                     correct += (predicted == labels).sum().item()
@@ -210,252 +186,27 @@ class TrainingProgram:
                 if macro_f1 > best_macro_f1:
                     best_epoch = epoch + 1
                     best_macro_f1 = macro_f1
-                    best_state_dict = copy.deepcopy(self.caud_model.state_dict())
+                    best_state_dict = copy.deepcopy(self.models[view].state_dict())
                     print(f"Model accuracy improved after epoch {best_epoch}.")
                 else:
                     print(f"No improvement to model, the best epoch is {best_epoch}.")
 
         # Set model to the best model after training
         if best_state_dict is not None:
-            self.caud_model.load_state_dict(best_state_dict)
-            self.model_accuracies["caud"] = best_macro_f1
+            self.models[view].load_state_dict(best_state_dict)
+            self.model_accuracies[view] = best_macro_f1
             print(f"Best Macro F1: {100 * best_macro_f1:.2f}% — model loaded.")
 
-    def training_evaluation_dorsal(self, num_epochs, train_loader, test_loader):
+    def train_resnet_model(self, num_epochs, view):
         """
-        Code for training algorithm and evaluating model
-        """
-        # Model Training
-        # define loss function, optimization function, and image transformation
-        criterion = torch.nn.CrossEntropyLoss()
-        optimizer = torch.optim.Adam(self.dors_model.parameters(), lr=0.001)
-
-        best_epoch = 0
-        best_macro_f1 = 0.0
-        best_state_dict = None
-        for epoch in range(num_epochs):
-            self.dors_model.train()
-            running_loss = 0.0
-            for inputs, labels in train_loader:
-                inputs, labels = inputs.to(self.device), labels.to(self.device)
-
-                # Clear previous gradients
-                optimizer.zero_grad()
-
-                # Forward pass
-                outputs = self.dors_model(inputs)
-                loss = criterion(outputs, labels)
-
-                # Backpropagation pass
-                loss.backward()
-                optimizer.step()
-
-                running_loss += loss.item()
-
-            print(f"Epoch {epoch+1}/{num_epochs}, Loss: {running_loss/len(train_loader):.4f}")
-
-            # evaluate testing machine
-            self.dors_model.eval()
-            correct = 0
-            total = 0
-            all_predictions = []
-            all_labels = []
-            with torch.no_grad():
-                for inputs, labels in test_loader:
-                    inputs, labels = inputs.to(self.device), labels.to(self.device)
-
-                    outputs = self.dors_model(inputs)
-                    _, predicted = torch.max(outputs, 1)
-                    total += labels.size(0)
-                    correct += (predicted == labels).sum().item()
-                    all_predictions.extend(predicted.cpu().numpy())
-                    all_labels.extend(labels.cpu().numpy())
-
-            if total != 0:
-                accuracy = correct / total
-                print(f"Accuracy: {100 * accuracy:.2f}%")
-
-                # Compute and print F1 scores
-                weighted_f1 = f1_score(all_labels, all_predictions, average='weighted')
-                macro_f1 = f1_score(all_labels, all_predictions, average='macro')
-                print(f"Weighted F1 Score: {100 * weighted_f1:.2f}%")
-                print(f"Macro F1 Score: {100 * macro_f1:.2f}%")
-
-                # Save model if macro_f1 improves
-                if macro_f1 > best_macro_f1:
-                    best_epoch = epoch + 1
-                    best_macro_f1 = macro_f1
-                    best_state_dict = copy.deepcopy(self.dors_model.state_dict())
-                    print(f"Model accuracy improved after epoch {best_epoch}.")
-                else:
-                    print(f"No improvement to model, the best epoch is {best_epoch}.")
-
-        # Set model to the best model after training
-        if best_state_dict is not None:
-            self.dors_model.load_state_dict(best_state_dict)
-            self.model_accuracies["dors"] = best_macro_f1
-            print(f"Best Macro F1: {100 * best_macro_f1:.2f}% — model loaded.")
-
-    def training_evaluation_frontal(self, num_epochs, train_loader, test_loader):
-        """
-        Code for training algorithm and evaluating model
-        """
-        # Model Training
-        # define loss function, optimization function, and image transformation
-        criterion = torch.nn.CrossEntropyLoss()
-        optimizer = torch.optim.Adam(self.fron_model.parameters(), lr=0.001)
-
-        best_epoch = 0
-        best_macro_f1 = 0.0
-        best_state_dict = None
-        for epoch in range(num_epochs):
-            self.fron_model.train()
-            running_loss = 0.0
-            for inputs, labels in train_loader:
-                inputs, labels = inputs.to(self.device), labels.to(self.device)
-
-                # Clear previous gradients
-                optimizer.zero_grad()
-
-                # Forward pass
-                outputs = self.fron_model(inputs)
-                loss = criterion(outputs, labels)
-
-                # Backpropagation pass
-                loss.backward()
-                optimizer.step()
-
-                running_loss += loss.item()
-
-            print(f"Epoch {epoch+1}/{num_epochs}, Loss: {running_loss/len(train_loader):.4f}")
-
-            # evaluate testing machine
-            self.fron_model.eval()
-            correct = 0
-            total = 0
-            all_predictions = []
-            all_labels = []
-            with torch.no_grad():
-                for inputs, labels in test_loader:
-                    inputs, labels = inputs.to(self.device), labels.to(self.device)
-
-                    outputs = self.fron_model(inputs)
-                    _, predicted = torch.max(outputs, 1)
-                    total += labels.size(0)
-                    correct += (predicted == labels).sum().item()
-                    all_predictions.extend(predicted.cpu().numpy())
-                    all_labels.extend(labels.cpu().numpy())
-
-            if total != 0:
-                accuracy = correct / total
-                print(f"Accuracy: {100 * accuracy:.2f}%")
-
-                # Compute and print F1 scores
-                weighted_f1 = f1_score(all_labels, all_predictions, average='weighted')
-                macro_f1 = f1_score(all_labels, all_predictions, average='macro')
-                print(f"Weighted F1 Score: {100 * weighted_f1:.2f}%")
-                print(f"Macro F1 Score: {100 * macro_f1:.2f}%")
-
-                # Save model if macro_f1 improves
-                if macro_f1 > best_macro_f1:
-                    best_epoch = epoch + 1
-                    best_macro_f1 = macro_f1
-                    best_state_dict = copy.deepcopy(self.fron_model.state_dict())
-                    print(f"Model accuracy improved after epoch {best_epoch}.")
-                else:
-                    print(f"No improvement to model, the best epoch is {best_epoch}.")
-
-        # Set model to the best model after training
-        if best_state_dict is not None:
-            self.fron_model.load_state_dict(best_state_dict)
-            self.model_accuracies["fron"] = best_macro_f1
-            print(f"Best Macro F1: {100 * best_macro_f1:.2f}% — model loaded.")
-
-    def training_evaluation_lateral(self, num_epochs, train_loader, test_loader):
-        """
-        Code for training algorithm and evaluating model
-        """
-        # Model Training
-        # define loss function, optimization function, and image transformation
-        criterion = torch.nn.CrossEntropyLoss()
-        optimizer = torch.optim.Adam(self.late_model.parameters(), lr=0.001)
-
-        best_epoch = 0
-        best_macro_f1 = 0.0
-        best_state_dict = None
-        for epoch in range(num_epochs):
-            self.late_model.train()
-            running_loss = 0.0
-            for inputs, labels in train_loader:
-                inputs, labels = inputs.to(self.device), labels.to(self.device)
-
-                # Clear previous gradients
-                optimizer.zero_grad()
-
-                # Forward pass
-                outputs = self.late_model(inputs)
-                loss = criterion(outputs, labels)
-
-                # Backpropagation pass
-                loss.backward()
-                optimizer.step()
-
-                running_loss += loss.item()
-
-            print(f"Epoch {epoch+1}/{num_epochs}, Loss: {running_loss/len(train_loader):.4f}")
-
-            # evaluate testing machine
-            self.late_model.eval()
-            correct = 0
-            total = 0
-            all_predictions = []
-            all_labels = []
-            with torch.no_grad():
-                for inputs, labels in test_loader:
-                    inputs, labels = inputs.to(self.device), labels.to(self.device)
-
-                    outputs = self.late_model(inputs)
-                    _, predicted = torch.max(outputs, 1)
-                    total += labels.size(0)
-                    correct += (predicted == labels).sum().item()
-                    all_predictions.extend(predicted.cpu().numpy())
-                    all_labels.extend(labels.cpu().numpy())
-
-            if total != 0:
-                accuracy = correct / total
-                print(f"Accuracy: {100 * accuracy:.2f}%")
-
-                # Compute and print F1 scores
-                weighted_f1 = f1_score(all_labels, all_predictions, average='weighted')
-                macro_f1 = f1_score(all_labels, all_predictions, average='macro')
-                print(f"Weighted F1 Score: {100 * weighted_f1:.2f}%")
-                print(f"Macro F1 Score: {100 * macro_f1:.2f}%")
-
-                # Save model if macro_f1 improves
-                if macro_f1 > best_macro_f1:
-                    best_epoch = epoch + 1
-                    best_macro_f1 = macro_f1
-                    best_state_dict = copy.deepcopy(self.late_model.state_dict())
-                    print(f"Model accuracy improved after epoch {best_epoch}.")
-                else:
-                    print(f"No improvement to model, the best epoch is {best_epoch}.")
-
-        # Set model to the best model after training
-        if best_state_dict is not None:
-            self.late_model.load_state_dict(best_state_dict)
-            self.model_accuracies["late"] = best_macro_f1
-            print(f"Best Macro F1: {100 * best_macro_f1:.2f}% — model loaded.")
-
-    def train_caudal(self, num_epochs):
-        """
-        Trains model with subset of caudal image views
+        Trains resnet model with subset of specified image views
         and save model to respective save file.
         Return: None
         """
         # Get training and testing data
-        train_x, test_x, train_y, test_y = self.get_train_test_split(self.get_caudal_view())
+        train_x, test_x, train_y, test_y = self.get_train_test_split(self.subsets[view])
         # Define image transformations, placeholder for preprocessing
-        transformation = self.transformations["caud"]
+        transformation = self.transformations[view]
 
         # Create DataLoaders
         train_dataset = ImageDataset(train_x, train_y, transform=transformation)
@@ -463,77 +214,20 @@ class TrainingProgram:
         training_loader = DataLoader(train_dataset, batch_size=32, shuffle=True)
         testing_loader = DataLoader(test_dataset, batch_size=32, shuffle=False)
 
-        self.training_evaluation_caudal(num_epochs, training_loader, testing_loader)
+        self.training_evaluation_resnet(num_epochs, training_loader, testing_loader, view)
 
-    def train_dorsal(self, num_epochs):
-        """
-        Trains model with subset of dorsal image views
-        and save model to respective save file.
-        Return: None
-        """
-        # Get training and testing data
-        train_x, test_x, train_y, test_y = self.get_train_test_split(self.get_dorsal_view())
-        # Define image transformations, placeholder for preprocessing
-        transformation = self.transformations["dors"]
-
-        # Create DataLoaders
-        train_dataset = ImageDataset(train_x, train_y, transform=transformation)
-        test_dataset = ImageDataset(test_x, test_y, transform=transformation)
-        training_loader = DataLoader(train_dataset, batch_size=32, shuffle=True)
-        testing_loader = DataLoader(test_dataset, batch_size=32, shuffle=False)
-
-        self.training_evaluation_dorsal(num_epochs, training_loader, testing_loader)
-
-    def train_frontal(self, num_epochs):
-        """
-        Trains model with subset of frontal image views
-        and save model to respective save file.
-        Return: None
-        """
-        # Get training and testing data
-        train_x, test_x, train_y, test_y = self.get_train_test_split(self.get_frontal_view())
-        # Define image transformations, placeholder for preprocessing
-        transformation = self.transformations["fron"]
-
-        # Create DataLoaders
-        train_dataset = ImageDataset(train_x, train_y, transform=transformation)
-        test_dataset = ImageDataset(test_x, test_y, transform=transformation)
-        training_loader = DataLoader(train_dataset, batch_size=32, shuffle=True)
-        testing_loader = DataLoader(test_dataset, batch_size=32, shuffle=False)
-
-        self.training_evaluation_frontal(num_epochs, training_loader, testing_loader)
-
-    def train_lateral(self, num_epochs):
-        """
-        Trains model with subset of lateral image views
-        and save model to respective save file.
-        Return: None
-        """
-        # Get training and testing data
-        train_x, test_x, train_y, test_y = self.get_train_test_split(self.get_lateral_view())
-        # Define image transformations, placeholder for preprocessing
-        transformation = self.transformations["late"]
-
-        # Create DataLoaders
-        train_dataset = ImageDataset(train_x, train_y, transform=transformation)
-        test_dataset = ImageDataset(test_x, test_y, transform=transformation)
-        training_loader = DataLoader(train_dataset, batch_size=32, shuffle=True)
-        testing_loader = DataLoader(test_dataset, batch_size=32, shuffle=False)
-
-        self.training_evaluation_lateral(num_epochs, training_loader, testing_loader)
-
-    def k_fold_caudal(self, num_epochs, k_folds=5):
+    def k_fold_resnet(self, num_epochs, view, k_folds=5):
         """
         Trains the caudal model using Stratified K-Fold Cross Validation.
         """
         # Get caudal dataset(images and labels)
-        caud_df = self.get_caudal_view()
+        caud_df = self.subsets[view]
 
         images = caud_df[self.image_column].values
         classes = caud_df[self.class_column].values
         labels = [self.class_string_dictionary[label] for label in classes]
 
-        transformation = self.transformations["caud"]
+        transformation = self.transformations[view]
         skf = StratifiedKFold(n_splits=k_folds, shuffle=True, random_state=42)
 
         all_fold_f1s = []
@@ -552,182 +246,20 @@ class TrainingProgram:
             val_loader = DataLoader(val_dataset, batch_size=32, shuffle=False)
 
             # Reinitialize model before each fold
-            self.model_accuracies["caud"] = 0.0
-            self.caud_model = self.load_caud_model()
+            self.model_accuracies[view] = 0.0
+            self.models[view] = self.load_model()
 
-            self.training_evaluation_caudal(num_epochs, train_loader, val_loader)
+            self.training_evaluation_resnet(num_epochs, train_loader, val_loader, view)
 
-            fold_f1 = self.model_accuracies.get("caud", 0.0)
+            fold_f1 = self.model_accuracies.get(view, 0.0)
             all_fold_f1s.append(fold_f1)
 
         average_macro_f1 = 100 * sum(all_fold_f1s)/k_folds
         print(f"\nAverage Macro F1 over {k_folds} folds: {average_macro_f1:.2f}%")
 
-    def k_fold_dorsal(self, num_epochs, k_folds=5):
+    def load_model(self):
         """
-        Trains the dorsal model using Stratified K-Fold Cross Validation.
-        """
-        # Get dorsal dataset(images and labels)
-        dors_df = self.get_dorsal_view()
-
-        images = dors_df[self.image_column].values
-        classes = dors_df[self.class_column].values
-        labels = [self.class_string_dictionary[label] for label in classes]
-
-        transformation = self.transformations["dors"]
-        skf = StratifiedKFold(n_splits=k_folds, shuffle=True, random_state=42)
-
-        all_fold_f1s = []
-
-        for fold, (train_idx, val_idx) in enumerate(skf.split(images, labels)):
-            print(f"\nFold {fold+1}/{k_folds}:")
-
-            train_x = [images[i] for i in train_idx]
-            train_y = [labels[i] for i in train_idx]
-            val_x = [images[i] for i in val_idx]
-            val_y = [labels[i] for i in val_idx]
-
-            train_dataset = ImageDataset(train_x, train_y, transform=transformation)
-            val_dataset = ImageDataset(val_x, val_y, transform=transformation)
-            train_loader = DataLoader(train_dataset, batch_size=32, shuffle=True)
-            val_loader = DataLoader(val_dataset, batch_size=32, shuffle=False)
-
-            # Reinitialize model before each fold
-            self.model_accuracies["dors"] = 0.0
-            self.dors_model = self.load_dors_model()
-
-            self.training_evaluation_dorsal(num_epochs, train_loader, val_loader)
-
-            fold_f1 = self.model_accuracies.get("dors", 0.0)
-            all_fold_f1s.append(fold_f1)
-
-        average_macro_f1 = 100 * sum(all_fold_f1s)/k_folds
-        print(f"\nAverage Macro F1 over {k_folds} folds: {average_macro_f1:.2f}%")
-
-    def k_fold_frontal(self, num_epochs, k_folds=5):
-        """
-        Trains the frontal model using Stratified K-Fold Cross Validation.
-        """
-        # Get frontal dataset(images and labels)
-        fron_df = self.get_frontal_view()
-
-        images = fron_df[self.image_column].values
-        classes = fron_df[self.class_column].values
-        labels = [self.class_string_dictionary[label] for label in classes]
-
-        transformation = self.transformations["fron"]
-        skf = StratifiedKFold(n_splits=k_folds, shuffle=True, random_state=42)
-
-        all_fold_f1s = []
-
-        for fold, (train_idx, val_idx) in enumerate(skf.split(images, labels)):
-            print(f"\nFold {fold+1}/{k_folds}:")
-
-            train_x = [images[i] for i in train_idx]
-            train_y = [labels[i] for i in train_idx]
-            val_x = [images[i] for i in val_idx]
-            val_y = [labels[i] for i in val_idx]
-
-            train_dataset = ImageDataset(train_x, train_y, transform=transformation)
-            val_dataset = ImageDataset(val_x, val_y, transform=transformation)
-            train_loader = DataLoader(train_dataset, batch_size=32, shuffle=True)
-            val_loader = DataLoader(val_dataset, batch_size=32, shuffle=False)
-
-            # Reinitialize model before each fold
-            self.model_accuracies["fron"] = 0.0
-            self.fron_model = self.load_fron_model()
-
-            self.training_evaluation_frontal(num_epochs, train_loader, val_loader)
-
-            fold_f1 = self.model_accuracies.get("fron", 0.0)
-            all_fold_f1s.append(fold_f1)
-
-        average_macro_f1 = 100 * sum(all_fold_f1s)/k_folds
-        print(f"\nAverage Macro F1 over {k_folds} folds: {average_macro_f1:.2f}%")
-
-    def k_fold_lateral(self, num_epochs, k_folds=5):
-        """
-        Trains the lateral model using Stratified K-Fold Cross Validation.
-        """
-        # Get lateral dataset(images and labels)
-        late_df = self.get_lateral_view()
-
-        images = late_df[self.image_column].values
-        classes = late_df[self.class_column].values
-        labels = [self.class_string_dictionary[label] for label in classes]
-
-        transformation = self.transformations["late"]
-        skf = StratifiedKFold(n_splits=k_folds, shuffle=True, random_state=42)
-
-        all_fold_f1s = []
-
-        for fold, (train_idx, val_idx) in enumerate(skf.split(images, labels)):
-            print(f"\nFold {fold+1}/{k_folds}:")
-
-            train_x = [images[i] for i in train_idx]
-            train_y = [labels[i] for i in train_idx]
-            val_x = [images[i] for i in val_idx]
-            val_y = [labels[i] for i in val_idx]
-
-            train_dataset = ImageDataset(train_x, train_y, transform=transformation)
-            val_dataset = ImageDataset(val_x, val_y, transform=transformation)
-            train_loader = DataLoader(train_dataset, batch_size=32, shuffle=True)
-            val_loader = DataLoader(val_dataset, batch_size=32, shuffle=False)
-
-            # Reinitialize model before each fold
-            self.model_accuracies["late"] = 0.0
-            self.late_model = self.load_late_model()
-
-            self.training_evaluation_lateral(num_epochs, train_loader, val_loader)
-
-            fold_f1 = self.model_accuracies.get("late", 0.0)
-            all_fold_f1s.append(fold_f1)
-
-        average_macro_f1 = 100 * sum(all_fold_f1s)/k_folds
-        print(f"\nAverage Macro F1 over {k_folds} folds: {average_macro_f1:.2f}%")
-
-    def load_caud_model(self):
-        """
-        Loads model to be trained and saved for caudal image views
-        Return: ResNet model
-        """
-        model = models.resnet50()
-        num_features = model.fc.in_features
-        # number of classifications tentative
-        model.fc = torch.nn.Linear(num_features, self.num_classes)
-        model = model.to(self.device)
-
-        return model
-
-    def load_dors_model(self):
-        """
-        Loads model to be trained and saved for dorsal image views
-        Return: ResNet model
-        """
-        model = models.resnet50()
-        num_features = model.fc.in_features
-        # number of classifications tentative
-        model.fc = torch.nn.Linear(num_features, self.num_classes)
-        model = model.to(self.device)
-
-        return model
-
-    def load_fron_model(self):
-        """
-        Loads model to be trained and saved for frontal image views
-        Return: ResNet model
-        """
-        model = models.resnet50()
-        num_features = model.fc.in_features
-        # number of classifications tentative
-        model.fc = torch.nn.Linear(num_features, self.num_classes)
-        model = model.to(self.device)
-
-        return model
-
-    def load_late_model(self):
-        """
-        Loads model to be trained and saved for lateral image views
+        Loads resnet50 model to be trained and saved
         Return: ResNet model
         """
         model = models.resnet50()
@@ -745,34 +277,17 @@ class TrainingProgram:
         
         Returns: None
         """
-
         # Update/Initialize Model Accuracy Dictionary
         # update_flags indicates which models weights need to be updated and saved
         update_flags = self.update_accuracies(accuracy_dict_filename)
+        views = ["caud", "dors", "fron", "late"]
 
-        if "caud" in model_filenames and model_filenames["caud"] and update_flags["caud"]:
-            caud_file = model_filenames["caud"]
-            torch.save(self.caud_model.state_dict(), caud_file)
-            self.save_transformation(self.transformations["caud"], 0)
-            print(f"Caudal Model weights saved to {caud_file}")
-
-        if "dors" in model_filenames and model_filenames["dors"] and update_flags["dors"]:
-            dors_file = model_filenames["dors"]
-            torch.save(self.dors_model.state_dict(), dors_file)
-            self.save_transformation(self.transformations["dors"], 1)
-            print(f"Dorsal Model weights saved to {dors_file}")
-
-        if "fron" in model_filenames and model_filenames["fron"] and update_flags["fron"]:
-            fron_file = model_filenames["fron"]
-            torch.save(self.fron_model.state_dict(), fron_file)
-            self.save_transformation(self.transformations["fron"], 2)
-            print(f"Frontal Model weights saved to {fron_file}")
-
-        if "late" in model_filenames and model_filenames["late"] and update_flags["late"]:
-            late_file = model_filenames["late"]
-            torch.save(self.late_model.state_dict(), late_file)
-            self.save_transformation(self.transformations["late"], 3)
-            print(f"Lateral Model weights saved to {late_file}")
+        for view in views:
+            if view in model_filenames and model_filenames[view] and update_flags[view]:
+                file = model_filenames[view]
+                torch.save(self.models[view].state_dict(), file)
+                self.save_transformation(self.transformations[view], view)
+                print(f"{view} model weights saved to {file}")
 
         # Handle dict_filename similarly if needed
         if class_dict_filename:
@@ -831,21 +346,8 @@ class TrainingProgram:
 
         Returns: None
         """
-        if angle == 0:
-            with open(globals.caud_transformation, "wb") as f:
-                dill.dump(transformation, f)
-
-        elif angle == 1:
-            with open(globals.dors_transformation, "wb") as f:
-                dill.dump(transformation, f)
-
-        elif angle == 2:
-            with open(globals.fron_transformation, "wb") as f:
-                dill.dump(transformation, f)
-
-        elif angle == 3:
-            with open(globals.late_transformation, "wb") as f:
-                dill.dump(transformation, f)
+        with open(f"src/models/{angle}_transformation.pth", "wb") as f:
+            dill.dump(transformation, f)
 
 # Custom Dataset class for loading images from binary data
 class ImageDataset(Dataset):

@@ -94,13 +94,13 @@ if __name__ == '__main__':
 
     # Training
     if train_caud:
-        species_tp.train_caudal(20)
+        species_tp.train_resnet_model(20, "caud")
     if train_dors:
-        species_tp.train_dorsal(20)
+        species_tp.train_resnet_model(20, "dors")
     if train_fron:
-        species_tp.train_frontal(20)
+        species_tp.train_resnet_model(20, "fron")
     if train_late:
-        species_tp.train_lateral(20)
+        species_tp.train_resnet_model(20, "late")
 
     # Save models
     species_model_filenames = {
@@ -121,13 +121,13 @@ if __name__ == '__main__':
 
     # Training
     if train_caud:
-        genus_tp.train_caudal(20)
+        genus_tp.train_resnet_model(20, "caud")
     if train_dors:
-        genus_tp.train_dorsal(20)
+        genus_tp.train_resnet_model(20, "dors")
     if train_fron:
-        genus_tp.train_frontal(20)
+        genus_tp.train_resnet_model(20, "fron")
     if train_late:
-        genus_tp.train_lateral(20)
+        genus_tp.train_resnet_model(20, "late")
 
     # Save models
     genus_model_filenames = {

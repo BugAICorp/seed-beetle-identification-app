@@ -112,26 +112,26 @@ if __name__ == '__main__':
 
         # Training
         if k_fold_caud:
-            species_tp.k_fold_caudal(20, k_folds=5)
+            species_tp.k_fold_resnet(20, "caud", k_folds=5)
         if k_fold_dors:
-            species_tp.k_fold_dorsal(20, k_folds=5)
+            species_tp.k_fold_resnet(20, "dors", k_folds=5)
         if k_fold_fron:
-            species_tp.k_fold_frontal(20, k_folds=5)
+            species_tp.k_fold_resnet(20, "fron", k_folds=5)
         if k_fold_late:
-            species_tp.k_fold_lateral(20, k_folds=5)
+            species_tp.k_fold_resnet(20, "late", k_folds=5)
 
         # Run training with dataframe
         genus_tp = TrainingProgram(df, "Genus", GENUS_OUTPUTS)
 
         # Training
         if k_fold_caud:
-            genus_tp.k_fold_caudal(20, k_folds=5)
+            genus_tp.k_fold_resnet(20, "caud", k_folds=5)
         if k_fold_dors:
-            genus_tp.k_fold_dorsal(20, k_folds=5)
+            genus_tp.k_fold_resnet(20, "dors", k_folds=5)
         if k_fold_fron:
-            genus_tp.k_fold_frontal(20, k_folds=5)
+            genus_tp.k_fold_resnet(20, "fron", k_folds=5)
         if k_fold_late:
-            genus_tp.k_fold_lateral(20, k_folds=5)
+            genus_tp.k_fold_resnet(20, "late", k_folds=5)
 
     finally:
         log_file.close()
