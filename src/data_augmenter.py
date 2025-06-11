@@ -3,6 +3,7 @@
 from io import BytesIO
 import pandas as pd
 from PIL import Image
+from torchvision import transforms
 
 class DataAugmenter:
     """
@@ -23,6 +24,10 @@ class DataAugmenter:
         self.image_column = image_column
         self.id_column = id_column
         self.threshold = threshold
+        # Create minor image transformation for newly generated images
+        self.transformation = transforms.Compose([
+                transforms.RandomRotation(degrees=5)
+            ])
 
     def binary_to_pil(self, binary_blob):
         """
@@ -46,7 +51,7 @@ class DataAugmenter:
         rare_classes = class_counts[class_counts < self.threshold].index.tolist()
         return rare_classes
 
-    def augment_rare_classes(self, augmentation_transform, num_augments_per_image=1):
+    def augment_rare_classes(self, num_augments_per_image=1):
         """
         Augments the dataset for rare classes
         """
@@ -61,7 +66,7 @@ class DataAugmenter:
 
                 for i in range(num_augments_per_image):
                     # Apply augmentation
-                    augmented_img = augmentation_transform(pil_img)
+                    augmented_img = self.transformation(pil_img)
                     augmented_blob = self.pil_to_binary(augmented_img)
 
                     # Copy row and just replace the Image
