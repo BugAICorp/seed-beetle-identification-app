@@ -156,6 +156,6 @@ def load_genus_specific_model(genus, device):
 
     #set model to evaluate and return
     model.eval()
-    
+
     genus_dict = {int(key): value for key, value in genus_dict.items()}
     return model, genus_dict

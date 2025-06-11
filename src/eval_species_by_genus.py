@@ -20,10 +20,6 @@ class EvalSpeciesByGenus:
         self.species_model = None
         self.species_idx_dict = None
         self.genus_idx_dict = self.open_class_dictionary(genus_filename)
-        
-        self.height = None
-        with open(height_filename, 'r', encoding='utf-8') as file:
-            self.height = int(file.readline().strip())
 
         #load transformations to a list for use in the program
         self.transformations = self.get_transformations()
@@ -210,18 +206,18 @@ class EvalSpeciesByGenus:
 
         top_five_scores = [0, 0, 0, 0, 0]
         top_five_names = [None, None, None, None, None]
-        for i in range(len(species)):
+        for i, item in enumerate(species):
             for j in range(len(species[i])):
                 if species[i][j] in top_five_names:
                     species_index = top_five_names.index(species[i][j])
                     top_five_scores[species_index] = max(top_five_scores[species_index], scores[i][j])
-                elif (scores[i][j] > min(top_five_scores)):
+                elif scores[i][j] > min(top_five_scores):
                     index_of_lowest = top_five_scores.index(min(top_five_scores))
                     top_five_scores[index_of_lowest] = scores[i][j]
                     top_five_names[index_of_lowest] = species[i][j]
 
         top_classes = {}
-        for i in range(len(top_five_scores)):
+        for i, item in enumerate(top_five_scores):
             top_classes[top_five_names[i]] = top_five_scores[i]
         sorted_scores = sorted(top_classes.items(), key=lambda item: item[1], reverse=True)
 

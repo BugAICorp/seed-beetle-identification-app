@@ -41,7 +41,6 @@ if __name__ == '__main__':
     # Get the images to be evaluated through user input
 
     DORS_PATH = "dataset/Algarobius prosopis GEM_3224221 5XEXT DORS.jpg"
-    
 
     # Load the provided images
     DORS_IMG = Image.open(DORS_PATH) if DORS_PATH else None
