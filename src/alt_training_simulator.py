@@ -4,6 +4,7 @@ import os
 from training_data_converter import TrainingDataConverter
 from training_database_reader import DatabaseReader
 from alt_training_program import AltTrainingProgram
+from data_augmenter import DataAugmenter
 import globals
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../')))
@@ -38,7 +39,12 @@ if __name__ == '__main__':
     tdc.conversion(globals.training_database)
     # Read converted data
     dbr = DatabaseReader(globals.training_database, class_file_path=globals.class_list)
-    df = dbr.get_dataframe()
+    original_df = dbr.get_dataframe()
+
+    # Data Augmentation - Add images for rare classes
+    augmenter = DataAugmenter(original_df, class_column="Species", threshold=50)
+
+    df = augmenter.augment_rare_classes(num_augments_per_image=5)
 
     # Display how many images we have for each angle
     print("Number of Images for Each Angle:")
