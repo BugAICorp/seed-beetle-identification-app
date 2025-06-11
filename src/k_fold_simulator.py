@@ -4,6 +4,7 @@ import os
 from training_data_converter import TrainingDataConverter
 from training_database_reader import DatabaseReader
 from training_program import TrainingProgram
+from data_augmenter import DataAugmenter
 import globals
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../')))
@@ -63,6 +64,19 @@ if __name__ == '__main__':
                 if not k_fold_dors and not k_fold_late and not k_fold_caud and not k_fold_fron:
                     print("No Training Requested")
                     sys.exit(0)
+
+        while(True):
+            print("\nWould you like to augment the dataset?")
+            user_input = int(input("Enter 1 for YES, and 2 for NO: "))
+            if user_input == 1:
+                augment = True
+                break
+            elif user_input == 2:
+                augment = False
+                break
+            else:
+                print("Invalid Input. Please enter 1 or 2.")
+
         # Set up data converter
         tdc = TrainingDataConverter("dataset")
         tdc.conversion(globals.training_database)
@@ -71,11 +85,24 @@ if __name__ == '__main__':
         df = dbr.get_dataframe()
 
         # Display how many images we have for each angle
-        print("Number of Images for Each Angle:")
+        print("Number of Images for Each Angle in the Original Dataset:")
         print(f"CAUD: {(df['View'] == 'CAUD').sum()}")
         print(f"DORS: {(df['View'] == 'DORS').sum()}")
         print(f"FRON: {(df['View'] == 'FRON').sum()}")
         print(f"LATE: {(df['View'] == 'LATE').sum()}")
+
+        if augment:
+            # Data Augmentation - Add images for rare classes
+            augmenter = DataAugmenter(df, class_column="Species", threshold=50)
+
+            df = augmenter.augment_rare_classes(num_augments_per_image=5)
+
+            # Display how many images we have for each angle after augmenting the data
+            print("\nNumber of Images for Each Angle After Augmentation:")
+            print(f"CAUD: {(df['View'] == 'CAUD').sum()}")
+            print(f"DORS: {(df['View'] == 'DORS').sum()}")
+            print(f"FRON: {(df['View'] == 'FRON').sum()}")
+            print(f"LATE: {(df['View'] == 'LATE').sum()}")
 
         # initialize number of outputs
         SPECIES_OUTPUTS = dbr.get_num_species()
