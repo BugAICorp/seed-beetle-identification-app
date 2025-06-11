@@ -100,6 +100,9 @@ class TrainingProgram:
         transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])])
         }
 
+        self.train_transformations = self.create_train_transformations(
+            rotation_degree=5,brightness=0.1, contrast=0.1, erasing=(0.5, (0.02, 0.15)))
+
     def get_subset(self, view_type, dataframe):
         """
         Reads database and pulls subset where View column is equal to parameter, view_type
@@ -109,6 +112,40 @@ class TrainingProgram:
         Return: pd.DataFrame: Subset of database if column value valid, otherwise empty dataframe
         """
         return dataframe[dataframe["View"] == view_type] if not dataframe.empty else pd.DataFrame()
+
+    def create_train_transformations(
+            self, rotation_degree=5, brightness=0.1, contrast=0.1, erasing=(0.5, (0.02, 0.15))):
+        """
+        Takes the self.transformations dictionary and forms training transformations. This allows for
+        data augmention while training(rotation, noise, etc.). This transformation contains random rotation,
+        random brightness and contrast adjustments, and random pixel erasing.
+
+        Args:
+            rotation_degree (int): Maximum degree of random rotation applied to training images.
+            brightness (float): Maximum brightness jitter factor; the image brightness is adjusted.
+            contrast (float): Maximum contrast jitter factor.
+            erasing (tuple): A tuple (p, scale), where:
+                             - p (float): Probability of applying random erasing.
+                             - scale (tuple of float): Range of proportion of erased area against input image.
+        
+        Returns:
+            dict: A dictionary of transformation pipelines with keys corresponding to their respective image views.
+        """
+        # Variables used for random erasing
+        p = erasing[0]
+        scale = erasing[1]
+
+        train_transformations = {}
+        for key in ["caud", "dors", "fron", "late"]:
+            train_transformations[key] = transforms.Compose([
+                # Add augmentations here for testing
+                transforms.RandomRotation(degrees=rotation_degree),
+                transforms.ColorJitter(brightness=brightness, contrast=contrast),
+                transforms.RandomErasing(p=p, scale=scale),
+                *self.transformations[key].transforms
+            ])
+
+        return train_transformations
 
     def get_train_test_split(self, df):
         """
@@ -205,8 +242,8 @@ class TrainingProgram:
         """
         # Get training and testing data
         train_x, test_x, train_y, test_y = self.get_train_test_split(self.subsets[view])
-        # Define image transformations, placeholder for preprocessing
-        transformation = self.transformations[view]
+        # Define image training transformations, placeholder for preprocessing
+        transformation = self.train_transformations[view]
 
         # Create DataLoaders
         train_dataset = ImageDataset(train_x, train_y, transform=transformation)
@@ -227,7 +264,8 @@ class TrainingProgram:
         classes = caud_df[self.class_column].values
         labels = [self.class_string_dictionary[label] for label in classes]
 
-        transformation = self.transformations[view]
+        # Define transformation for training
+        transformation = self.train_transformations[view]
         skf = StratifiedKFold(n_splits=k_folds, shuffle=True, random_state=42)
 
         all_fold_f1s = []
