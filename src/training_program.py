@@ -113,7 +113,8 @@ class TrainingProgram:
         """
         return dataframe[dataframe["View"] == view_type] if not dataframe.empty else pd.DataFrame()
 
-    def create_train_transformations(self, rotation_degree=5, brightness=0.1, contrast=0.1, erasing=(0.5, (0.02, 0.15))):
+    def create_train_transformations(
+            self, rotation_degree=5, brightness=0.1, contrast=0.1, erasing=(0.5, (0.02, 0.15))):
         """
         Takes the self.transformations dictionary and forms training transformations. This allows for
         data augmention while training(rotation, noise, etc.). This transformation contains random rotation,
@@ -143,7 +144,7 @@ class TrainingProgram:
                 transforms.RandomErasing(p=p, scale=scale),
                 *self.transformations[key].transforms
             ])
-        
+
         return train_transformations
 
     def get_train_test_split(self, df):
