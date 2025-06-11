@@ -24,7 +24,7 @@ class TrainingProgram:
     Reads 4 subsets of pandas database from DatabaseReader, and trains and saves 4 models
     according to their respective image angles.
     """
-    def __init__(self, dataframe, class_column, num_classes, image_column='Image'):
+    def __init__(self, dataframe, class_column, num_classes, image_column='Image', rotation_degree=5):
         """
         Initialize dataset, image height, and individual model training
         Args:
@@ -100,6 +100,8 @@ class TrainingProgram:
         transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])])
         }
 
+        self.train_transformations = self.form_train_transformations(rotation_degree)
+
     def get_subset(self, view_type, dataframe):
         """
         Reads database and pulls subset where View column is equal to parameter, view_type
@@ -109,6 +111,21 @@ class TrainingProgram:
         Return: pd.DataFrame: Subset of database if column value valid, otherwise empty dataframe
         """
         return dataframe[dataframe["View"] == view_type] if not dataframe.empty else pd.DataFrame()
+
+    def form_train_transformations(self, rotation_degree):
+        """
+        Takes the self.transformations dictionary and forms training transformations. This allows for
+        data augmention while training(rotation, noise, etc.)
+        """
+        train_transformations = {}
+        for key in ["caud", "dors", "fron", "late"]:
+            train_transformations[key] = transforms.Compose([
+                # Add augmentations here for testing
+                transforms.RandomRotation(degrees=rotation_degree),
+                *self.transformations[key].transforms
+            ])
+        
+        return train_transformations
 
     def get_train_test_split(self, df):
         """
@@ -205,8 +222,8 @@ class TrainingProgram:
         """
         # Get training and testing data
         train_x, test_x, train_y, test_y = self.get_train_test_split(self.subsets[view])
-        # Define image transformations, placeholder for preprocessing
-        transformation = self.transformations[view]
+        # Define image training transformations, placeholder for preprocessing
+        transformation = self.train_transformations[view]
 
         # Create DataLoaders
         train_dataset = ImageDataset(train_x, train_y, transform=transformation)
@@ -227,7 +244,8 @@ class TrainingProgram:
         classes = caud_df[self.class_column].values
         labels = [self.class_string_dictionary[label] for label in classes]
 
-        transformation = self.transformations[view]
+        # Define transformation for training
+        transformation = self.train_transformations[view]
         skf = StratifiedKFold(n_splits=k_folds, shuffle=True, random_state=42)
 
         all_fold_f1s = []
