@@ -6,6 +6,7 @@ import os
 import pandas as pd
 from PIL import Image
 from io import BytesIO
+from torchvision import transforms
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../src')))
 from data_augmenter import DataAugmenter
 
@@ -21,11 +22,6 @@ class TestDataAugmenter(unittest.TestCase):
         with BytesIO() as output:
             img.save(output, format='PNG')
             return output.getvalue()
-
-    @staticmethod
-    def dummy_augmentation(pil_img):
-        """ Fake transformation that returns the same image """
-        return pil_img.rotate(90)
 
     def setUp(self):
         """ Set up fake dataframe for testing """
@@ -44,6 +40,7 @@ class TestDataAugmenter(unittest.TestCase):
         self.assertEqual(augmenter.image_column, 'Image')
         self.assertEqual(augmenter.id_column, 'UniqueID')
         self.assertEqual(augmenter.threshold, 20)
+        self.assertIsInstance(augmenter.transformation, transforms.Compose)
 
     def test_get_rare_classes(self):
         """ Test the get_rare_classes method returns the expected classes. """
@@ -67,7 +64,7 @@ class TestDataAugmenter(unittest.TestCase):
     def test_augment_rare_classes_adds_images(self):
         """ Test the augment_rare_classes method correctly adds images to the dataframe. """
         augmenter = DataAugmenter(self.df, class_column='Species', threshold=3)
-        augmented_df = augmenter.augment_rare_classes(self.dummy_augmentation, num_augments_per_image=2)
+        augmented_df = augmenter.augment_rare_classes(num_augments_per_image=2)
 
         # Assert that the dataframe is the expected length(2 rare images with 2 augments per image, so 4 additional)
         self.assertEqual(len(augmented_df), len(self.df) + 4)
@@ -79,7 +76,7 @@ class TestDataAugmenter(unittest.TestCase):
     def test_no_augmentation_for_common_classes(self):
         """ Test that augment_rare_classes doesn't augment if threshold isn't met. """
         augmenter = DataAugmenter(self.df, class_column='Species', threshold=2)
-        augmented_df = augmenter.augment_rare_classes(self.dummy_augmentation, num_augments_per_image=1)
+        augmented_df = augmenter.augment_rare_classes(num_augments_per_image=1)
         # No augmentations should have been preformed, so size doesn't change
         self.assertEqual(len(augmented_df), len(self.df))
 
