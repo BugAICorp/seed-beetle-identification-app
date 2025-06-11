@@ -7,6 +7,7 @@ from training_database_reader import DatabaseReader
 from genus_specific_model_trainer import GenusSpecificModelTrainer
 from model_loader import ModelLoader
 import globals
+from eval_species_by_genus import EvalSpeciesByGenus
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../')))
 
@@ -33,3 +34,28 @@ if __name__ == '__main__':
     GENUS_OUTPUTS = dbr.get_num_genus()
     genus_ml = ModelLoader(genus_model_paths, GENUS_OUTPUTS)
     genus_models = genus_ml.get_models()
+
+    pic_evaluator = EvalSpeciesByGenus(globals.img_height, genus_models, globals.gen_class_dictionary)
+
+    # Get the images to be evaluated through user input
+    LATE_PATH = "dataset/Callosobruchus chinensis GEM_187686348 5XEXT LATE.jpg"
+    DORS_PATH = "dataset/Callosobruchus chinensis GEM_187686348 5XEXT DORS.jpg"
+    FRON_PATH = "dataset/Callosobruchus chinensis GEM_187686348 5XEXT FRON.jpg"
+    CAUD_PATH = "dataset/Callosobruchus chinensis GEM_187686348 5XEXT CAUD.jpg"
+
+    # Load the provided images
+    LATE_IMG = Image.open(LATE_PATH) if LATE_PATH else None
+    DORS_IMG = Image.open(DORS_PATH) if DORS_PATH else None
+    FRON_IMG = Image.open(FRON_PATH) if FRON_PATH else None
+    CAUD_IMG = Image.open(CAUD_PATH) if CAUD_PATH else None
+
+    top_genus, top_species = pic_evaluator.classify_images(
+        caud=CAUD_IMG, dors=DORS_IMG, fron=FRON_IMG, late=LATE_IMG
+    )
+
+    print(f"Predicted Genus: {top_genus[0]}, Confidence: {top_genus[1]:.2f}\n")
+    print(f"1. Predicted Species: {top_species[0][0]}, Confidence: {top_species[0][1]:.2f}\n")
+    print(f"2. Predicted Species: {top_species[1][0]}, Confidence: {top_species[1][1]:.2f}\n")
+    print(f"3. Predicted Species: {top_species[2][0]}, Confidence: {top_species[2][1]:.2f}\n")
+    print(f"4. Predicted Species: {top_species[3][0]}, Confidence: {top_species[3][1]:.2f}\n")
+    print(f"5. Predicted Species: {top_species[4][0]}, Confidence: {top_species[4][1]:.2f}\n")

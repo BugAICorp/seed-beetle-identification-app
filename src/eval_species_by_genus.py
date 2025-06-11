@@ -14,13 +14,12 @@ class EvalSpeciesByGenus:
     models to use when evaluating
     """
 
-    def __init__(self, height_filename, models_dict, genus_filename, model_loader):
+    def __init__(self, height_filename, models_dict, genus_filename):
         self.trained_models = models_dict
         self.species_model = None
         self.species_idx_dict = None
         self.genus_idx_dict = self.open_class_dictionary(genus_filename)
-        self.model_loader = model_loader
-
+        
         self.height = None
         with open(height_filename, 'r', encoding='utf-8') as file:
             self.height = int(file.readline().strip())
