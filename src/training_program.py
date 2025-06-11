@@ -24,13 +24,21 @@ class TrainingProgram:
     Reads 4 subsets of pandas database from DatabaseReader, and trains and saves 4 models
     according to their respective image angles.
     """
-    def __init__(self, dataframe, class_column , num_classes):
+    def __init__(self, dataframe, class_column, num_classes, image_column='Image'):
         """
         Initialize dataset, image height, and individual model training
+        Args:
+            dataframe (pd.DataFrame): Original dataset with image blobs
+            class_column (str): Column header used to determine class
+            num_classes (int): Number of classes/outputs for the models
+            image_column (str): Column header used to determine the image column
         """
         self.dataframe = dataframe
         self.height = 300
         self.num_classes = num_classes
+        # Dataframe variables
+        self.image_column = image_column
+        self.class_column = class_column
         # subsets to save database reading to
         self.subsets = {
             "caud" : self.get_subset("CAUD", self.dataframe),
@@ -50,11 +58,10 @@ class TrainingProgram:
             "late" : self.load_model()
         }
         # Dictionary variables
-        self.class_column = class_column
         self.class_index_dictionary = {}
         self.class_string_dictionary = {}
         self.class_set = set()
-        # model accuracy dictionary
+        # Model accuracy dictionary
         self.model_accuracies = {
             "caud" : 0,
             "dors" : 0,
@@ -62,7 +69,7 @@ class TrainingProgram:
             "late" : 0
         }
 
-        classes = dataframe.iloc[:, self.class_column].values
+        classes = dataframe[self.class_column].values
         class_to_idx = {label: idx for idx, label in enumerate(sorted(set(classes)))}
         for class_values in classes:
             if class_to_idx[class_values] not in self.class_set:
@@ -108,8 +115,8 @@ class TrainingProgram:
         Gets train and test split for given dataframe
         Returns: List of train and test data
         """
-        image_binaries = df.iloc[:, -1].values
-        classes = df.iloc[:, self.class_column].values
+        image_binaries = df[self.image_column].values
+        classes = df[self.class_column].values
         labels = [self.class_string_dictionary[label] for label in classes]
         # Split subset into training and testing sets
         # x: images, y: species
@@ -216,8 +223,8 @@ class TrainingProgram:
         # Get caudal dataset(images and labels)
         caud_df = self.subsets[view]
 
-        images = caud_df.iloc[:, -1].values
-        classes = caud_df.iloc[:, self.class_column].values
+        images = caud_df[self.image_column].values
+        classes = caud_df[self.class_column].values
         labels = [self.class_string_dictionary[label] for label in classes]
 
         transformation = self.transformations[view]

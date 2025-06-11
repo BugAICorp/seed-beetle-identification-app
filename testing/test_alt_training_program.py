@@ -4,6 +4,8 @@ import os
 import unittest
 import json
 from unittest.mock import MagicMock, patch, mock_open
+from io import BytesIO
+from PIL import Image
 import pandas as pd
 import torch
 from torch.utils.data import DataLoader
@@ -18,6 +20,12 @@ class TestAltTrainingProgram(unittest.TestCase):
         """
         Set up test data and initialize the TrainingProgram instance.
         """
+        # Create mock binary images
+        def create_mock_image_blob():
+            img = Image.new("RGB", (100, 100), color=(255, 0, 0))
+            with BytesIO() as buffer:
+                img.save(buffer, format="PNG")
+                return buffer.getvalue()
         # Create a mock DataFrame for testing
         self.mock_dataframe = pd.DataFrame({
             "Genus": ["GenusA", "GenusB", "GenusC", "GenusD", "GenusE",
@@ -25,11 +33,12 @@ class TestAltTrainingProgram(unittest.TestCase):
             "Species": ["SpeciesA", "SpeciesB", "SpeciesC", "SpeciesD", "SpeciesE",
                         "SpeciesF", "SpeciesG", "SpeciesH", "SpeciesI", "SpeciesJ"],
             "UniqueID": ["ID1", "ID2", "ID3", "ID4", "ID5", "ID6", "ID7", "ID8", "ID9", "ID10"],
-            "View": ["CAUD", "DORS", "FRON", "LATE", "CAUD", "DORS", "FRON", "LATE", "CAUD", "DORS"]
+            "View": ["CAUD", "DORS", "FRON", "LATE", "CAUD", "DORS", "FRON", "LATE", "CAUD", "DORS"],
+            "Image": [create_mock_image_blob() for _ in range(10)]
         })
 
         # Initialize the TrainingProgram instance
-        self.training_program = AltTrainingProgram(self.mock_dataframe, 1, 15)
+        self.training_program = AltTrainingProgram(self.mock_dataframe, "Species", 15)
 
         # Mock the get_subset method to use the mock DataFrame
         self.training_program.get_subset = MagicMock(side_effect=self.mock_get_subset)
