@@ -74,8 +74,7 @@ if __name__ == '__main__':
             if user_input == 2:
                 augment = False
                 break
-            else:
-                print("Invalid Input. Please enter 1 or 2.")
+            print("Invalid Input. Please enter 1 or 2.")
 
         # Set up data converter
         tdc = TrainingDataConverter("dataset")
