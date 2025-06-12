@@ -58,11 +58,11 @@ def evaluate_with_genspec(eval,
     FRON_IMG = Image.open(fron_path) if fron_path else None
     CAUD_IMG = Image.open(caud_path) if caud_path else None
 
-    top_genus, top_species = eval.classify_images(
+    top_gen, top_spec = eval.classify_images(
         dors=DORS_IMG, caud=CAUD_IMG, late=LATE_IMG, fron=FRON_IMG
     )
 
-    return (top_species, top_genus[0], top_genus[1])
+    return (top_spec, top_gen[0], top_gen[1])
 
 if __name__ == '__main__':
     # Get Species and Genus Class Number
@@ -122,7 +122,7 @@ if __name__ == '__main__':
                        "BCISP-3585", "GEM_1002210995", "GEM_1002210916", "USNM_3214019", "GEM_187685294",
                        "USNM_187679768", "USNM_110282", "CNCType15059", "USNM_187687049", "GEM_187675200",
                        "GEM_187673626", "GEM_1002205459", "WIBF_025200", "GEM_1002205468"]
-    
+
     model_to_use = int(input("Input 1 for classic models, 2 for species based on genus: "))
     for imagename in specimen_inputs:
         filtered_images = dbr.dataframe[dbr.dataframe['SpecimenID'] == imagename]
@@ -142,7 +142,7 @@ if __name__ == '__main__':
             top_species = None
             top_genus = None
             genus_conf_score = None
-            if(model_to_use == 1):
+            if model_to_use == 1:
                 # Genus and Species Evaluation
                 top_species, top_genus, genus_conf_score = evaluate_images(
                     species_eval=species_evaluator,
@@ -151,8 +151,8 @@ if __name__ == '__main__':
                     dors_path=DORS_PATH if os.path.exists(DORS_PATH) else None,
                     fron_path=FRON_PATH if os.path.exists(FRON_PATH) else None,
                     caud_path=CAUD_PATH if os.path.exists(CAUD_PATH) else None)
-            
-            elif(model_to_use == 2):
+
+            elif model_to_use == 2:
                 top_species, top_genus, genus_conf_score = evaluate_with_genspec(
                     eval=genus_spec_evaluator,
                     late_path=LATE_PATH if os.path.exists(LATE_PATH) else None,
