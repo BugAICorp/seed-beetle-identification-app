@@ -6,6 +6,7 @@ import copy
 from io import BytesIO
 import pandas as pd
 from PIL import Image
+import numpy as np
 from torch.utils.data import DataLoader, Dataset
 from torchvision import transforms, models
 import torch
@@ -267,7 +268,7 @@ class TrainingProgram:
 
         # Define transformation for training
         transformation = self.train_transformations[view]
-        skf = StratifiedKFold(n_splits=k_folds, shuffle=True, random_state=42)
+        skf = StratifiedKFold(n_splits=k_folds, shuffle=True)
 
         all_fold_f1s = []
 
@@ -335,6 +336,60 @@ class TrainingProgram:
 
         f1 = f1_score(true_labels, predictions, average="macro")
         return f1
+
+    def objective(self, trial, view, num_epochs=5, k_folds=3):
+        """
+        
+        """
+        lr = trial.suggest_float("lr", 1e-5, 1e-2, log=True)
+        optimizer_type = trial.suggest_categorical("optimizer_type", ["adam", "sgd"])
+        rotation = trial.suggest_int("rotation", 0, 20)
+        brightness = trial.suggest_float("brightness", 0.0, 0.3)
+        
+        self.train_transformations = self.create_train_transformations(
+            rotation_degree=rotation,
+            brightness=brightness,
+            contrast=0.1,
+            erasing=(0.5, (0.02, 0.15))
+        )
+
+        skf = StratifiedKFold(n_splits=k_folds, shuffle=True, random_state=21)
+        labels = [sample[1] for sample in self.full_datasets[view]]
+
+        all_f1_scores = []
+
+        for train_idx, val_idx in skf.split(np.zeros(len(labels)), labels):
+            train_subset = self.get_subset(self.full_datasets[view], train_idx)
+            val_subset = self.get_subset(self.full_datasets[view], val_idx)
+
+            train_loader = DataLoader(train_subset, batch_size=32, shuffle=True)
+            val_loader = DataLoader(val_subset, batch_size=32, shuffle=False)
+
+            self.models[view] = self.load_model()
+            f1 = self.hyperparameter_training_evaluation(
+                num_epochs=num_epochs,
+                train_loader=train_loader,
+                test_loader=val_loader,
+                view=view,
+                lr=lr,
+                optimizer_type=optimizer_type
+            )
+            all_f1_scores.append(f1)
+
+        avg_f1 = np.mean(all_f1_scores)
+        return avg_f1
+
+    def run_optuna_study(self, view, n_trials=20):
+        """
+        
+        """
+        study = optuna.create_study(direction="maximize")
+        study.optimize(lambda trial: self.objective(trial, view), n_trials=n_trials)
+
+        print(f"Best trial for view {view}:")
+        print(f"F1 Score: {100 * study.best_value:.2f}%")
+        print("Best hyperparameters:", study.best_params)
+        return study.best_params
 
     def load_model(self):
         """
