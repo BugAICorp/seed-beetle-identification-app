@@ -134,7 +134,7 @@ class AltTrainingProgram:
         scale = erasing[1]
 
         train_transformations = {}
-        for key in ["caud", "dors", "fron", "late"]:
+        for key in ["dors_caud", "all", "dors_late"]:
             base_transforms = self.transformations[key].transforms
 
             # Manually reorder to insert augmentations in the correct locations
