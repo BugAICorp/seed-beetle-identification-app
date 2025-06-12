@@ -189,8 +189,7 @@ class EvalSpeciesByGenus:
             input_order.append(3)
 
         #Check if there are less possible classifications than self.k and adjust if necessary
-        if len(self.species_idx_dict) < self.k:
-            self.k = len(self.species_idx_dict)
+        self.k = min(self.k, len(self.species_idx_dict))
 
         count = 0
         for i in all_inputs:
