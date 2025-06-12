@@ -6,6 +6,7 @@ from training_database_reader import DatabaseReader
 from model_loader import ModelLoader
 from evaluation_method import EvaluationMethod
 from genus_evaluation_method import GenusEvaluationMethod
+from eval_species_by_genus import EvalSpeciesByGenus
 import globals
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../')))
@@ -40,11 +41,34 @@ def evaluate_images(species_eval,
 
     return (top_spec, top_gen, genus_confidence)
 
+def evaluate_with_genspec(eval,
+                    late_path,
+                    dors_path,
+                    fron_path,
+                    caud_path) -> tuple:
+    """
+    Uses the inputted models to classify the species and
+    genus of the inputted bug.
+
+    Returns: Tuple of top species list and genus/genus confidence
+    """
+    # Load the provided images
+    LATE_IMG = Image.open(late_path) if late_path else None
+    DORS_IMG = Image.open(dors_path) if dors_path else None
+    FRON_IMG = Image.open(fron_path) if fron_path else None
+    CAUD_IMG = Image.open(caud_path) if caud_path else None
+
+    top_gen, top_spec = eval.classify_images(
+        dors=DORS_IMG, caud=CAUD_IMG, late=LATE_IMG, fron=FRON_IMG
+    )
+
+    return (top_spec, top_gen[0], top_gen[1])
+
 if __name__ == '__main__':
     # Get Species and Genus Class Number
     dbr = DatabaseReader(globals.training_database, class_file_path=globals.class_list)
     SPECIES_OUTPUTS = dbr.get_num_species()
-    GENUS_OUTPUTS = dbr.get_num_genus()
+    GENUS_OUTPUTS = dbr.get_num_genus() + 1
 
     # Get Model Files
     species_model_paths = {
@@ -75,6 +99,8 @@ if __name__ == '__main__':
     species_evaluator = EvaluationMethod(globals.img_height, species_models, 1,
                                          globals.spec_class_dictionary, globals.spec_accuracy_list)
 
+    genus_spec_evaluator = EvalSpeciesByGenus(genus_models, globals.gen_class_dictionary)
+
     ###### TO BE CHANGED FOR MULTIPLE TESTS
     #LATE_PATH = "dataset/Callosobruchus chinensis GEM_187686348 5XEXT LATE.jpg"
     #DORS_PATH = "dataset/Callosobruchus chinensis GEM_187686348 5XEXT DORS.jpg"
@@ -96,6 +122,8 @@ if __name__ == '__main__':
                        "BCISP-3585", "GEM_1002210995", "GEM_1002210916", "USNM_3214019", "GEM_187685294",
                        "USNM_187679768", "USNM_110282", "CNCType15059", "USNM_187687049", "GEM_187675200",
                        "GEM_187673626", "GEM_1002205459", "WIBF_025200", "GEM_1002205468"]
+
+    model_to_use = int(input("Input 1 for classic models, 2 for species based on genus: "))
     for imagename in specimen_inputs:
         filtered_images = dbr.dataframe[dbr.dataframe['SpecimenID'] == imagename]
         if not filtered_images.empty:
@@ -111,15 +139,27 @@ if __name__ == '__main__':
             CAUD_PATH = file_name_substring + "CAUD.jpg"
 
             print(f"Results for {file_name_substring}:\n")
+            top_species = None
+            top_genus = None
+            genus_conf_score = None
+            if model_to_use == 1:
+                # Genus and Species Evaluation
+                top_species, top_genus, genus_conf_score = evaluate_images(
+                    species_eval=species_evaluator,
+                    genus_eval=genus_evaluator,
+                    late_path=LATE_PATH if os.path.exists(LATE_PATH) else None,
+                    dors_path=DORS_PATH if os.path.exists(DORS_PATH) else None,
+                    fron_path=FRON_PATH if os.path.exists(FRON_PATH) else None,
+                    caud_path=CAUD_PATH if os.path.exists(CAUD_PATH) else None)
 
-            # Genus and Species Evaluation
-            top_species, top_genus, genus_conf_score = evaluate_images(
-                species_eval=species_evaluator,
-                genus_eval=genus_evaluator,
-                late_path=LATE_PATH if os.path.exists(LATE_PATH) else None,
-                dors_path=DORS_PATH if os.path.exists(DORS_PATH) else None,
-                fron_path=FRON_PATH if os.path.exists(FRON_PATH) else None,
-                caud_path=CAUD_PATH if os.path.exists(CAUD_PATH) else None)
+            elif model_to_use == 2:
+                top_species, top_genus, genus_conf_score = evaluate_with_genspec(
+                    eval=genus_spec_evaluator,
+                    late_path=LATE_PATH if os.path.exists(LATE_PATH) else None,
+                    dors_path=DORS_PATH if os.path.exists(DORS_PATH) else None,
+                    fron_path=FRON_PATH if os.path.exists(FRON_PATH) else None,
+                    caud_path=CAUD_PATH if os.path.exists(CAUD_PATH) else None
+                )
 
             print(f"1. Predicted Species: {top_species[0][0]}, Confidence: {top_species[0][1]:.2f}\n")
             print(f"2. Predicted Species: {top_species[1][0]}, Confidence: {top_species[1][1]:.2f}\n")

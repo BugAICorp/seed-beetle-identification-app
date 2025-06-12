@@ -7,6 +7,7 @@ import os
 import json
 import torch
 import dill
+import globals
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../')))
 
 # pylint: disable=too-many-arguments, too-many-positional-arguments
@@ -66,16 +67,16 @@ class EvaluationMethod:
         transformations = []
 
         #open each file and load the transformation then save it to the list
-        with open("caud_transformation.pth", "rb") as f:
+        with open(globals.caud_transformation, "rb") as f:
             transformations.append(dill.load(f))
 
-        with open("dors_transformation.pth", "rb") as f:
+        with open(globals.dors_transformation, "rb") as f:
             transformations.append(dill.load(f))
 
-        with open("fron_transformation.pth", "rb") as f:
+        with open(globals.fron_transformation, "rb") as f:
             transformations.append(dill.load(f))
 
-        with open("late_transformation.pth", "rb") as f:
+        with open(globals.late_transformation, "rb") as f:
             transformations.append(dill.load(f))
 
         return transformations
