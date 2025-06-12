@@ -141,6 +141,7 @@ class TrainingProgram:
 
             # Manually reorder to insert augmentations in the correct locations
             new_transforms = []
+            normalize_transform = None
             for t in base_transforms:
                 if isinstance(t, transforms.Resize):
                     new_transforms.append(t)
@@ -153,7 +154,6 @@ class TrainingProgram:
                 elif isinstance(t, HistogramEqualization):
                     new_transforms.append(t)
                 elif isinstance(t, transforms.Normalize):
-                    # save to append at the end
                     normalize_transform = t
                 else:
                     new_transforms.append(t)
@@ -161,7 +161,8 @@ class TrainingProgram:
             # Add tensor augmentations here
             new_transforms.append(transforms.RandomErasing(p=p, scale=scale))
             # End of tensor augmentations
-            new_transforms.append(normalize_transform)
+            if normalize_transform:
+                new_transforms.append(normalize_transform)
 
             train_transformations[key] = transforms.Compose(new_transforms)
 
