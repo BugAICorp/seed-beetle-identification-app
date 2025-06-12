@@ -11,8 +11,8 @@ import globals
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../')))
 
 if __name__ == '__main__':
-    #tdc = TrainingDataConverter("dataset")
-    #tdc.conversion(globals.training_database)
+    tdc = TrainingDataConverter("dataset")
+    tdc.conversion(globals.training_database)
     dbr = DatabaseReader(globals.training_database, class_file_path=globals.class_list)
     df = dbr.get_dataframe()
 

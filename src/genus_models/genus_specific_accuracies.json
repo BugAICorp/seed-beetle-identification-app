@@ -1,4 +1,16 @@
 {
-    "Callosobruchus": 0.44340637068321503,
-    "Specularius": 1.0
+    "Callosobruchus": 0.5941790060394333,
+    "Specularius": 1.0,
+    "Acanthoscelides": 0.7798465423465424,
+    "Algarobius": 0.8214285714285714,
+    "Bruchidius": 0.8851851851851853,
+    "Bruchus": 0.44258684405025867,
+    "Caryedon": 1.0,
+    "Caryobruchus": 1.0,
+    "Decellebruchus": 1.0,
+    "Megabruchidius": 1.0,
+    "Mimosestes": 0.9434523809523809,
+    "Pseudopachymerina": 1.0,
+    "Rhipibruchus": 1.0,
+    "Stator": 0.9804143126177025
 }
