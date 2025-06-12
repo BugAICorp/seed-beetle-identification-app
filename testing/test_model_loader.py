@@ -11,6 +11,7 @@ from torchvision import models
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../src')))
 from model_loader import ModelLoader
+from model_loader import load_stack_model
 
 class TestModelLoader(unittest.TestCase):
     """
@@ -102,7 +103,7 @@ class TestModelLoader(unittest.TestCase):
         loader = ModelLoader({}, 3, test=True)
 
         with patch("torch.nn.Module.load_state_dict", return_value=None):
-            model = loader.load_stack_model("Genus", df, "genus_dict.json")
+            model = load_stack_model("Genus", df, "genus_dict.json")
 
         mock_file.assert_called_once_with("src/models/genus_dict.json", 'r', encoding='utf-8')
         mock_torch_load.assert_called_once_with("src/models/Genus_meta.pth")
