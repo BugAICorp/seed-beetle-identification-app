@@ -258,11 +258,11 @@ class TrainingProgram:
         """
         Trains the caudal model using Stratified K-Fold Cross Validation.
         """
-        # Get caudal dataset(images and labels)
-        caud_df = self.subsets[view]
+        # Get view dataset(images and labels)
+        view_df = self.subsets[view]
 
-        images = caud_df[self.image_column].values
-        classes = caud_df[self.class_column].values
+        images = view_df[self.image_column].values
+        classes = view_df[self.class_column].values
         labels = [self.class_string_dictionary[label] for label in classes]
 
         # Define transformation for training
