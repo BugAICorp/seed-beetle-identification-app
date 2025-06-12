@@ -10,6 +10,7 @@ from torch.utils.data import DataLoader, Dataset
 from torchvision import transforms, models
 import torch
 import dill
+import optuna
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import f1_score
 from sklearn.model_selection import StratifiedKFold
@@ -294,6 +295,46 @@ class TrainingProgram:
 
         average_macro_f1 = 100 * sum(all_fold_f1s)/k_folds
         print(f"\nAverage Macro F1 over {k_folds} folds: {average_macro_f1:.2f}%")
+
+    def hyperparameter_training_evaluation(self, num_epochs, train_loader, test_loader, view, lr, optimizer_type):
+        """
+        Code for training algorithm and evaluating model, adjusted for hyperparameter tuning.
+        """
+        model = self.models[view]
+        criterion = torch.nn.CrossEntropyLoss()
+
+        # Determine optimizer to be used
+        if optimizer_type == "adam":
+            optimizer = torch.optim.Adam(model.parameters(), lr=lr)
+        elif optimizer_type == "sgd":
+            optimizer = torch.optim.SGD(model.parameters(), lr=lr, momentum=0.9)
+        else:
+            raise ValueError(f"Unsupported optimizer: {optimizer_type}")
+
+        # Run training algorithm
+        for epoch in range(num_epochs):
+            model.train()
+            for inputs, labels in train_loader:
+                inputs, labels = inputs.to(self.device), labels.to(self.device)
+                optimizer.zero_grad()
+                outputs = model(inputs)
+                loss = criterion(outputs, labels)
+                loss.backward()
+                optimizer.step()
+
+        # Evaluate model at the end rather than at each epoch due to hyperparameter tuning
+        model.eval()
+        predictions, true_labels = [], []
+        with torch.no_grad():
+            for inputs, labels in test_loader:
+                inputs, labels = inputs.to(self.device), labels.to(self.device)
+                outputs = model(inputs)
+                _, preds = torch.max(outputs, 1)
+                predictions.extend(preds.cpu().numpy())
+                true_labels.extend(labels.cpu().numpy())
+
+        f1 = f1_score(true_labels, predictions, average="macro")
+        return f1
 
     def load_model(self):
         """
