@@ -134,14 +134,35 @@ class AltTrainingProgram:
         scale = erasing[1]
 
         train_transformations = {}
-        for key in ["dors_caud", "all", "dors_late"]:
-            train_transformations[key] = transforms.Compose([
-                # Add augmentations here for testing
-                transforms.RandomRotation(degrees=rotation_degree),
-                transforms.ColorJitter(brightness=brightness, contrast=contrast),
-                transforms.RandomErasing(p=p, scale=scale),
-                *self.transformations[key].transforms
-            ])
+        for key in ["caud", "dors", "fron", "late"]:
+            base_transforms = self.transformations[key].transforms
+
+            # Manually reorder to insert augmentations in the correct locations
+            new_transforms = []
+            normalize_transform = None
+            for t in base_transforms:
+                if isinstance(t, transforms.Resize):
+                    new_transforms.append(t)
+                    # Add PIL augmentations here
+                    new_transforms.append(transforms.RandomRotation(degrees=rotation_degree))
+                    new_transforms.append(transforms.ColorJitter(brightness=brightness, contrast=contrast))
+                    # End of PIL augmentations
+                elif isinstance(t, transforms.ToTensor):
+                    new_transforms.append(t)
+                elif isinstance(t, HistogramEqualization):
+                    new_transforms.append(t)
+                elif isinstance(t, transforms.Normalize):
+                    normalize_transform = t
+                else:
+                    new_transforms.append(t)
+
+            # Add tensor augmentations here
+            new_transforms.append(transforms.RandomErasing(p=p, scale=scale))
+            # End of tensor augmentations
+            if normalize_transform:
+                new_transforms.append(normalize_transform)
+
+            train_transformations[key] = transforms.Compose(new_transforms)
 
         return train_transformations
 
