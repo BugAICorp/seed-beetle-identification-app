@@ -7,3 +7,5 @@ omit =
     src/transformation_classes.py
     src/globals.py
     src/k_fold_simulator.py
+    src/genus_specific_simulator.py
+    src/one_of_each_simulator.py
