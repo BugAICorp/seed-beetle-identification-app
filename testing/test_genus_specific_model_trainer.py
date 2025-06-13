@@ -65,7 +65,65 @@ class TestGenusSpecificModelTrainer(unittest.TestCase):
         self.assertIsInstance(train_y, object)
         self.assertIsInstance(test_y, object)
     
-    
+    def test_get_subset_filters_correctly(self):
+        """Test that get_subset returns rows matching the given genus"""
+        genus = "GenusA"
+        subset = self.training_program.get_subset(genus, self.mock_dataframe)
+        self.assertTrue((subset["Genus"] == genus).all())
+        self.assertEqual(len(subset), 0)
+
+    def test_load_model_output_layer_size(self):
+        """Test that load_model returns a model with the correct output layer size"""
+        model = self.training_program.load_model(num_classes=5)
+        self.assertEqual(model.fc.out_features, 5)
+
+    @patch("genus_specific_model_trainer.torch.save")
+    @patch("builtins.open", new_callable=mock_open)
+    def test_save_model_writes_files(self, mock_open_file, mock_torch_save):
+        """Test save_model saves model and dictionary correctly"""
+        dummy_model = MagicMock()
+        class_dict = {"A": 0, "B": 1}
+        genus = "GenusX"
+        self.training_program.save_model(dummy_model, genus, class_dict)
+        mock_torch_save.assert_called_once()
+        mock_open_file.assert_called_with(f"src/genus_models/{genus}_dict.json", "w")
+
+    @patch("builtins.open", new_callable=mock_open)
+    def test_update_accuracies_creates_file_if_missing(self, mock_open_file):
+        """Test update_accuracies when file doesn't exist"""
+        genus = "GenusA"
+        accuracy_path = "fake_path.json"
+        self.training_program.model_accuracies = {genus: 0.9}
+
+        with patch("json.dump") as mock_json_dump, \
+             patch("json.load", side_effect=FileNotFoundError):
+            should_update = self.training_program.update_accuracies(genus, accuracy_path)
+
+        self.assertTrue(should_update)
+        mock_json_dump.assert_called_once()
+
+    @patch("builtins.open", new_callable=mock_open)
+    def test_update_accuracies_updates_only_if_better(self, mock_open_file):
+        """Test update_accuracies updates only if the new accuracy is better"""
+        genus = "GenusA"
+        path = "mock_path.json"
+        self.training_program.model_accuracies = {genus: 0.8}
+
+        existing_data = {genus: 0.5}
+        with patch("json.load", return_value=existing_data.copy()), \
+             patch("json.dump") as mock_json_dump:
+            result = self.training_program.update_accuracies(genus, path)
+
+        self.assertTrue(result)
+        mock_json_dump.assert_called_once()
+
+    def test_image_dataset_returns_tensor_and_label(self):
+        """Test ImageDataset __getitem__ returns expected outputs"""
+        img_blob = self.mock_dataframe["Image"].iloc[0]
+        dataset = ImageDataset([img_blob], [0], transform=self.training_program.transformation)
+        image, label = dataset[0]
+        self.assertIsInstance(image, torch.Tensor)
+        self.assertEqual(label.item(), 0)
 
 if __name__ == "__main__":
     unittest.main()
