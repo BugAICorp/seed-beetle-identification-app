@@ -74,7 +74,7 @@ if __name__ == '__main__':
 
     if augment:
         # Data Augmentation - Add images for rare classes
-        augmenter = DataAugmenter(df, class_column="Species", threshold=50)
+        augmenter = DataAugmenter(df, class_column="Species", threshold=100)
 
         df = augmenter.augment_rare_classes(num_augments_per_image=5)
 
