@@ -1,6 +1,7 @@
+--only-binary=:all:
 asgiref==3.5.2
 Django==4.1.4
-psycopg2-binary==2.9.5
+psycopg2-binary==2.9.10
 sqlparse==0.4.3
 tzdata==2022.7
 whitenoise==6.2.0
