@@ -52,8 +52,11 @@ class TestGenusSpecificModelTrainer(unittest.TestCase):
     def test_get_train_test_split(self):
         """Test get_train_test_split returns correctly split data"""
         df = self.mock_dataframe[self.mock_dataframe["View"] == "CAUD"]
+        fake_dict = {"SpeciesA" : 0, "SpeciesB" : 1, "SpeciesC" : 2, "SpeciesD" : 3, "SpeciesE" : 4,
+                        "SpeciesF" : 5, "SpeciesG" : 6, "SpeciesH" : 7, "SpeciesI" : 8, "SpeciesJ" : 9
+                        }
 
-        result = self.training_program.get_train_test_split(df)
+        result = self.training_program.get_train_test_split(df, fake_dict)
         train_x, test_x, train_y, test_y = result
 
         # Check data types
