@@ -1,7 +1,7 @@
 """ test_model_loader.py """
 
 import unittest
-from unittest.mock import patch, MagicMock
+from unittest.mock import mock_open, patch, MagicMock
 import sys
 import os
 from io import StringIO
@@ -11,7 +11,7 @@ from torchvision import models
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../src')))
 from model_loader import ModelLoader
-from model_loader import load_stack_model
+from model_loader import load_stack_model, load_genus_specific_model
 
 class TestModelLoader(unittest.TestCase):
     """
@@ -111,6 +111,37 @@ class TestModelLoader(unittest.TestCase):
         self.assertEqual(model.in_features, df_no_label.shape[1])
         self.assertEqual(model.out_features, 3)
 
+    @patch("model_loader.open", new_callable=mock_open, read_data='{"0": "species_a", "1": "species_b"}')
+    @patch("model_loader.torch.load")
+    @patch("model_loader.models.resnet50")
+    def test_load_genus_specific_model_success(self, mock_resnet50, mock_torch_load, mock_file):
+        # Mock model and its fc layer
+        mock_model = MagicMock()
+        mock_model.fc = torch.nn.Linear(2048, 100)  # dummy layer
+        mock_model.fc.in_features = 2048
+        mock_resnet50.return_value = mock_model
+        
+        device = torch.device("cpu")
+        genus = "TestGenus"
+
+        model, class_dict = load_genus_specific_model(genus, device)
+
+        # Assert model and dict are returned
+        self.assertIsNotNone(model)
+        self.assertIsInstance(class_dict, dict)
+        self.assertEqual(class_dict[0], "species_a")
+        self.assertEqual(class_dict[1], "species_b")
+
+        # Assert model was put into eval mode
+        model.eval.assert_called_once()
+
+        # Assert torch.load was called correctly
+        mock_torch_load.assert_called_once_with(
+            f"src/genus_models/{genus}_species.pth", map_location=device, weights_only=True
+        )
+
+        # Check open was called for the correct JSON file
+        mock_file.assert_called_once_with(f"src/genus_models/{genus}_dict.json", 'r', encoding='utf-8')
 
 if __name__ == "__main__":
     unittest.main()
