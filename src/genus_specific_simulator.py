@@ -18,12 +18,12 @@ if __name__ == '__main__':
     df = dbr.get_dataframe()
 
     genus_list = df['Genus'].unique().tolist()
-    """
+
     print(f"Training for each genus in this list: {genus_list}")
     genus_specific_tp = GenusSpecificModelTrainer(df)
     for genus in genus_list:
         genus_specific_tp.train_genus(genus, 20)
-    """
+
     # Load Genus models
     genus_model_paths = {
             "caud" : globals.gen_caud_model,
