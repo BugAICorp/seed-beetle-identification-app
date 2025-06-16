@@ -88,6 +88,10 @@ DATABASES = {
 
 CSRF_TRUSTED_ORIGINS = [
     "https://port-inspector-app.dedyn.io",
+    "http://localhost:80",
+    "http://127.0.0.1:80",
+    "http://localhost",
+    "http://127.0.0.1"
 ]
 
 
@@ -144,10 +148,12 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'uploads')
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
 AUTH_USER_MODEL = 'port_inspector_app.User'
 
 DEFAULT_FROM_EMAIL = 'usdportinspector@port-inspector-app.dedyn.io'
-
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+"""
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'smtp.mailersend.net'
 EMAIL_PORT = 2525
@@ -155,6 +161,7 @@ EMAIL_HOST_USER = 'MS_Hd5uH9@port-inspector-app.dedyn.io'
 # Add password in production
 EMAIL_HOST_PASSWORD = '[password_here]'
 EMAIL_USE_TLS = True
+"""
 
 SALT_KEY = "callosobruchus!maculatus"
 
