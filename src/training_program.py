@@ -377,13 +377,13 @@ class TrainingProgram:
         )
 
         skf = StratifiedKFold(n_splits=k_folds, shuffle=True, random_state=21)
-        labels = [sample[1] for sample in self.full_datasets[view]]
+        labels = [sample[1] for sample in self.subsets[view]]
 
         all_f1_scores = []
 
         for train_idx, val_idx in skf.split(np.zeros(len(labels)), labels):
-            train_subset = self.get_subset(self.full_datasets[view], train_idx)
-            val_subset = self.get_subset(self.full_datasets[view], val_idx)
+            train_subset = self.get_subset(self.subsets[view], train_idx)
+            val_subset = self.get_subset(self.subsets[view], val_idx)
 
             train_loader = DataLoader(train_subset, batch_size=batch_size, shuffle=True)
             val_loader = DataLoader(val_subset, batch_size=batch_size, shuffle=False)
