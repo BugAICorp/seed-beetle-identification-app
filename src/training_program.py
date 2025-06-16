@@ -3,6 +3,7 @@ import os
 import sys
 import json
 import copy
+import gc
 from io import BytesIO
 import pandas as pd
 from PIL import Image
@@ -12,7 +13,6 @@ from torchvision import transforms, models
 import torch
 import dill
 import optuna
-import gc
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import f1_score
 from sklearn.model_selection import StratifiedKFold
@@ -350,7 +350,7 @@ class TrainingProgram:
             raise ValueError(f"Unsupported optimizer: {optimizer_type}")
 
         # Run training algorithm
-        for epoch in range(num_epochs):
+        for _ in range(num_epochs):
             model.train()
             for inputs, labels in train_loader:
                 inputs, labels = inputs.to(self.device), labels.to(self.device)
@@ -396,7 +396,7 @@ class TrainingProgram:
         optimizer_type = trial.suggest_categorical("optimizer_type", ["adam", "sgd"])
         rotation = trial.suggest_int("rotation", 0, 20)
         brightness = trial.suggest_float("brightness", 0.0, 0.3)
-        
+
         self.train_transformations = self.create_train_transformations(
             rotation_degree=rotation,
             brightness=brightness,
