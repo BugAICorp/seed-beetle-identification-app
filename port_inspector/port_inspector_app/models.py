@@ -20,6 +20,9 @@ class CustomUserManager(BaseUserManager):
 
     def create_superuser(self, email, password=None, **extra_fields):
         extra_fields.setdefault('is_superuser', True)
+        extra_fields.setdefault('admin', True)
+        extra_fields.setdefault('is_staff', True)
+        extra_fields.setdefault('is_active', True)
         return self.create_user(email, password, **extra_fields)
 
 
@@ -31,6 +34,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     is_active = models.BooleanField(default=False)
     is_usda = models.BooleanField(default=False)
     admin = models.BooleanField(default=False)
+    is_staff = models.BooleanField(default=False)
 
     groups = models.ManyToManyField(
         'auth.Group',
