@@ -404,17 +404,30 @@ class TrainingProgram:
             erasing=(0.5, (0.02, 0.15))
         )
 
+        # Get view dataset(images and labels)
+        view_df = self.subsets[view]
+
+        images = view_df[self.image_column].values
+        classes = view_df[self.class_column].values
+        labels = [self.class_string_dictionary[label] for label in classes]
+
+        # Define transformation for training
+        transformation = self.train_transformations[view]
+
         skf = StratifiedKFold(n_splits=k_folds, shuffle=True, random_state=21)
-        labels = [sample[1] for sample in self.subsets[view]]
 
         all_f1_scores = []
 
-        for train_idx, val_idx in skf.split(np.zeros(len(labels)), labels):
-            train_subset = self.get_subset(self.subsets[view], train_idx)
-            val_subset = self.get_subset(self.subsets[view], val_idx)
+        for train_idx, val_idx in skf.split(images, labels):
+            train_x = [images[i] for i in train_idx]
+            train_y = [labels[i] for i in train_idx]
+            val_x = [images[i] for i in val_idx]
+            val_y = [labels[i] for i in val_idx]
 
-            train_loader = DataLoader(train_subset, batch_size=batch_size, shuffle=True)
-            val_loader = DataLoader(val_subset, batch_size=batch_size, shuffle=False)
+            train_dataset = ImageDataset(train_x, train_y, transform=transformation)
+            val_dataset = ImageDataset(val_x, val_y, transform=transformation)
+            train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
+            val_loader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False)
 
             self.models[view] = self.load_model()
             f1 = self.hyperparameter_training_evaluation(
