@@ -5,6 +5,9 @@ from django.core.exceptions import ValidationError
 from django.core.files.storage import default_storage
 from django.contrib.auth import get_user_model
 from django.utils.translation import gettext_lazy as _
+from django.core.files.base import ContentFile
+from PIL import Image as PILImage
+from io import BytesIO
 
 
 class CustomUserManager(BaseUserManager):
@@ -14,7 +17,7 @@ class CustomUserManager(BaseUserManager):
         email = self.normalize_email(email)
         user = self.model(email=email, **extra_fields)
         user.set_password(password)
-        user.is_usda = email.endswith('@sandiego.edu')  # this needs to change to @usda.gov
+        user.is_usda = email.lower().strip().endswith('@usda.gov')  # this needs to change to @usda.gov
         user.save(using=self._db)
         return user
 
@@ -112,6 +115,19 @@ class Image(models.Model):
     specimen_upload = models.ForeignKey('port_inspector_app.SpecimenUpload', on_delete=models.CASCADE, related_name="images")
     image = models.ImageField(upload_to="uploads/")
     uploaded_at = models.DateTimeField(auto_now_add=True)
+
+    def save(self, *args, **kwargs):
+        if self.image and not kwargs.get('raw', False):
+            img = PILImage.open(self.image)
+            img = img.convert('RGB')
+
+            buffer = BytesIO()
+            img.save(buffer, format='PNG')
+            buffer.seek(0)
+
+            self.image.save(self.image.name, ContentFile(buffer.read()), save=False)
+
+        super().save(*args, **kwargs)
 
     # TODO: fix, make sure our image files get deleted w/SpecimenUpload
     def delete(self, *args, **kwargs):
