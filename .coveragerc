@@ -9,3 +9,4 @@ omit =
     src/k_fold_simulator.py
     src/genus_specific_simulator.py
     src/one_of_each_simulator.py
+    src/hyperparameter_simulator.py
