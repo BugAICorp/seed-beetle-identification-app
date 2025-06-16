@@ -9,4 +9,5 @@ Pillow
 six
 torchvision
 torch
+optuna
 dill
