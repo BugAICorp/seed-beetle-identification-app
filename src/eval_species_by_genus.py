@@ -188,6 +188,9 @@ class EvalSpeciesByGenus:
             all_inputs.append(late)
             input_order.append(3)
 
+        #Check if there are less possible classifications than self.k and adjust if necessary
+        self.k = min(self.k, len(self.species_idx_dict))
+
         count = 0
         for i in all_inputs:
             image = self.transform_input(i, self.transformations[input_order[count]]).to(device)
@@ -205,8 +208,12 @@ class EvalSpeciesByGenus:
             species.append(top5_species.tolist())
             count += 1
 
-        top_five_scores = [0, 0, 0, 0, 0]
-        top_five_names = [None, None, None, None, None]
+        top_five_scores = []
+        top_five_names = []
+        for i in range(self.k):
+            top_five_scores.append(0)
+            top_five_names.append(None)
+
         for i, _ in enumerate(species):
             for j in range(len(species[i])):
                 if species[i][j] in top_five_names:
@@ -228,6 +235,10 @@ class EvalSpeciesByGenus:
                 list_to_return.append((self.species_idx_dict[key], value))
             else:
                 list_to_return.append(("Unknown Species", value))
+
+        while self.k < 5:
+            list_to_return.append(("No other species", 0))
+            self.k += 1
 
         return list_to_return
 
