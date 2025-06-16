@@ -173,25 +173,39 @@ class TestTrainingProgram(unittest.TestCase):
     @patch("torchvision.transforms.Compose")
     def test_objective(self, mock_compose, mock_dataloader):
         """ Test the objective method with mocked components. """
-        # Setup mock trial
+
+        # Setup mock Optuna trial
         trial = MagicMock()
-        trial.suggest_float.side_effect = [0.001, 0.2, 0.1]
-        trial.suggest_categorical.side_effect = [[16, 32, 64][1], ["adam", "sgd"][0]]
-        trial.suggest_int.return_value = 15
+        trial.suggest_float.side_effect = [0.001, 0.2, 0.1]  # lr, brightness, contrast
+        trial.suggest_categorical.side_effect = [32, "adam"]  # batch_size, optimizer_type
+        trial.suggest_int.return_value = 15  # rotation
 
-        # Setup mock dataset for stratified k-fold
-        self.training_program.subsets["caud"] = [(torch.rand(3, 224, 224), i % 2) for i in range(6)]
+        # Set up mock dataset for "caud" with at least 2 samples per class - 2 fold
+        df = pd.DataFrame({
+            "Image": [f"img_{i}.jpg" for i in range(6)],
+            "Genus": ["GenusA", "GenusB", "GenusA", "GenusB", "GenusA", "GenusB"]  # 3 each
+        })
 
-        # Patch other methods
-        self.training_program.get_subset = MagicMock(
-            side_effect=lambda ds, idx: [ds[i] for i in idx]
-        )
+        self.training_program.class_column = "Genus"
+        self.training_program.class_string_dictionary = {"GenusA": 0, "GenusB": 1}
+        self.training_program.image_column = "Image"
+        self.training_program.subsets["caud"] = df
+
         self.training_program.load_model = MagicMock(return_value=MagicMock())
         self.training_program.hyperparameter_training_evaluation = MagicMock(return_value=0.75)
-        self.training_program.create_train_transformations = MagicMock(return_value=MagicMock())
 
+        # Return a valid transformation dictionary
+        self.training_program.create_train_transformations = MagicMock(return_value={"caud": MagicMock()})
+
+        # Ensure get_subset returns dummy data
+        self.training_program.get_subset = MagicMock(
+            side_effect=lambda df, idx: [("img", i % 2) for i in idx]
+        )
+
+        # Call the objective method
         avg_f1 = self.training_program.objective(trial, view="caud", num_epochs=1, k_folds=2)
-        
+
+        # Assertions
         self.assertAlmostEqual(avg_f1, 0.75)
         self.assertEqual(self.training_program.hyperparameter_training_evaluation.call_count, 2)
 
