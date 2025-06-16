@@ -12,6 +12,7 @@ from torchvision import transforms, models
 import torch
 import dill
 import optuna
+import gc
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import f1_score
 from sklearn.model_selection import StratifiedKFold
@@ -358,11 +359,12 @@ class TrainingProgram:
         f1 = f1_score(true_labels, predictions, average="macro")
         return f1
 
-    def objective(self, trial, view, num_epochs=5, k_folds=3):
+    def objective(self, trial, view, num_epochs=10, k_folds=3):
         """
         
         """
         lr = trial.suggest_float("lr", 1e-5, 1e-2, log=True)
+        batch_size = trial.suggest_categorical("batch_size", [16, 32, 64])
         optimizer_type = trial.suggest_categorical("optimizer_type", ["adam", "sgd"])
         rotation = trial.suggest_int("rotation", 0, 20)
         brightness = trial.suggest_float("brightness", 0.0, 0.3)
@@ -383,8 +385,8 @@ class TrainingProgram:
             train_subset = self.get_subset(self.full_datasets[view], train_idx)
             val_subset = self.get_subset(self.full_datasets[view], val_idx)
 
-            train_loader = DataLoader(train_subset, batch_size=32, shuffle=True)
-            val_loader = DataLoader(val_subset, batch_size=32, shuffle=False)
+            train_loader = DataLoader(train_subset, batch_size=batch_size, shuffle=True)
+            val_loader = DataLoader(val_subset, batch_size=batch_size, shuffle=False)
 
             self.models[view] = self.load_model()
             f1 = self.hyperparameter_training_evaluation(
@@ -396,6 +398,12 @@ class TrainingProgram:
                 optimizer_type=optimizer_type
             )
             all_f1_scores.append(f1)
+            # Clear model and loaders
+            del train_loader, val_loader
+            del self.models[view]
+            # clear GPU memory
+            torch.cuda.empty_cache()
+            gc.collect()
 
         avg_f1 = np.mean(all_f1_scores)
         return avg_f1
