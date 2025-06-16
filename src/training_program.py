@@ -322,6 +322,21 @@ class TrainingProgram:
     def hyperparameter_training_evaluation(self, num_epochs, train_loader, test_loader, view, lr, optimizer_type):
         """
         Code for training algorithm and evaluating model, adjusted for hyperparameter tuning.
+        Trains and evaluate the model for a given view using specified hyperparameters.
+
+        Args:
+            num_epochs (int): Number of epochs to train the model.
+            train_loader (DataLoader): DataLoader providing training batches.
+            test_loader (DataLoader): DataLoader providing testing/validation batches.
+            view (str): Identifier for the model/view to train and evaluate.
+            lr (float): Learning rate for the optimizer.
+            optimizer_type (str): Optimizer type to use, either 'adam' or 'sgd'.
+
+        Returns:
+            float: Macro F1 score computed on the test set predictions.
+        
+        Raises:
+            ValueError: If `optimizer_type` is not supported.
         """
         model = self.models[view]
         criterion = torch.nn.CrossEntropyLoss()
@@ -361,7 +376,20 @@ class TrainingProgram:
 
     def objective(self, trial, view, num_epochs=10, k_folds=3):
         """
-        
+        Objective function for Optuna hyperparameter tuning.
+
+        Suggests hyperparameters including learning rate, batch size, optimizer type,
+        and augmentation parameters. Performs k-fold stratified cross-validation
+        to evaluate the average macro F1 score of the model under these hyperparameters.
+
+        Args:
+            trial (optuna.trial.Trial): Optuna trial object for suggesting hyperparameters.
+            view (str): Identifier for the model/view to tune.
+            num_epochs (int, optional): Number of training epochs per fold. Defaults to 10.
+            k_folds (int, optional): Number of folds for cross-validation. Defaults to 3.
+
+        Returns:
+            float: Average macro F1 score across the k folds.
         """
         lr = trial.suggest_float("lr", 1e-5, 1e-2, log=True)
         batch_size = trial.suggest_categorical("batch_size", [16, 32, 64])
@@ -410,7 +438,18 @@ class TrainingProgram:
 
     def run_optuna_study(self, view, n_trials=20):
         """
-        
+        Run an Optuna hyperparameter optimization study for a specified view.
+
+        Creates and runs an Optuna study to maximize the macro F1 score by
+        tuning hyperparameters for the model associated with the given view.
+        Prints and returns the best hyperparameters found.
+
+        Args:
+            view (str): Identifier for the model/view to optimize.
+            n_trials (int, optional): Number of Optuna trials to run. Defaults to 20.
+
+        Returns:
+            dict: Best hyperparameters found by the study.
         """
         study = optuna.create_study(direction="maximize")
         study.optimize(lambda trial: self.objective(trial, view), n_trials=n_trials)
