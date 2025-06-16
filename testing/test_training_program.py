@@ -14,7 +14,11 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../s
 from training_program import TrainingProgram
 
 class DummyModel(nn.Module):
+    """
+    DummyModel class used for replacing the model in testing.
+    """
     def forward(self, x):
+        """ Simulate a model’s forward pass by returning random logits. """
         # Return logits for 2 classes, batch size matches input
         return torch.randn(x.size(0), 2)
 
@@ -133,6 +137,7 @@ class TestTrainingProgram(unittest.TestCase):
 
     @patch("torch.nn.CrossEntropyLoss", return_value=MagicMock())
     def test_hyperparameter_training_evaluation(self, mock_loss_fn):
+        """ Test the hyperparameter_training_evaluation method with mocked components. """
         # Use the DummyModel instead of MagicMock for model
         dummy_model = DummyModel()
         dummy_model.eval = MagicMock()
@@ -167,6 +172,7 @@ class TestTrainingProgram(unittest.TestCase):
     @patch("torch.utils.data.DataLoader")
     @patch("torchvision.transforms.Compose")
     def test_objective(self, mock_compose, mock_dataloader):
+        """ Test the objective method with mocked components. """
         # Setup mock trial
         trial = MagicMock()
         trial.suggest_float.side_effect = [0.001, 0.2, 0.1]
@@ -191,6 +197,7 @@ class TestTrainingProgram(unittest.TestCase):
 
     @patch("optuna.create_study")
     def test_run_optuna_study(self, mock_create_study):
+        """ Test the run_optuna_study method with mocked components. """
         mock_study = MagicMock()
         mock_study.best_value = 0.85
         mock_study.best_params = {"lr": 0.001, "batch_size": 32}
