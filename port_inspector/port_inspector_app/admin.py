@@ -17,6 +17,7 @@ class SpecimenUploadAdmin(admin.ModelAdmin):
     Add formatting for the specimen upload view on the admin page
     """
     list_display = ('id', 'formatted_genus', 'formatted_species', 'final_identification', 'display_all_images')
+    list_filter = ('final_identification', )
     readonly_fields = ['display_all_images', 'formatted_genus', 'formatted_species']
     fields = ('display_all_images', 'formatted_genus', 'formatted_species', 'final_identification')
 
