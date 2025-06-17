@@ -157,3 +157,14 @@ class Genus(models.Model):
 
     def __str__(self):
         return self.genus_name
+
+class TrainingDatabase(models.Model):
+    genus = models.CharField(max_length=32)
+    species = models.CharField(max_length=80)
+    uniqueid = models.CharField(max_length=100, unique=True)
+    view = models.CharField(max_length=4)
+    specimenid = models.CharField(max_length=255)
+    image = models.BinaryField()
+
+    def __str__(self):
+        return f"{self.specimenid} - {self.view}"
