@@ -10,6 +10,7 @@ from .models import Genus
 admin.site.register(KnownSpecies)
 admin.site.register(Genus)
 
+
 @admin.register(SpecimenUpload)
 class SpecimenUploadAdmin(admin.ModelAdmin):
     """
