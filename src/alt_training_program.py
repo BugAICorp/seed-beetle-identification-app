@@ -295,7 +295,7 @@ class AltTrainingProgram:
         model = model.to(self.device)
 
         return model
-
+    
     def save_models(self, model_filenames = None, height_filename = None,
                     class_dict_filename = None, accuracy_dict_filename = None):
         """
@@ -303,36 +303,17 @@ class AltTrainingProgram:
         
         Returns: None
         """
-
         # Update/Initialize Model Accuracy Dictionary
         # update_flags indicates which models weights need to be updated and saved
         update_flags = self.update_accuracies(accuracy_dict_filename)
+        views = ["dors_caud", "all", "dors_late"]
 
-        if (
-            "dors_caud" in model_filenames and
-            model_filenames["dors_caud"] and
-            update_flags["dors_caud"]
-        ):
-            dors_caud_filename = model_filenames["dors_caud"]
-            torch.save(self.dors_caud_model.state_dict(), dors_caud_filename)
-            self.save_transformation(self.transformations["dors_caud"], 0)
-            print(f"Dorsal Caudal Model weights saved to {dors_caud_filename}")
-
-        if "all" in model_filenames and model_filenames["all"] and update_flags["all"]:
-            all_filename = model_filenames["all"]
-            torch.save(self.all_model.state_dict(), all_filename)
-            self.save_transformation(self.transformations["all"], 1)
-            print(f"All Model weights saved to {all_filename}")
-
-        if (
-            "dors_late" in model_filenames and
-            model_filenames["dors_late"] and
-            update_flags["dors_late"]
-        ):
-            dors_late_filename = model_filenames["dors_late"]
-            torch.save(self.dors_late_model.state_dict(), dors_late_filename)
-            self.save_transformation(self.transformations["dors_late"], 2)
-            print(f"Dorsal Lateral Model weights saved to {dors_late_filename}")
+        for view in views:
+            if view in model_filenames and model_filenames[view] and update_flags[view]:
+                file = model_filenames[view]
+                torch.save(self.models[view].state_dict(), file)
+                self.save_transformation(self.transformations[view], view)
+                print(f"{view} model weights saved to {file}")
 
         # Handle dict_filename similarly if needed
         if class_dict_filename:
