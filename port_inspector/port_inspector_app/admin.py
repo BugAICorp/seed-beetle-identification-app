@@ -91,6 +91,7 @@ class SpecimenUploadAdmin(admin.ModelAdmin):
         return mark_safe(html)
     display_all_images.short_description = 'Specimen Images'
 
+
 @admin.register(ValidClasses)
 class ValidClassesAdmin(admin.ModelAdmin):
     def delete_queryset(self, request, queryset):
