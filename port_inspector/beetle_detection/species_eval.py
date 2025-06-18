@@ -8,6 +8,7 @@ if "runserver" in sys.argv:
     from .model_loader import ModelLoader
     from .evaluation_method import EvaluationMethod
     from .genus_evaluation_method import GenusEvaluationMethod
+    from .data_converter import DjangoTrainingDatabaseConverter
     from django.conf import settings
 
     BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -51,6 +52,9 @@ if "runserver" in sys.argv:
                                             os.path.join(os.path.dirname(os.path.abspath(__file__)), "gen_accuracies.json"))
 
     print("!!! ML Models loaded in evaluation mode !!!")
+
+    dbr = DjangoTrainingDatabaseConverter("dataset")
+    dbr.conversion()
 
 
 def evaluate_images(late_path, dors_path, fron_path, caud_path):

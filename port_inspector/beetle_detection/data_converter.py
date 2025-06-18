@@ -2,13 +2,14 @@
 
 # flake8: noqa
 import json, os, sys
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../')))
+from port_inspector_app.models import TrainingDatabase, ValidClasses
 
  
 class DjangoTrainingDatabaseConverter:
 
     def __init__(self, dir):
-        self.dir = dir
+        base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '../../'))
+        self.dir = os.path.join(base_dir, dir)
 
     def img_to_binary(self, image):
         with open(image, 'rb') as file:
@@ -29,12 +30,12 @@ class DjangoTrainingDatabaseConverter:
         genus = name_parts[cur_index][name_parts[cur_index].find('/')+1:]
 
         return (genus, species, unique_id, view, specimen_id)
-    
+
     def conversion(self):
         if not os.path.exists(self.dir):
             print(f"Directory {self.dir} does not exist.")
             return
-        
+
         for filename in os.listdir(self.dir):
             if filename.lower().endswith(('png', 'jpg', 'jpeg', 'bmp', 'gif')):
                 file_path = os.path.join(self.dir, filename)
@@ -43,19 +44,14 @@ class DjangoTrainingDatabaseConverter:
                     genus, species, unique_id, view, specimen_id = name_parts
                     image_binary = self.img_to_binary(file_path)
 
-                    if not TrainingDatabase.objects.filter(unique_id=unique_id).exists():
-                        TrainingDatabase.objects.create(
-                            genus=genus,
-                            species=species,
-                            unique_id=unique_id,
-                            view=view,
-                            specimen_id=specimen_id,
-                            image=image_binary
-                        )
-                        print(f"Inserted: {unique_id}")
-
-if "runserver" in sys.argv:
-    from port_inspector_app.models import TrainingDatabase
-
-    dbr = DjangoTrainingDatabaseConverter("dataset")
-    dbr.conversion()
+                    if ValidClasses.objects.filter(genus=genus).exists() and ValidClasses.objects.filter(species=species).exists():
+                        if not TrainingDatabase.objects.filter(uniqueid=unique_id).exists():
+                            TrainingDatabase.objects.create(
+                                genus=genus,
+                                species=species,
+                                uniqueid=unique_id,
+                                view=view,
+                                specimenid=specimen_id,
+                                image=image_binary
+                            )
+                            print(f"Inserted: {unique_id}")
