@@ -51,33 +51,23 @@ class TestAltTrainingProgram(unittest.TestCase):
         """
         return dataframe[dataframe["View"] == view_type] if not dataframe.empty else pd.DataFrame()
 
-    def test_get_dorsal_caudal_view(self):
+    def test_get_combined_subset(self):
         """
-        Test that get_dorsal_caudal_view returns the correct subset.
+        Test that get_combined_subset returns the correct subset.
         """
 
         # Call the method
-        df = self.training_program.get_dorsal_caudal_view()
+        df = self.training_program.get_combined_subset(["DORS", "CAUD"], self.training_program.dataframe)
 
         # Verify the result
         expected_df = pd.concat(
             [
-            self.training_program.get_subset("CAUD", self.training_program.dataframe),
-            self.training_program.get_subset("DORS", self.training_program.dataframe)
+            self.training_program.get_subset("DORS", self.training_program.dataframe),
+            self.training_program.get_subset("CAUD", self.training_program.dataframe)
             ],
             ignore_index = True
             )
 
-        self.assertFalse(df.empty)
-        self.assertTrue(df.equals(expected_df))
-
-    def test_get_all_view(self):
-        """ Test that get_dorsal_view returns the correct subset. """
-        # Call the method
-        df = self.training_program.get_all_view()
-
-        # Verify the result
-        expected_df = self.mock_dataframe
         self.assertFalse(df.empty)
         self.assertTrue(df.equals(expected_df))
 
@@ -95,8 +85,8 @@ class TestAltTrainingProgram(unittest.TestCase):
         self.assertIsInstance(test_y, object)
 
     @patch('training_program.DataLoader')
-    def test_training_evaluation_dorsal_caudal(self, mock_loader):
-        """ Test the caudal training and evaluation function """
+    def test_alt_training_evaluation_resnet(self, mock_loader):
+        """ Test the alternate training and evaluation function """
         # Mock DataLoader
         mock_loader.__iter__.return_value = iter([
         (torch.randn(4, 3, 224, 224), torch.tensor([0, 1, 0, 1])),  # 4 samples
@@ -104,10 +94,10 @@ class TestAltTrainingProgram(unittest.TestCase):
         ])
         mock_loader.__len__.return_value = 2  # Two batches
 
-        self.training_program.training_evaluation_dorsal_caudal(1, mock_loader, mock_loader)
+        self.training_program.alt_training_evaluation_resnet(1, mock_loader, mock_loader, "dors_caud")
 
-    def test_train_dorsal_caudal(self):
-        """ Test train_caudal method """
+    def test_alt_train_resnet_model(self):
+        """ Test alt_train_resnet_model method """
        # Mock dataset with multiple samples
         mock_train_x = ["img1.jpg", "img2.jpg", "img3.jpg", "img4.jpg"]
         mock_test_x = ["img5.jpg", "img6.jpg"]
@@ -123,81 +113,11 @@ class TestAltTrainingProgram(unittest.TestCase):
         self.training_program.get_train_test_split = MagicMock(
             return_value=[mock_train_x, mock_test_x, mock_train_y, mock_test_y])
         # Mock evaluation function
-        self.training_program.training_evaluation_dorsal_caudal = MagicMock()
+        self.training_program.alt_training_evaluation_resnet = MagicMock()
         # Run train_caudal
-        self.training_program.train_dorsal_caudal(1)
+        self.training_program.alt_train_resnet_model(1, "dors_caud")
         # Ensure training_evaluation_caudal was called once
-        self.training_program.training_evaluation_dorsal_caudal.assert_called_once()
-
-    @patch('training_program.DataLoader')
-    def test_training_evaluation_all(self, mock_loader):
-        """ Test the frontal training and evaluation function """
-        # Mock DataLoader
-        mock_loader.__iter__.return_value = iter([
-        (torch.randn(4, 3, 224, 224), torch.tensor([0, 1, 0, 1])),  # 4 samples
-        (torch.randn(4, 3, 224, 224), torch.tensor([1, 0, 1, 0]))   # Another 4 samples
-        ])
-        mock_loader.__len__.return_value = 2  # Two batches
-
-        self.training_program.training_evaluation_all(1, mock_loader, mock_loader)
-
-    def test_train_all(self):
-        """ Test train_frontal method """
-       # Mock dataset with multiple samples
-        mock_train_x = ["img1.jpg", "img2.jpg", "img3.jpg", "img4.jpg"]
-        mock_test_x = ["img5.jpg", "img6.jpg"]
-        mock_train_y = [0, 1, 0, 1]
-        mock_test_y = [1, 0]
-
-        # Mock DataLoader
-        mock_loader = MagicMock(spec=DataLoader)
-        mock_loader.__iter__.return_value = iter([(torch.randn(2, 3, 224, 224),
-                                                torch.tensor([0, 1]))])
-        mock_loader.__len__.return_value = 2  # Mocked DataLoader length
-        # Mock train-test split
-        self.training_program.get_train_test_split = MagicMock(
-            return_value=[mock_train_x, mock_test_x, mock_train_y, mock_test_y])
-        # Mock evaluation function
-        self.training_program.training_evaluation_all = MagicMock()
-        # Run train_caudal
-        self.training_program.train_all(1)
-        # Ensure training_evaluation_caudal was called once
-        self.training_program.training_evaluation_all.assert_called_once()
-
-    @patch('training_program.DataLoader')
-    def test_training_evaluation_dorsal_lateral(self, mock_loader):
-        """ Test the caudal training and evaluation function """
-        # Mock DataLoader
-        mock_loader.__iter__.return_value = iter([
-        (torch.randn(4, 3, 224, 224), torch.tensor([0, 1, 0, 1])),  # 4 samples
-        (torch.randn(4, 3, 224, 224), torch.tensor([1, 0, 1, 0]))   # Another 4 samples
-        ])
-        mock_loader.__len__.return_value = 2  # Two batches
-
-        self.training_program.training_evaluation_dorsal_lateral(1, mock_loader, mock_loader)
-
-    def test_train_dorsal_lateral(self):
-        """ Test train_caudal method """
-       # Mock dataset with multiple samples
-        mock_train_x = ["img1.jpg", "img2.jpg", "img3.jpg", "img4.jpg"]
-        mock_test_x = ["img5.jpg", "img6.jpg"]
-        mock_train_y = [0, 1, 0, 1]
-        mock_test_y = [1, 0]
-
-        # Mock DataLoader
-        mock_loader = MagicMock(spec=DataLoader)
-        mock_loader.__iter__.return_value = iter([(torch.randn(2, 3, 224, 224),
-                                                torch.tensor([0, 1]))])
-        mock_loader.__len__.return_value = 2  # Mocked DataLoader length
-        # Mock train-test split
-        self.training_program.get_train_test_split = MagicMock(
-            return_value=[mock_train_x, mock_test_x, mock_train_y, mock_test_y])
-        # Mock evaluation function
-        self.training_program.training_evaluation_dorsal_lateral = MagicMock()
-        # Run train_caudal
-        self.training_program.train_dorsal_lateral(1)
-        # Ensure training_evaluation_caudal was called once
-        self.training_program.training_evaluation_dorsal_lateral.assert_called_once()
+        self.training_program.alt_training_evaluation_resnet.assert_called_once()
 
     @patch("torch.save")
     def test_save_models(self, mock_torch_save):
