@@ -1,10 +1,10 @@
 from django.contrib import admin
+from django.urls import path
 from django.utils.html import format_html
 from django.utils.safestring import mark_safe
 
 # Register your models here.
 from .models import SpecimenUpload, Image, KnownSpecies, Genus, TrainingDatabase, User, ValidClasses
-from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 
 admin.site.register(KnownSpecies)
 admin.site.register(Genus)

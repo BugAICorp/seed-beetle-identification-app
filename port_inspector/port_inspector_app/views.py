@@ -7,13 +7,16 @@ from django.core import signing
 from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
+from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib.auth.forms import AuthenticationForm
 from django.contrib.sites.shortcuts import get_current_site
 from django.core.mail import EmailMessage
 from django.template.loader import render_to_string
 from django.utils.encoding import force_bytes, force_str
 from django.utils.http import urlsafe_base64_decode, urlsafe_base64_encode
+from django.http import HttpResponse
 from .tokens import account_activation_token
+import threading
 
 
 def verify_email(request, user_id):
@@ -277,3 +280,13 @@ def profile_view(request):
         "usda_user": user.is_usda
     }
     return render(request, 'profile.html', context)
+
+def long_task():
+    import time
+    time.sleep(10)
+    print("Done")
+
+@staff_member_required
+def run_custom_task(request):
+    threading.Thread(target=long_task).start()
+    return redirect("/admin/")
