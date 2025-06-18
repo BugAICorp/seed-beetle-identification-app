@@ -3,6 +3,7 @@ import os
 import sys
 import json
 import copy
+import gc
 from io import BytesIO
 import pandas as pd
 from PIL import Image
@@ -14,6 +15,7 @@ import dill
 import optuna
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import f1_score
+from sklearn.model_selection import StratifiedKFold
 from transformation_classes import HistogramEqualization
 import globals
 
@@ -282,6 +284,159 @@ class AltTrainingProgram:
         testing_loader = DataLoader(test_dataset, batch_size=32, shuffle=False)
 
         self.alt_training_evaluation_resnet(num_epochs, training_loader, testing_loader, view)
+
+    def alt_hyperparameter_training_evaluation(self, num_epochs, train_loader, test_loader, view, lr, optimizer_type):
+        """
+        Code for alternate training algorithm and evaluating model, adjusted for hyperparameter tuning.
+        Trains and evaluate the model for a given view using specified hyperparameters.
+
+        Args:
+            num_epochs (int): Number of epochs to train the model.
+            train_loader (DataLoader): DataLoader providing training batches.
+            test_loader (DataLoader): DataLoader providing testing/validation batches.
+            view (str): Identifier for the model/view to train and evaluate.
+            lr (float): Learning rate for the optimizer.
+            optimizer_type (str): Optimizer type to use, either 'adam' or 'sgd'.
+
+        Returns:
+            float: Macro F1 score computed on the test set predictions.
+        
+        Raises:
+            ValueError: If `optimizer_type` is not supported.
+        """
+        model = self.models[view]
+        criterion = torch.nn.CrossEntropyLoss()
+
+        # Determine optimizer to be used
+        if optimizer_type == "adam":
+            optimizer = torch.optim.Adam(model.parameters(), lr=lr)
+        elif optimizer_type == "sgd":
+            optimizer = torch.optim.SGD(model.parameters(), lr=lr, momentum=0.9)
+        else:
+            raise ValueError(f"Unsupported optimizer: {optimizer_type}")
+
+        # Run training algorithm
+        for _ in range(num_epochs):
+            model.train()
+            for inputs, labels in train_loader:
+                inputs, labels = inputs.to(self.device), labels.to(self.device)
+                optimizer.zero_grad()
+                outputs = model(inputs)
+                loss = criterion(outputs, labels)
+                loss.backward()
+                optimizer.step()
+
+        # Evaluate model at the end rather than at each epoch due to hyperparameter tuning
+        model.eval()
+        predictions, true_labels = [], []
+        with torch.no_grad():
+            for inputs, labels in test_loader:
+                inputs, labels = inputs.to(self.device), labels.to(self.device)
+                outputs = model(inputs)
+                _, preds = torch.max(outputs, 1)
+                predictions.extend(preds.cpu().numpy())
+                true_labels.extend(labels.cpu().numpy())
+
+        f1 = f1_score(true_labels, predictions, average="macro")
+        return f1
+
+    def objective(self, trial, view, num_epochs=10, k_folds=3):
+        """
+        Objective function for Optuna hyperparameter tuning.
+
+        Suggests hyperparameters including learning rate, batch size, optimizer type,
+        and augmentation parameters. Performs k-fold stratified cross-validation
+        to evaluate the average macro F1 score of the model under these hyperparameters.
+
+        Args:
+            trial (optuna.trial.Trial): Optuna trial object for suggesting hyperparameters.
+            view (str): Identifier for the model/view to tune.
+            num_epochs (int, optional): Number of training epochs per fold. Defaults to 10.
+            k_folds (int, optional): Number of folds for cross-validation. Defaults to 3.
+
+        Returns:
+            float: Average macro F1 score across the k folds.
+        """
+        lr = trial.suggest_float("lr", 1e-5, 1e-2, log=True)
+        batch_size = trial.suggest_categorical("batch_size", [16, 32, 64])
+        optimizer_type = trial.suggest_categorical("optimizer_type", ["adam", "sgd"])
+        rotation = trial.suggest_int("rotation", 0, 20)
+        brightness = trial.suggest_float("brightness", 0.0, 0.3)
+
+        self.train_transformations = self.create_train_transformations(
+            rotation_degree=rotation,
+            brightness=brightness,
+            contrast=0.1,
+            erasing=(0.5, (0.02, 0.15))
+        )
+
+        # Get view dataset(images and labels)
+        view_df = self.subsets[view]
+
+        images = view_df[self.image_column].values
+        classes = view_df[self.class_column].values
+        labels = [self.class_string_dictionary[label] for label in classes]
+
+        # Define transformation for training
+        transformation = self.train_transformations[view]
+
+        skf = StratifiedKFold(n_splits=k_folds, shuffle=True, random_state=21)
+
+        all_f1_scores = []
+
+        for train_idx, val_idx in skf.split(images, labels):
+            train_x = [images[i] for i in train_idx]
+            train_y = [labels[i] for i in train_idx]
+            val_x = [images[i] for i in val_idx]
+            val_y = [labels[i] for i in val_idx]
+
+            train_dataset = ImageDataset(train_x, train_y, transform=transformation)
+            val_dataset = ImageDataset(val_x, val_y, transform=transformation)
+            train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
+            val_loader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False)
+
+            self.models[view] = self.load_model()
+            f1 = self.alt_hyperparameter_training_evaluation(
+                num_epochs=num_epochs,
+                train_loader=train_loader,
+                test_loader=val_loader,
+                view=view,
+                lr=lr,
+                optimizer_type=optimizer_type
+            )
+            all_f1_scores.append(f1)
+            # Clear model and loaders
+            del train_loader, val_loader
+            del self.models[view]
+            # clear GPU memory
+            torch.cuda.empty_cache()
+            gc.collect()
+
+        avg_f1 = np.mean(all_f1_scores)
+        return avg_f1
+
+    def run_optuna_study(self, view, n_trials=20):
+        """
+        Run an Optuna hyperparameter optimization study for a specified view.
+
+        Creates and runs an Optuna study to maximize the macro F1 score by
+        tuning hyperparameters for the model associated with the given view.
+        Prints and returns the best hyperparameters found.
+
+        Args:
+            view (str): Identifier for the model/view to optimize.
+            n_trials (int, optional): Number of Optuna trials to run. Defaults to 20.
+
+        Returns:
+            dict: Best hyperparameters found by the study.
+        """
+        study = optuna.create_study(direction="maximize")
+        study.optimize(lambda trial: self.objective(trial, view), n_trials=n_trials)
+
+        print(f"Best trial for view {view}:")
+        print(f"F1 Score: {100 * study.best_value:.2f}%")
+        print("Best hyperparameters:", study.best_params)
+        return study.best_params
 
     def load_model(self):
         """
