@@ -70,6 +70,7 @@ def signup_view(request):
             user = form.save(commit=False)
             password = form.cleaned_data.get("password")
             user.set_password(password)
+            user.name = form.cleaned_data.get("name")
             user.save()
             new_user = authenticate(email=user.email, password=password)
             if new_user:
