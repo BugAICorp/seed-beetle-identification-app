@@ -1,14 +1,15 @@
 from django.contrib import admin
+from django.urls import path
 from django.utils.html import format_html
 from django.utils.safestring import mark_safe
 
 # Register your models here.
-from .models import SpecimenUpload, Image
-from .models import KnownSpecies
-from .models import Genus
+from .models import SpecimenUpload, Image, KnownSpecies, Genus, TrainingDatabase, User, ValidClasses
 
 admin.site.register(KnownSpecies)
 admin.site.register(Genus)
+admin.site.register(TrainingDatabase)
+admin.site.register(User)
 
 
 @admin.register(SpecimenUpload)
@@ -89,3 +90,10 @@ class SpecimenUploadAdmin(admin.ModelAdmin):
             return "No images available."
         return mark_safe(html)
     display_all_images.short_description = 'Specimen Images'
+
+
+@admin.register(ValidClasses)
+class ValidClassesAdmin(admin.ModelAdmin):
+    def delete_queryset(self, request, queryset):
+        for obj in queryset:
+            obj.delete()

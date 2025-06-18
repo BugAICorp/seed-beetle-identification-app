@@ -146,6 +146,9 @@ class KnownSpecies(models.Model):
     species_name = models.CharField(max_length=255, unique=True)
     resource_link = models.URLField(blank=True, null=True)
 
+    class Meta:
+        verbose_name_plural = "Known Species"
+
     def __str__(self):
         return self.species_name
 
@@ -155,5 +158,40 @@ class Genus(models.Model):
     genus_name = models.CharField(max_length=255, unique=True)
     resource_link = models.URLField(blank=True, null=True)
 
+    class Meta:
+        verbose_name_plural = "Genera"
+
     def __str__(self):
         return self.genus_name
+
+
+class TrainingDatabase(models.Model):
+    genus = models.CharField(max_length=32)
+    species = models.CharField(max_length=80)
+    uniqueid = models.CharField(max_length=100, unique=True)
+    view = models.CharField(max_length=4)
+    specimenid = models.CharField(max_length=255)
+    image = models.BinaryField()
+
+    class Meta:
+        verbose_name_plural = "Training Database"
+        verbose_name = "training entry"
+
+    def __str__(self):
+        return f"{self.specimenid} - {self.view}"
+
+
+class ValidClasses(models.Model):
+    genus = models.CharField(max_length=32)
+    species = models.CharField(max_length=80)
+
+    class Meta:
+        verbose_name_plural = "Classes used for training"
+        verbose_name = "allowed genus/species"
+
+    def delete(self, *args, **kwargs):
+        TrainingDatabase.objects.filter(species=self.species).delete()
+        super().delete(*args, **kwargs)
+
+    def __str__(self):
+        return f"{self.genus} {self.species}"

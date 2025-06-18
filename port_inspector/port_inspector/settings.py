@@ -32,17 +32,16 @@ ALLOWED_HOSTS = [
     'port-inspector-app.dedyn.io',
 ]
 
-
 # Application definition
 
 INSTALLED_APPS = [
+    'port_inspector_app',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'port_inspector_app'
 ]
 
 MIDDLEWARE = [
