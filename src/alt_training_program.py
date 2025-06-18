@@ -450,7 +450,7 @@ class AltTrainingProgram:
         model = model.to(self.device)
 
         return model
-    
+
     def save_models(self, model_filenames = None, height_filename = None,
                     class_dict_filename = None, accuracy_dict_filename = None):
         """
