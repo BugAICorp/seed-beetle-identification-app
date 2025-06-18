@@ -10,3 +10,4 @@ omit =
     src/genus_specific_simulator.py
     src/one_of_each_simulator.py
     src/hyperparameter_simulator.py
+    src/alt_hyperparameter_simulator.py
