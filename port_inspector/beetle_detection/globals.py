@@ -1,4 +1,4 @@
-""" globals.py 
+""" globals.py
 
 When adding new files to the project in the categories of: Models, Transformations, Model Trackers;
 Add a variable here with the full path of the file so that the code will only show a simple variable
@@ -37,19 +37,19 @@ spec_dors_caud_model = "src/models/alt_spec_dors_caud.pth"
 spec_all_model = "src/models/alt_spec_all.pth"
 spec_dors_late_model = "src/models/alt_spec_dors_late.pth"
 alt_spec_class_dictionary = "src/models/alt_spec_dict.json"
-alt_spec_accuracy_list =  "src/models/alt_spec_accuracies.json"
+alt_spec_accuracy_list = "src/models/alt_spec_accuracies.json"
 
 # Alternate Genus Files
 gen_dors_caud_model = "src/models/alt_gen_dors_caud.pth"
 gen_all_model = "src/models/alt_gen_all.pth"
 gen_dors_late_model = "src/models/alt_gen_dors_late.pth"
 alt_gen_class_dictionary = "src/models/alt_gen_dict.json"
-alt_gen_accuracy_list =  "src/models/alt_gen_accuracies.json"
+alt_gen_accuracy_list = "src/models/alt_gen_accuracies.json"
 
 # Alternate Transformation Files
 all_transformations = "src/models/all_transformation.pth"
 dors_caud_transformation = "src/models/dors_caud_transformation.pth"
 dors_late_transformation = "src/models/dors_late_transformation.pth"
 
-#Genus Model Tracked Files
+# Genus Model Tracked Files
 genus_specific_accuracies = "src/genus_models/genus_specific_accuracies.json"
