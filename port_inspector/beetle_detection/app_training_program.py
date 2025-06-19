@@ -294,7 +294,7 @@ class TrainingProgram:
         for view in views:
             if view in model_filenames and model_filenames[view] and update_flags[view]:
                 file = model_filenames[view]
-                torch.save(self.models[view].state_dict(), file)
+                torch.save(self.models[view].state_dict(), os.path.join(os.path.dirname(os.path.abspath(__file__)),file))
                 self.save_transformation(self.transformations[view], view)
                 print(f"{view} model weights saved to {file}")
 

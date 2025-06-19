@@ -6,30 +6,30 @@ rather than joining the path in the code.
 (Please check spelling to ensure easy access as well)
 """
 training_database = "training.db"
-class_list = "src/models/class_list.txt"
-img_height = "src/models/height.txt"
+class_list = "class_list.txt"
+img_height = "height.txt"
 
 # Species Files
-spec_caud_model = "src/models/spec_caud.pth"
-spec_dors_model = "src/models/spec_dors.pth"
-spec_fron_model = "src/models/spec_fron.pth"
-spec_late_model = "src/models/spec_late.pth"
-spec_class_dictionary = "src/models/spec_dict.json"
-spec_accuracy_list = "src/models/spec_accuracies.json"
+spec_caud_model = "spec_caud.pth"
+spec_dors_model = "spec_dors.pth"
+spec_fron_model = "spec_fron.pth"
+spec_late_model = "spec_late.pth"
+spec_class_dictionary = "spec_dict.json"
+spec_accuracy_list = "spec_accuracies.json"
 
 # Genus Files
-gen_caud_model = "src/models/gen_caud.pth"
-gen_dors_model = "src/models/gen_dors.pth"
-gen_fron_model = "src/models/gen_fron.pth"
-gen_late_model = "src/models/gen_late.pth"
-gen_class_dictionary = "src/models/gen_dict.json"
-gen_accuracy_list = "src/models/gen_accuracies.json"
+gen_caud_model = "gen_caud.pth"
+gen_dors_model = "gen_dors.pth"
+gen_fron_model = "gen_fron.pth"
+gen_late_model = "gen_late.pth"
+gen_class_dictionary = "gen_dict.json"
+gen_accuracy_list = "gen_accuracies.json"
 
 # Transformation Files
-caud_transformation = "src/models/caud_transformation.pth"
-dors_transformation = "src/models/dors_transformation.pth"
-fron_transformation = "src/models/fron_transformation.pth"
-late_transformation = "src/models/late_transformation.pth"
+caud_transformation = "caud_transformation.pth"
+dors_transformation = "dors_transformation.pth"
+fron_transformation = "fron_transformation.pth"
+late_transformation = "late_transformation.pth"
 
 # Alternate Species Files
 alt_img_height = "src/models/alt_height.txt"

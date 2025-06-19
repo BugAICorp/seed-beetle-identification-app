@@ -14,6 +14,8 @@ if "runserver" in sys.argv:
 
     BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
+    import globals
+
     # read json to see size of outputs
     spec_dict_path = os.path.join(BASE_DIR, "spec_dict.json")
     with open(spec_dict_path, 'r', encoding='utf-8') as spec_dict:
@@ -102,6 +104,26 @@ def retrain_models():
 
     species_tp.train_resnet_model(20, 'late')
     genus_tp.train_resnet_model(20, 'late')
+    species_tp.train_resnet_model(20, 'dors')
+    genus_tp.train_resnet_model(20, 'dors')
+    species_tp.train_resnet_model(20, 'fron')
+    genus_tp.train_resnet_model(20, 'fron')
+    species_tp.train_resnet_model(20, 'caud')
+    genus_tp.train_resnet_model(20, 'caud')
+
+    species_model_filenames = {
+        "caud" : globals.spec_caud_model,
+        "dors" : globals.spec_dors_model,
+        "fron" : globals.spec_fron_model,
+        "late" : globals.spec_late_model
+    }
+
+    species_tp.save_models(
+        species_model_filenames,
+        globals.img_height,
+        globals.spec_class_dictionary,
+        globals.spec_accuracy_list
+    )
 
 
 def refresh_database():
