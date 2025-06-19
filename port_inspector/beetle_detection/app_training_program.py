@@ -113,7 +113,11 @@ class TrainingProgram:
 
         Return: pd.DataFrame: Subset of database if column value valid, otherwise empty dataframe
         """
-        return dataframe.filter(view=view_type)
+        filtered_set = dataframe.filter(view=view_type)
+        if not filtered_set.exists():
+            return TrainingDatabase.objects.none()
+
+        return filtered_set
 
     def create_train_transformations(
             self, rotation_degree=5, brightness=0.1, contrast=0.1, erasing=(0.5, (0.02, 0.15))):
