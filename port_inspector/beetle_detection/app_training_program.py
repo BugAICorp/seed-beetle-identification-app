@@ -20,7 +20,6 @@ os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'port_inspector.settings')
 django.setup()
 
 
-
 # pylint: disable=too-many-instance-attributes, too-many-arguments, too-many-positional-arguments, unspecified-encoding too-many-public-methods
 class TrainingProgram:
     """
