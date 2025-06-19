@@ -283,12 +283,6 @@ def profile_view(request):
     return render(request, 'profile.html', context)
 
 
-def long_task():
-    import time
-    time.sleep(10)
-    print("Done")
-
-
 @staff_member_required
 def run_custom_task(request):
     threading.Thread(target=species_eval.retrain_models).start()

@@ -22,6 +22,7 @@ os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'port_inspector.settings')
 django.setup()
 from port_inspector_app.models import TrainingDatabase
 
+
 # pylint: disable=too-many-instance-attributes, too-many-arguments, too-many-positional-arguments, unspecified-encoding too-many-public-methods
 class TrainingProgram:
     """
@@ -45,10 +46,10 @@ class TrainingProgram:
         self.class_column = class_column
         # subsets to save database reading to
         self.subsets = {
-            "caud" : self.get_subset("CAUD", self.dataframe),
-            "dors" : self.get_subset("DORS", self.dataframe),
-            "fron" : self.get_subset("FRON", self.dataframe),
-            "late" : self.get_subset("LATE", self.dataframe)
+            "caud": self.get_subset("CAUD", self.dataframe),
+            "dors": self.get_subset("DORS", self.dataframe),
+            "fron": self.get_subset("FRON", self.dataframe),
+            "late": self.get_subset("LATE", self.dataframe)
         }
         # Set device to a CUDA-compatible gpu, else mps, else cpu
         self.device = torch.device(
@@ -56,10 +57,10 @@ class TrainingProgram:
             else 'mps' if torch.backends.mps.is_built()
             else 'cpu')
         self.models = {
-            "caud" : self.load_model(),
-            "dors" : self.load_model(),
-            "fron" : self.load_model(),
-            "late" : self.load_model()
+            "caud": self.load_model(),
+            "dors": self.load_model(),
+            "fron": self.load_model(),
+            "late": self.load_model()
         }
         # Dictionary variables
         self.class_index_dictionary = {}
@@ -67,10 +68,10 @@ class TrainingProgram:
         self.class_set = set()
         # Model accuracy dictionary
         self.model_accuracies = {
-            "caud" : 0,
-            "dors" : 0,
-            "fron" : 0,
-            "late" : 0
+            "caud": 0,
+            "dors": 0,
+            "fron": 0,
+            "late": 0
         }
 
         classes = self.dataframe.values_list(self.class_column, flat=True)
@@ -83,36 +84,36 @@ class TrainingProgram:
 
         # Create transformation method dictionary
         self.transformations = {
-            "caud": transforms.Compose([
-        transforms.Resize((self.height, self.height)),
-        transforms.ToTensor(),
-        HistogramEqualization(),
-        transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])]),
-            "dors": transforms.Compose([
-        transforms.Resize((self.height, self.height)),
-        transforms.ToTensor(),
-        HistogramEqualization(),
-        transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])]),
-            "fron": transforms.Compose([
-        transforms.Resize((self.height, self.height)),
-        transforms.ToTensor(),
-        HistogramEqualization(),
-        transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])]),
-            "late": transforms.Compose([
-        transforms.Resize((self.height, self.height)),
-        transforms.ToTensor(),
-        transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])])
+                "caud": transforms.Compose([
+            transforms.Resize((self.height, self.height)),
+            transforms.ToTensor(),
+            HistogramEqualization(),
+            transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])]),
+                "dors": transforms.Compose([
+            transforms.Resize((self.height, self.height)),
+            transforms.ToTensor(),
+            HistogramEqualization(),
+            transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])]),
+                "fron": transforms.Compose([
+            transforms.Resize((self.height, self.height)),
+            transforms.ToTensor(),
+            HistogramEqualization(),
+            transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])]),
+                "late": transforms.Compose([
+            transforms.Resize((self.height, self.height)),
+            transforms.ToTensor(),
+            transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])])
         }
 
         self.train_transformations = self.create_train_transformations(
-            rotation_degree=5,brightness=0.1, contrast=0.1, erasing=(0.5, (0.02, 0.15)))
+            rotation_degree=5, brightness=0.1, contrast=0.1, erasing=(0.5, (0.02, 0.15)))
 
     def get_subset(self, view_type, dataframe):
         """
         Reads database and pulls subset where View column is equal to parameter, view_type
-        
+
         Args: view_type (string): View type column value (e.g., 'CAUD', 'DORS', 'FRON', 'LATE')
-       
+
         Return: pd.DataFrame: Subset of database if column value valid, otherwise empty dataframe
         """
         return dataframe.filter(view=view_type)
@@ -131,7 +132,7 @@ class TrainingProgram:
             erasing (tuple): A tuple (p, scale), where:
                              - p (float): Probability of applying random erasing.
                              - scale (tuple of float): Range of proportion of erased area against input image.
-        
+
         Returns:
             dict: A dictionary of transformation pipelines with keys corresponding to their respective image views.
         """
@@ -183,7 +184,7 @@ class TrainingProgram:
         # Split subset into training and testing sets
         # x: images, y: species
         train_x, test_x, train_y, test_y = train_test_split(
-        image_binaries, labels, test_size=0.2, random_state=42)
+            image_binaries, labels, test_size=0.2, random_state=42)
         return [train_x, test_x, train_y, test_y]
 
     def training_evaluation_resnet(self, num_epochs, train_loader, test_loader, view):
@@ -279,11 +280,11 @@ class TrainingProgram:
         self.training_evaluation_resnet(num_epochs, training_loader, testing_loader, view)
 
 
-    def save_models(self, model_filenames = None, height_filename = None,
-                    class_dict_filename = None, accuracy_dict_filename = None):
+    def save_models(self, model_filenames=None, height_filename=None,
+                    class_dict_filename=None, accuracy_dict_filename=None):
         """
         Saves trained models to their respective files and image height file
-        
+
         Returns: None
         """
         # Update/Initialize Model Accuracy Dictionary
@@ -294,7 +295,7 @@ class TrainingProgram:
         for view in views:
             if view in model_filenames and model_filenames[view] and update_flags[view]:
                 file = model_filenames[view]
-                torch.save(self.models[view].state_dict(), os.path.join(os.path.dirname(os.path.abspath(__file__)),file))
+                torch.save(self.models[view].state_dict(), os.path.join(os.path.dirname(os.path.abspath(__file__)), file))
                 self.save_transformation(self.transformations[view], view)
                 print(f"{view} model weights saved to {file}")
 
@@ -305,17 +306,17 @@ class TrainingProgram:
             print(f"Dictionary saved to {class_dict_filename}")
 
         if height_filename:
-            with open(os.path.join(os.path.dirname(os.path.abspath(__file__)),height_filename), "w") as file:
+            with open(os.path.join(os.path.dirname(os.path.abspath(__file__)), height_filename), "w") as file:
                 file.write(str(self.height))
             print(f"Height saved to {height_filename}.")
 
-    def update_accuracies(self, accuracy_dict_filename = None):
+    def update_accuracies(self, accuracy_dict_filename=None):
         """
-        Reads in the previously saved model accuracies(if exists), and updates and saves 
+        Reads in the previously saved model accuracies(if exists), and updates and saves
         accuracy dictionary if accuracies increased during training. If model accuracies
         dictionary does not exist, then it initializes with training values or 0 if that
         model was not trained.
-        
+
         Returns: update_flags - dictionary that tracks which models should update their weights
         """
 
@@ -371,6 +372,7 @@ class TrainingProgram:
         with open(os.path.join(os.path.dirname(os.path.abspath(__file__)), f"{angle}_transformation.pth"), "wb") as f:
             dill.dump(transformation, f)
 
+
 # Custom Dataset class for loading images from binary data
 class ImageDataset(Dataset):
     """
@@ -379,7 +381,7 @@ class ImageDataset(Dataset):
     Arguments:
         image_binaries (0'b): image file in binary values
         label (str): species label of image
-        transform (transforms.Compose): transform of image to be able 
+        transform (transforms.Compose): transform of image to be able
         to input into model
     """
     def __init__(self, image_binaries, label, transform=None):
