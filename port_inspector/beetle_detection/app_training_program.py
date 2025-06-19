@@ -1,4 +1,3 @@
-""" app_training_program.py """
 import os
 import sys
 import json
@@ -84,25 +83,25 @@ class TrainingProgram:
 
         # Create transformation method dictionary
         self.transformations = {
-                "caud": transforms.Compose([
-            transforms.Resize((self.height, self.height)),
-            transforms.ToTensor(),
-            HistogramEqualization(),
-            transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])]),
-                "dors": transforms.Compose([
-            transforms.Resize((self.height, self.height)),
-            transforms.ToTensor(),
-            HistogramEqualization(),
-            transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])]),
-                "fron": transforms.Compose([
-            transforms.Resize((self.height, self.height)),
-            transforms.ToTensor(),
-            HistogramEqualization(),
-            transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])]),
-                "late": transforms.Compose([
-            transforms.Resize((self.height, self.height)),
-            transforms.ToTensor(),
-            transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])])
+            "caud": transforms.Compose([
+                transforms.Resize((self.height, self.height)),
+                transforms.ToTensor(),
+                HistogramEqualization(),
+                transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])]),
+            "dors": transforms.Compose([
+                transforms.Resize((self.height, self.height)),
+                transforms.ToTensor(),
+                HistogramEqualization(),
+                transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])]),
+            "fron": transforms.Compose([
+                transforms.Resize((self.height, self.height)),
+                transforms.ToTensor(),
+                HistogramEqualization(),
+                transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])]),
+            "late": transforms.Compose([
+                transforms.Resize((self.height, self.height)),
+                transforms.ToTensor(),
+                transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])])
         }
 
         self.train_transformations = self.create_train_transformations(
@@ -278,7 +277,6 @@ class TrainingProgram:
         testing_loader = DataLoader(test_dataset, batch_size=32, shuffle=False)
 
         self.training_evaluation_resnet(num_epochs, training_loader, testing_loader, view)
-
 
     def save_models(self, model_filenames=None, height_filename=None,
                     class_dict_filename=None, accuracy_dict_filename=None):
