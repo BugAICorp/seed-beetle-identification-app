@@ -97,7 +97,11 @@ def retrain_models():
     """
     Script for running retraining of models
     """
-    pass
+    species_tp = TrainingProgram('species', 'image')
+    genus_tp = TrainingProgram('genus', 'image')
+
+    species_tp.train_resnet_model(20, 'late')
+    genus_tp.train_resnet_model(20, 'late')
 
 
 def refresh_database():
