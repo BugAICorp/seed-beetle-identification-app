@@ -9,6 +9,7 @@ if "runserver" in sys.argv:
     from .evaluation_method import EvaluationMethod
     from .genus_evaluation_method import GenusEvaluationMethod
     from .data_converter import DjangoTrainingDatabaseConverter
+    from .app_training_program import TrainingProgram
     from django.conf import settings
 
     BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -90,3 +91,17 @@ def evaluate_images(late_path, dors_path, fron_path, caud_path):
     top_genus = top_genus[0], top_genus[1]*100.0
 
     return top_5_species, top_genus
+
+
+def retrain_models():
+    """
+    Script for running retraining of models
+    """
+    pass
+
+
+def refresh_database():
+    """
+    Method to be called upon saving a new valid class
+    """
+    dbr.conversion()
