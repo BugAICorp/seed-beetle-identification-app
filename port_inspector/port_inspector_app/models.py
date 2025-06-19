@@ -189,6 +189,11 @@ class ValidClasses(models.Model):
         verbose_name_plural = "Classes used for training"
         verbose_name = "allowed genus/species"
 
+    def save(self, *args, **kwargs):
+        from beetle_detection import species_eval
+        super().save(*args, **kwargs)
+        species_eval.refresh_database()
+
     def delete(self, *args, **kwargs):
         TrainingDatabase.objects.filter(species=self.species).delete()
         super().delete(*args, **kwargs)

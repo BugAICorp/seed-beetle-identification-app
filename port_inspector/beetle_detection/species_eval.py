@@ -9,9 +9,12 @@ if "runserver" in sys.argv:
     from .evaluation_method import EvaluationMethod
     from .genus_evaluation_method import GenusEvaluationMethod
     from .data_converter import DjangoTrainingDatabaseConverter
+    from .app_training_program import TrainingProgram
     from django.conf import settings
 
     BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
+    import globals
 
     # read json to see size of outputs
     spec_dict_path = os.path.join(BASE_DIR, "spec_dict.json")
@@ -90,3 +93,41 @@ def evaluate_images(late_path, dors_path, fron_path, caud_path):
     top_genus = top_genus[0], top_genus[1]*100.0
 
     return top_5_species, top_genus
+
+
+def retrain_models():
+    """
+    Script for running retraining of models
+    """
+    species_tp = TrainingProgram('species', 'image')
+    genus_tp = TrainingProgram('genus', 'image')
+
+    species_tp.train_resnet_model(20, 'late')
+    genus_tp.train_resnet_model(20, 'late')
+    species_tp.train_resnet_model(20, 'dors')
+    genus_tp.train_resnet_model(20, 'dors')
+    species_tp.train_resnet_model(20, 'fron')
+    genus_tp.train_resnet_model(20, 'fron')
+    species_tp.train_resnet_model(20, 'caud')
+    genus_tp.train_resnet_model(20, 'caud')
+
+    species_model_filenames = {
+        "caud" : globals.spec_caud_model,
+        "dors" : globals.spec_dors_model,
+        "fron" : globals.spec_fron_model,
+        "late" : globals.spec_late_model
+    }
+
+    species_tp.save_models(
+        species_model_filenames,
+        globals.img_height,
+        globals.spec_class_dictionary,
+        globals.spec_accuracy_list
+    )
+
+
+def refresh_database():
+    """
+    Method to be called upon saving a new valid class
+    """
+    dbr.conversion()
