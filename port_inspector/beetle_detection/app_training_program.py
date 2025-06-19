@@ -2,10 +2,6 @@ import globals
 import os
 import sys
 import django
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'port_inspector.settings')
-django.setup()
-from port_inspector_app.models import TrainingDatabase
 import json
 import copy
 from io import BytesIO
@@ -18,6 +14,11 @@ import dill
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import f1_score
 from transformation_classes import HistogramEqualization
+from port_inspector_app.models import TrainingDatabase
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'port_inspector.settings')
+django.setup()
+
 
 
 # pylint: disable=too-many-instance-attributes, too-many-arguments, too-many-positional-arguments, unspecified-encoding too-many-public-methods
