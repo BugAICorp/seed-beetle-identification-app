@@ -2,6 +2,10 @@ from django.contrib import admin
 from django.urls import path
 from django.utils.html import format_html
 from django.utils.safestring import mark_safe
+import os
+import uuid
+from io import BytesIO
+from PIL import Image as img
 
 # Register your models here.
 from .models import SpecimenUpload, Image, KnownSpecies, Genus, TrainingDatabase, User, ValidClasses
@@ -12,15 +16,90 @@ admin.site.register(TrainingDatabase)
 admin.site.register(User)
 
 
+@admin.action(description="Transfer to Training Database")
+def add_to_trainingdb(modeladmin, request, queryset):
+    base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '../../'))
+    dir = os.path.join(base_dir, "dataset")
+    for obj in queryset:
+        # Check that the object is not already in the dataset and has been validated
+        if obj.in_training:
+            continue
+        if not obj.is_validated:
+            continue
+
+        # Generate a new id for the specimen and parse its classication
+        new_uid = str(uuid.uuid4())
+        parsed_field = obj.final_identification.split(' ')
+        if len(parsed_field) != 2:
+            continue
+        # Checks to see if the classification is meant to be trained with
+        if not ValidClasses.objects.filter(genus=parsed_field[0]).exists() and not ValidClasses.objects.filter(species=parsed_field[1]).exists():
+            continue 
+        # Update object to remember it has been added already
+        obj.in_training = True
+        obj.save()
+
+        # Check each of four possible images and add to training database
+        if obj.frontal_image and obj.frontal_image.image:
+            image_binary = obj.frontal_image.image.read()
+            TrainingDatabase.objects.create(
+                genus=parsed_field[0],
+                species=parsed_field[1],
+                uniqueid=new_uid+"FRON",
+                view="FRON",
+                specimenid=new_uid,
+                image=image_binary
+            )
+            pil_img = img.open(BytesIO(image_binary)).convert("RGB")
+            pil_img.save(os.path.join(dir, f"{parsed_field[0]} {parsed_field[1]} {new_uid} USER FRON.jpg"), format="JPEG")
+        if obj.caudal_image and obj.caudal_image.image:
+            image_binary = obj.caudal_image.image.read()
+            TrainingDatabase.objects.create(
+                genus=parsed_field[0],
+                species=parsed_field[1],
+                uniqueid=new_uid+"CAUD",
+                view="CAUD",
+                specimenid=new_uid,
+                image=image_binary
+            )
+            pil_img = img.open(BytesIO(image_binary)).convert("RGB")
+            pil_img.save(os.path.join(dir, f"{parsed_field[0]} {parsed_field[1]} {new_uid} USER CAUD.jpg"), format="JPEG")
+        if obj.dorsal_image and obj.dorsal_image.image:
+            image_binary = obj.dorsal_image.image.read()
+            TrainingDatabase.objects.create(
+                genus=parsed_field[0],
+                species=parsed_field[1],
+                uniqueid=new_uid+"DORS",
+                view="DORS",
+                specimenid=new_uid,
+                image=image_binary
+            )
+            pil_img = img.open(BytesIO(image_binary)).convert("RGB")
+            pil_img.save(os.path.join(dir, f"{parsed_field[0]} {parsed_field[1]} {new_uid} USER DORS.jpg"), format="JPEG")
+        if obj.lateral_image and obj.lateral_image.image:
+            image_binary = obj.lateral_image.image.read()
+            TrainingDatabase.objects.create(
+                genus=parsed_field[0],
+                species=parsed_field[1],
+                uniqueid=new_uid+"LATE",
+                view="LATE",
+                specimenid=new_uid,
+                image=image_binary
+            )
+            pil_img = img.open(BytesIO(image_binary)).convert("RGB")
+            pil_img.save(os.path.join(dir, f"{parsed_field[0]} {parsed_field[1]} {new_uid} USER LATE.jpg"), format="JPEG")
+
+
 @admin.register(SpecimenUpload)
 class SpecimenUploadAdmin(admin.ModelAdmin):
     """
     Add formatting for the specimen upload view on the admin page
     """
     list_display = ('id', 'formatted_genus', 'formatted_species', 'final_identification', 'display_all_images')
-    list_filter = ('final_identification', )
+    list_filter = ('final_identification', 'is_validated', )
     readonly_fields = ['display_all_images', 'formatted_genus', 'formatted_species']
-    fields = ('display_all_images', 'formatted_genus', 'formatted_species', 'final_identification')
+    fields = ('display_all_images', 'formatted_genus', 'formatted_species', 'final_identification', 'is_validated')
+    actions = [add_to_trainingdb]
 
     def formatted_genus(self, obj):
         """

@@ -81,6 +81,8 @@ class SpecimenUpload(models.Model):
 
     genus = models.JSONField(default=default_genus)
     species = models.JSONField(default=default_species)
+    in_training = models.BooleanField(default=False)
+    is_validated = models.BooleanField(default=False)
 
     final_identification = models.TextField()
 
