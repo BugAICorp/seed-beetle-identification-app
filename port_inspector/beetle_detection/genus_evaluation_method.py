@@ -236,30 +236,32 @@ class GenusEvaluationMethod:
     def weighted_eval(self, conf_scores, genus_predictions, weights, view_count):
         """
         Takes the classifications of the models and combines them based on programmer determined
-        weights to create a single output
+        weights to create a single output, ignoring OOD (unknown) predictions.
 
         Returns: classification of combined models
         """
 
         genus_scores = {}
         for i in range(view_count):
+            genus = genus_predictions[i]
+            if genus == -1 or genus is None:
+                # Skip so weighted average isn't skewed
+                continue
+
             weighted_score = weights[i] * conf_scores[i]
-
-            if genus_predictions[i] in genus_scores:
-                genus_scores[genus_predictions[i]] += weighted_score
-
+            if genus in genus_scores:
+                genus_scores[genus] += weighted_score
             else:
-                genus_scores[genus_predictions[i]] = weighted_score
+                genus_scores[genus] = weighted_score
 
-        highest_score = -1
-        highest_species = None
+        if not genus_scores:
+            # If no valid genus predictions, return unknown
+            return "Unknown Genus", 0.0
 
-        for i, j in genus_scores.items():
-            if j > highest_score:
-                highest_score = j
-                highest_species = i
+        highest_species = max(genus_scores, key=genus_scores.get)
+        highest_score = genus_scores[highest_species]
 
-        return self.genus_idx_dict[highest_species], highest_score
+        return self.genus_idx_dict.get(highest_species, "Unknown Species"), highest_score
 
     def stacked_eval(self):
         """
