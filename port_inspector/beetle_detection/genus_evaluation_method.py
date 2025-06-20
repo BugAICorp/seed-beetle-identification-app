@@ -121,11 +121,19 @@ class GenusEvaluationMethod:
                 with torch.no_grad():
                     model_output = self.trained_models[view].to(device)(transformed_image)
 
-                # Get the predicted class and confidence score
-                _, predicted_index = torch.max(model_output, 1)
-                predictions[view]["score"] = torch.nn.functional.softmax(
-                    model_output, dim=1)[0, predicted_index].item()
-                predictions[view]["genus"] = predicted_index.item()
+                # Apply ODIN for out-of-distribution detection
+                # Threshold to be adjusted (If threshold is too strict (try −14) If too lenient (try −10))
+                is_confident, energy, softmax_scores = self.apply_odin(model_output, temperature=1000, threshold=-12.0)
+
+                if is_confident:
+                    # Use the predicted class and softmax confidence
+                    confidence, predicted_index = torch.max(softmax_scores, 0)
+                    predictions[view]["score"] = confidence.item()
+                    predictions[view]["genus"] = predicted_index.item()
+                else:
+                    # Mark as unknown if not confident
+                    predictions[view]["score"] = 0.0
+                    predictions[view]["genus"] = -1  # -1 indicates unknown class
 
         return self.evaluation_handler(predictions, view_count)
 
