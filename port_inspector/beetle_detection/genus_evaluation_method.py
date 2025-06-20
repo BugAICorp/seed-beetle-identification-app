@@ -97,67 +97,35 @@ class GenusEvaluationMethod:
             else 'mps' if torch.backends.mps.is_built()
             else 'cpu')
 
-        #define variables outside the if statements so they can be used in other method calls
+        inputs = {
+            "caud": (caud, self.transformations[0]),
+            "dors": (dors, self.transformations[1]),
+            "fron": (fron, self.transformations[2]),
+            "late": (late, self.transformations[3]),
+        }
+
+        # Define variables outside the if statements so they can be used in other method calls
         predictions = {
             "late" : {"score" : 0, "genus" : None},
             "dors" : {"score" : 0, "genus" : None},
             "fron" : {"score" : 0, "genus" : None},
             "caud" : {"score" : 0, "genus" : None},
         }
-
         view_count = 0
 
-        if late:
-            view_count += 1
-            late_image = self.transform_input(late, self.transformations[3]).to(device)
+        for view, (image, transformation) in inputs.items():
+            if view:
+                view_count += 1
+                transformed_image = self.transform_input(image, transformation).to(device)
 
-            with torch.no_grad():
-                late_output = self.trained_models["late"].to(device)(late_image)
+                with torch.no_grad():
+                    model_output = self.trained_models[view].to(device)(transformed_image)
 
-            # Get the predicted class and confidence score
-            _, predicted_index = torch.max(late_output, 1)
-            predictions["late"]["score"] = torch.nn.functional.softmax(
-                late_output, dim=1)[0, predicted_index].item()
-            predictions["late"]["genus"] = predicted_index.item()
-
-        if dors:
-            view_count += 1
-            #mirrors above usage but for the dors angle
-            dors_image = self.transform_input(dors, self.transformations[1]).to(device)
-
-            with torch.no_grad():
-                dors_output = self.trained_models["dors"].to(device)(dors_image)
-
-            _, predicted_index = torch.max(dors_output, 1)
-            predictions["dors"]["score"] = torch.nn.functional.softmax(
-                dors_output, dim=1)[0, predicted_index].item()
-            predictions["dors"]["genus"] = predicted_index.item()
-
-        if fron:
-            view_count += 1
-            #mirrors above usage but for the fron angle
-            fron_image = self.transform_input(fron, self.transformations[2]).to(device)
-
-            with torch.no_grad():
-                fron_output = self.trained_models["fron"].to(device)(fron_image)
-
-            _, predicted_index = torch.max(fron_output, 1)
-            predictions["fron"]["score"] = torch.nn.functional.softmax(
-                fron_output, dim=1)[0, predicted_index].item()
-            predictions["fron"]["genus"] = predicted_index.item()
-
-        if caud:
-            view_count += 1
-            #mirrors above usage but for the caud angle
-            caud_image = self.transform_input(caud, self.transformations[0]).to(device)
-
-            with torch.no_grad():
-                caud_output = self.trained_models["caud"].to(device)(caud_image)
-
-            _, predicted_index = torch.max(caud_output, 1)
-            predictions["caud"]["score"] = torch.nn.functional.softmax(
-                caud_output, dim=1)[0, predicted_index].item()
-            predictions["caud"]["genus"] = predicted_index.item()
+                # Get the predicted class and confidence score
+                _, predicted_index = torch.max(model_output, 1)
+                predictions[view]["score"] = torch.nn.functional.softmax(
+                    model_output, dim=1)[0, predicted_index].item()
+                predictions[view]["genus"] = predicted_index.item()
 
         return self.evaluation_handler(predictions, view_count)
 
