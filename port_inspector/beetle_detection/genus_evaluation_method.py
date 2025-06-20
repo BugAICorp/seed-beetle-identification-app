@@ -194,36 +194,43 @@ class GenusEvaluationMethod:
 
         Returns: specifies most certain model
         """
-        accs = []
-        use_angle = None
+        view_order = ["fron", "dors", "late", "caud"]
+
         if self.accuracies_filename:
             with open(self.accuracies_filename, 'r', encoding='utf-8') as f:
                 accuracy_dict = json.load(f)
 
-            angle_list = ["fron", "dors", "late", "caud"]
-            acc_dict_reverse = {v:k for k, v in accuracy_dict.items()}
-            for i in conf_scores:
-                if i != 0:
-                    accs.append(accuracy_dict[angle_list[conf_scores.index(i)]])
-            use_angle = acc_dict_reverse[max(accs)]
+            # Only consider views with input   
+            valid_views = []
+            for i, view in enumerate(view_order):
+                if genus_predictions[i] is not None:
+                    # stored as a tuple containing view, index to prediction, model accuracy from dict
+                    valid_views.append((view, i, accuracy_dict[view]))
 
-        elif genus_predictions[1] is not None:
-            use_angle = "dors"
-        elif genus_predictions[3] is not None:
-            use_angle = "caud"
-        elif genus_predictions[0] is not None:
-            use_angle = "fron"
-        elif genus_predictions[2] is not None:
-            use_angle = "late"
+            if not valid_views:
+                return None, -1
 
-        if use_angle == "fron":
-            return self.genus_idx_dict[genus_predictions[0]], conf_scores[0]
-        elif use_angle == "dors":
-            return self.genus_idx_dict[genus_predictions[1]], conf_scores[1]
-        elif use_angle == "late":
-            return self.genus_idx_dict[genus_predictions[2]], conf_scores[2]
-        elif use_angle == "caud":
-            return self.genus_idx_dict[genus_predictions[3]], conf_scores[3]
+            # Pick view with highest accuracy
+            best_view, best_index, _ = max(valid_views, key=lambda x: x[2])
+
+        else:
+            # Fallback priority order
+            priority = ["dors", "late", "caud", "fron"]
+            for view in priority:
+                idx = view_order.index(view)
+                if genus_predictions[idx] is not None:
+                    best_index = idx
+                    break
+            else:
+                return None, -1
+
+        genus = genus_predictions[best_index]
+        score = conf_scores[best_index]
+
+        if genus == -1 or genus not in self.genus_idx_dict:
+            return "Unknown Genus", score
+
+        return self.genus_idx_dict[genus], score
 
 
     def weighted_eval(self, conf_scores, genus_predictions, weights, view_count):
