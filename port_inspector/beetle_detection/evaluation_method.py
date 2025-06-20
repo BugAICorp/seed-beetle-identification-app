@@ -117,6 +117,8 @@ class EvaluationMethod:
                 with torch.no_grad():
                     model_output = self.trained_models[view].to(device)(transformed_image)
 
+                # Apply OOD for out-of-distribution detection
+                # Threshold to be adjusted (If threshold is too strict (try −14) If too lenient (try −10))
                 is_confident, energy, softmax_scores = self.apply_ood(model_output, temperature=1000, threshold=-12.0)
 
                 if not is_confident:
