@@ -93,6 +93,13 @@ class EvaluationMethod:
         device = torch.device('cuda' if torch.cuda.is_available()
                               else 'mps' if torch.backends.mps.is_built() else 'cpu')
 
+        inputs = {
+            "caud": (caud, self.transformations[0]),
+            "dors": (dors, self.transformations[1]),
+            "fron": (fron, self.transformations[2]),
+            "late": (late, self.transformations[3]),
+        }
+
         # Define variables outside the if statements so they can be used in other method calls
         predictions = {
             "late" : {"scores" : None, "species" : None},
@@ -102,63 +109,34 @@ class EvaluationMethod:
         }
         view_count = 0
 
-        if late:
-            view_count += 1
-            late_image = self.transform_input(late, self.transformations[3]).to(device)
+        for view, (image, transform) in inputs.items():
+            if image:
+                view_count += 1
+                transformed_image = self.transform_input(image, transform).to(device)
 
-            with torch.no_grad():
-                late_output = self.trained_models["late"].to(device)(late_image)
+                with torch.no_grad():
+                    model_output = self.trained_models[view].to(device)(transformed_image)
 
-            # Get the predicted top 5 species(or less if not enough outputs) and their indices
-            softmax_scores = torch.nn.functional.softmax(late_output, dim=1)[0]
-            top5_scores, top5_species = torch.topk(softmax_scores, self.k)
+                # Apply OOD for out-of-distribution detection
+                # Threshold to be adjusted (If threshold is too strict (try −14) If too lenient (try −10))
+                is_confident, energy, softmax_scores = self.apply_ood(model_output, temperature=1000, threshold=-12.0)
 
-            # Store top 5 confidence and species as a list to the correct dictionary entry
-            # Index 0 is the highest and 4 is the lowest
-            predictions["late"]["scores"] = top5_scores.tolist()
-            predictions["late"]["species"] = top5_species.tolist()
-
-        if dors:
-            # Mirrors above usage but for the dors angle
-            view_count += 1
-            dors_image = self.transform_input(dors, self.transformations[1]).to(device)
-
-            with torch.no_grad():
-                dors_output = self.trained_models["dors"].to(device)(dors_image)
-
-            softmax_scores = torch.nn.functional.softmax(dors_output, dim=1)[0]
-            top5_scores, top5_species = torch.topk(softmax_scores, self.k)
-
-            predictions["dors"]["scores"] = top5_scores.tolist()
-            predictions["dors"]["species"] = top5_species.tolist()
-
-        if fron:
-            # Mirrors above usage but for the fron angle
-            view_count += 1
-            fron_image = self.transform_input(fron, self.transformations[2]).to(device)
-
-            with torch.no_grad():
-                fron_output = self.trained_models["fron"].to(device)(fron_image)
-
-            softmax_scores = torch.nn.functional.softmax(fron_output, dim=1)[0]
-            top5_scores, top5_species = torch.topk(softmax_scores, self.k)
-
-            predictions["fron"]["scores"] = top5_scores.tolist()
-            predictions["fron"]["species"] = top5_species.tolist()
-
-        if caud:
-            # Mirrors above usage but for the caud angle
-            view_count += 1
-            caud_image = self.transform_input(caud, self.transformations[0]).to(device)
-
-            with torch.no_grad():
-                caud_output = self.trained_models["caud"].to(device)(caud_image)
-
-            softmax_scores = torch.nn.functional.softmax(caud_output, dim=1)[0]
-            top5_scores, top5_species = torch.topk(softmax_scores, self.k)
-
-            predictions["caud"]["scores"] = top5_scores.tolist()
-            predictions["caud"]["species"] = top5_species.tolist()
+                if not is_confident:
+                    # Get the predicted top 5 species(or less if not enough outputs) and their indices
+                    topk = min(self.k - 1, softmax_scores.size(0))
+                    top_scores, top_species = torch.topk(softmax_scores, topk)
+                    # Store unknown and top 4 confidences and species as a list to the correct dictionary entry
+                    # Index 0(unknown) is the highest and 4 is the lowest
+                    predictions[view]["scores"] = [0.0] + top_scores.tolist()
+                    predictions[view]["species"] = [-1] + top_species.tolist()  # -1 means unknown
+                else:
+                    # Get the predicted top 5 species(or less if not enough outputs) and their indices
+                    topk = min(self.k, softmax_scores.size(0))
+                    top_scores, top_species = torch.topk(softmax_scores, topk)
+                    # Store top 5 confidence and species as a list to the correct dictionary entry
+                    # Index 0 is the highest and 4 is the lowest
+                    predictions[view]["scores"] = top_scores.tolist()
+                    predictions[view]["species"] = top_species.tolist()
 
         return self.evaluation_handler(predictions, view_count)
 
@@ -262,10 +240,10 @@ class EvaluationMethod:
         # Change key from index to correct species name
         top_5 = []
         for key, value in sorted_scores:
-            if key in self.species_idx_dict:
-                top_5.append((self.species_idx_dict[key], value))
-            else:
+            if key == -1 or key not in self.species_idx_dict:
                 top_5.append(("Unknown Species", value))
+            else:
+                top_5.append((self.species_idx_dict[key], value))
 
         return top_5
 
@@ -299,10 +277,10 @@ class EvaluationMethod:
         # Change key from index to correct species name
         top_5 = []
         for key, value in sorted_scores:
-            if key in self.species_idx_dict:
-                top_5.append((self.species_idx_dict[key], value))
-            else:
+            if key == -1 or key not in self.species_idx_dict:
                 top_5.append(("Unknown Species", value))
+            else:
+                top_5.append((self.species_idx_dict[key], value))
 
         return top_5
 
@@ -327,3 +305,24 @@ class EvaluationMethod:
         transformed_image = transformed_image.unsqueeze(0)
 
         return transformed_image
+
+    def apply_ood(self, logits, temperature=1000.0, threshold=-10.0):
+        """
+        Applies OOD (out-of-distribution detection) using energy scores.
+
+        Args:
+            logits (Tensor): Raw model outputs.
+            temperature (float): Temperature for scaling.
+            threshold (float): Energy threshold for rejection.
+
+        Returns:
+            Tuple[bool, float, Tensor]: 
+                - is_confident (bool): True if in-distribution, False if likely OOD.
+                - energy_score (float)
+                - softmax_probs (Tensor)
+        """
+        scaled_logits = logits / temperature
+        softmax_probs = torch.nn.functional.softmax(scaled_logits, dim=1)
+        energy_score = -temperature * torch.logsumexp(scaled_logits, dim=1)
+        is_confident = energy_score.item() > threshold  # lower = less confident
+        return is_confident, energy_score.item(), softmax_probs[0]

@@ -97,67 +97,43 @@ class GenusEvaluationMethod:
             else 'mps' if torch.backends.mps.is_built()
             else 'cpu')
 
-        #define variables outside the if statements so they can be used in other method calls
+        inputs = {
+            "caud": (caud, self.transformations[0]),
+            "dors": (dors, self.transformations[1]),
+            "fron": (fron, self.transformations[2]),
+            "late": (late, self.transformations[3]),
+        }
+
+        # Define variables outside the if statements so they can be used in other method calls
         predictions = {
             "late" : {"score" : 0, "genus" : None},
             "dors" : {"score" : 0, "genus" : None},
             "fron" : {"score" : 0, "genus" : None},
             "caud" : {"score" : 0, "genus" : None},
         }
-
         view_count = 0
 
-        if late:
-            view_count += 1
-            late_image = self.transform_input(late, self.transformations[3]).to(device)
+        for view, (image, transformation) in inputs.items():
+            if view:
+                view_count += 1
+                transformed_image = self.transform_input(image, transformation).to(device)
 
-            with torch.no_grad():
-                late_output = self.trained_models["late"].to(device)(late_image)
+                with torch.no_grad():
+                    model_output = self.trained_models[view].to(device)(transformed_image)
 
-            # Get the predicted class and confidence score
-            _, predicted_index = torch.max(late_output, 1)
-            predictions["late"]["score"] = torch.nn.functional.softmax(
-                late_output, dim=1)[0, predicted_index].item()
-            predictions["late"]["genus"] = predicted_index.item()
+                # Apply OOD for out-of-distribution detection
+                # Threshold to be adjusted (If threshold is too strict (try −14) If too lenient (try −10))
+                is_confident, energy, softmax_scores = self.apply_ood(model_output, temperature=1000, threshold=-12.0)
 
-        if dors:
-            view_count += 1
-            #mirrors above usage but for the dors angle
-            dors_image = self.transform_input(dors, self.transformations[1]).to(device)
-
-            with torch.no_grad():
-                dors_output = self.trained_models["dors"].to(device)(dors_image)
-
-            _, predicted_index = torch.max(dors_output, 1)
-            predictions["dors"]["score"] = torch.nn.functional.softmax(
-                dors_output, dim=1)[0, predicted_index].item()
-            predictions["dors"]["genus"] = predicted_index.item()
-
-        if fron:
-            view_count += 1
-            #mirrors above usage but for the fron angle
-            fron_image = self.transform_input(fron, self.transformations[2]).to(device)
-
-            with torch.no_grad():
-                fron_output = self.trained_models["fron"].to(device)(fron_image)
-
-            _, predicted_index = torch.max(fron_output, 1)
-            predictions["fron"]["score"] = torch.nn.functional.softmax(
-                fron_output, dim=1)[0, predicted_index].item()
-            predictions["fron"]["genus"] = predicted_index.item()
-
-        if caud:
-            view_count += 1
-            #mirrors above usage but for the caud angle
-            caud_image = self.transform_input(caud, self.transformations[0]).to(device)
-
-            with torch.no_grad():
-                caud_output = self.trained_models["caud"].to(device)(caud_image)
-
-            _, predicted_index = torch.max(caud_output, 1)
-            predictions["caud"]["score"] = torch.nn.functional.softmax(
-                caud_output, dim=1)[0, predicted_index].item()
-            predictions["caud"]["genus"] = predicted_index.item()
+                if is_confident:
+                    # Use the predicted class and softmax confidence
+                    confidence, predicted_index = torch.max(softmax_scores, 0)
+                    predictions[view]["score"] = confidence.item()
+                    predictions[view]["genus"] = predicted_index.item()
+                else:
+                    # Mark as unknown if not confident
+                    predictions[view]["score"] = 0.0
+                    predictions[view]["genus"] = -1  # -1 indicates unknown class
 
         return self.evaluation_handler(predictions, view_count)
 
@@ -218,65 +194,74 @@ class GenusEvaluationMethod:
 
         Returns: specifies most certain model
         """
-        accs = []
-        use_angle = None
+        view_order = ["fron", "dors", "late", "caud"]
+
         if self.accuracies_filename:
             with open(self.accuracies_filename, 'r', encoding='utf-8') as f:
                 accuracy_dict = json.load(f)
 
-            angle_list = ["fron", "dors", "late", "caud"]
-            acc_dict_reverse = {v:k for k, v in accuracy_dict.items()}
-            for i in conf_scores:
-                if i != 0:
-                    accs.append(accuracy_dict[angle_list[conf_scores.index(i)]])
-            use_angle = acc_dict_reverse[max(accs)]
+            # Only consider views with input   
+            valid_views = []
+            for i, view in enumerate(view_order):
+                if genus_predictions[i] is not None:
+                    # stored as a tuple containing view, index to prediction, model accuracy from dict
+                    valid_views.append((view, i, accuracy_dict[view]))
 
-        elif genus_predictions[1] is not None:
-            use_angle = "dors"
-        elif genus_predictions[3] is not None:
-            use_angle = "caud"
-        elif genus_predictions[0] is not None:
-            use_angle = "fron"
-        elif genus_predictions[2] is not None:
-            use_angle = "late"
+            if not valid_views:
+                return None, -1
 
-        if use_angle == "fron":
-            return self.genus_idx_dict[genus_predictions[0]], conf_scores[0]
-        elif use_angle == "dors":
-            return self.genus_idx_dict[genus_predictions[1]], conf_scores[1]
-        elif use_angle == "late":
-            return self.genus_idx_dict[genus_predictions[2]], conf_scores[2]
-        elif use_angle == "caud":
-            return self.genus_idx_dict[genus_predictions[3]], conf_scores[3]
+            # Pick view with highest accuracy
+            best_view, best_index, _ = max(valid_views, key=lambda x: x[2])
+
+        else:
+            # Fallback priority order
+            priority = ["dors", "late", "caud", "fron"]
+            for view in priority:
+                idx = view_order.index(view)
+                if genus_predictions[idx] is not None:
+                    best_index = idx
+                    break
+            else:
+                return None, -1
+
+        genus = genus_predictions[best_index]
+        score = conf_scores[best_index]
+
+        if genus == -1 or genus not in self.genus_idx_dict:
+            return "Unknown Genus", score
+
+        return self.genus_idx_dict[genus], score
 
 
     def weighted_eval(self, conf_scores, genus_predictions, weights, view_count):
         """
         Takes the classifications of the models and combines them based on programmer determined
-        weights to create a single output
+        weights to create a single output, ignoring OOD (unknown) predictions.
 
         Returns: classification of combined models
         """
 
         genus_scores = {}
         for i in range(view_count):
+            genus = genus_predictions[i]
+            if genus == -1 or genus is None:
+                # Skip so weighted average isn't skewed
+                continue
+
             weighted_score = weights[i] * conf_scores[i]
-
-            if genus_predictions[i] in genus_scores:
-                genus_scores[genus_predictions[i]] += weighted_score
-
+            if genus in genus_scores:
+                genus_scores[genus] += weighted_score
             else:
-                genus_scores[genus_predictions[i]] = weighted_score
+                genus_scores[genus] = weighted_score
 
-        highest_score = -1
-        highest_species = None
+        if not genus_scores:
+            # If no valid genus predictions, return unknown
+            return "Unknown Genus", 0.0
 
-        for i, j in genus_scores.items():
-            if j > highest_score:
-                highest_score = j
-                highest_species = i
+        highest_species = max(genus_scores, key=genus_scores.get)
+        highest_score = genus_scores[highest_species]
 
-        return self.genus_idx_dict[highest_species], highest_score
+        return self.genus_idx_dict.get(highest_species, "Unknown Species"), highest_score
 
     def stacked_eval(self):
         """
@@ -298,3 +283,24 @@ class GenusEvaluationMethod:
         transformed_image = transformed_image.unsqueeze(0)
 
         return transformed_image
+
+    def apply_ood(self, logits, temperature=1000.0, threshold=-10.0):
+        """
+        Applies OOD (out-of-distribution detection) using energy scores.
+
+        Args:
+            logits (Tensor): Raw model outputs.
+            temperature (float): Temperature for scaling.
+            threshold (float): Energy threshold for rejection.
+
+        Returns:
+            Tuple[bool, float, Tensor]: 
+                - is_confident (bool): True if in-distribution, False if likely OOD.
+                - energy_score (float)
+                - softmax_probs (Tensor)
+        """
+        scaled_logits = logits / temperature
+        softmax_probs = torch.nn.functional.softmax(scaled_logits, dim=1)
+        energy_score = -temperature * torch.logsumexp(scaled_logits, dim=1)
+        is_confident = energy_score.item() > threshold  # lower = less confident
+        return is_confident, energy_score.item(), softmax_probs[0]
