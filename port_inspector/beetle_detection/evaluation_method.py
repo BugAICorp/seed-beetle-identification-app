@@ -117,14 +117,24 @@ class EvaluationMethod:
                 with torch.no_grad():
                     model_output = self.trained_models[view].to(device)(transformed_image)
 
-                # Get the predicted top 5 species(or less if not enough outputs) and their indices
-                softmax_scores = torch.nn.functional.softmax(model_output, dim=1)[0]
-                top5_scores, top5_species = torch.topk(softmax_scores, self.k)
+                is_confident, energy, softmax_scores = self.apply_odin(model_output, temperature=1000, threshold=-12.0)
 
-                # Store top 5 confidence and species as a list to the correct dictionary entry
-                # Index 0 is the highest and 4 is the lowest
-                predictions[view]["scores"] = top5_scores.tolist()
-                predictions[view]["species"] = top5_species.tolist()
+                if not is_confident:
+                    # Get the predicted top 5 species(or less if not enough outputs) and their indices
+                    topk = min(self.k - 1, softmax_scores.size(0))
+                    top_scores, top_species = torch.topk(softmax_scores, topk)
+                    # Store unknown and top 4 confidences and species as a list to the correct dictionary entry
+                    # Index 0(unknown) is the highest and 4 is the lowest
+                    predictions[view]["scores"] = [0.0] + top_scores.tolist()
+                    predictions[view]["species"] = [-1] + top_species.tolist()  # -1 means unknown
+                else:
+                    # Get the predicted top 5 species(or less if not enough outputs) and their indices
+                    topk = min(self.k, softmax_scores.size(0))
+                    top_scores, top_species = torch.topk(softmax_scores, topk)
+                    # Store top 5 confidence and species as a list to the correct dictionary entry
+                    # Index 0 is the highest and 4 is the lowest
+                    predictions[view]["scores"] = top_scores.tolist()
+                    predictions[view]["species"] = top_species.tolist()
 
         return self.evaluation_handler(predictions, view_count)
 
@@ -228,10 +238,10 @@ class EvaluationMethod:
         # Change key from index to correct species name
         top_5 = []
         for key, value in sorted_scores:
-            if key in self.species_idx_dict:
-                top_5.append((self.species_idx_dict[key], value))
-            else:
+            if key == -1 or key not in self.species_idx_dict:
                 top_5.append(("Unknown Species", value))
+            else:
+                top_5.append((self.species_idx_dict[key], value))
 
         return top_5
 
@@ -265,10 +275,10 @@ class EvaluationMethod:
         # Change key from index to correct species name
         top_5 = []
         for key, value in sorted_scores:
-            if key in self.species_idx_dict:
-                top_5.append((self.species_idx_dict[key], value))
-            else:
+            if key == -1 or key not in self.species_idx_dict:
                 top_5.append(("Unknown Species", value))
+            else:
+                top_5.append((self.species_idx_dict[key], value))
 
         return top_5
 
@@ -293,3 +303,24 @@ class EvaluationMethod:
         transformed_image = transformed_image.unsqueeze(0)
 
         return transformed_image
+
+    def apply_odin(self, logits, temperature=1000.0, threshold=-10.0):
+        """
+        Applies ODIN-style out-of-distribution detection using energy scores.
+
+        Args:
+            logits (Tensor): Raw model outputs.
+            temperature (float): Temperature for scaling.
+            threshold (float): Energy threshold for rejection.
+
+        Returns:
+            Tuple[bool, float, Tensor]: 
+                - is_confident (bool): True if in-distribution, False if likely OOD.
+                - energy_score (float)
+                - softmax_probs (Tensor)
+        """
+        scaled_logits = logits / temperature
+        softmax_probs = torch.nn.functional.softmax(scaled_logits, dim=1)
+        energy_score = -temperature * torch.logsumexp(scaled_logits, dim=1)
+        is_confident = energy_score.item() > threshold  # lower = less confident
+        return is_confident, energy_score.item(), softmax_probs[0]
