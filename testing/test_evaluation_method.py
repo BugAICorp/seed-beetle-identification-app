@@ -158,6 +158,45 @@ class TestEvaluationMethod(unittest.TestCase):
 
         assert result.shape == (1, 3, 224, 224)
 
+    @patch("json.load", return_value={"0": "analis"})
+    def test_apply_ood(self, mock_json):
+        """Test the apply_ood method for in-distribution and OOD samples"""
+        mock_models = {
+            "late": MagicMock(),
+            "fron": MagicMock(),
+            "dors": MagicMock(),
+            "caud": MagicMock()
+        }
+        mock_text_file = mock_open(read_data="224")
+        mock_binary_file = mock_open(read_data=b"\x80\x03}q\x00.")
+
+        def mock_mode(_file, mode='r', **_kwargs):
+            """ helper function for deciding which mock to use """
+            if "b" in mode:
+                return mock_binary_file()
+            return mock_text_file()
+
+        with patch("builtins.open", new=mock_mode):
+            evaluator = EvaluationMethod("height_mock.txt", mock_models, 1, "json_mock.txt")
+
+        mock_json.assert_called_once()
+
+        # In-distribution logits with clear high confidence
+        logits_in = torch.tensor([[2.0, 1.0, 0.1]])
+        is_confident, energy_score, softmax_probs = evaluator.apply_ood(
+            logits_in, temperature=1.0, threshold=-3.0)
+        self.assertTrue(is_confident)
+        self.assertIsInstance(energy_score, float)
+        self.assertAlmostEqual(torch.sum(softmax_probs).item(), 1.0, places=4)
+
+        # Out-of-distribution logits with flat distribution
+        logits_ood = torch.tensor([[0.1, 0.1, 0.1]])
+        is_confident, energy_score, softmax_probs = evaluator.apply_ood(
+            logits_ood, temperature=1000.0, threshold=-10.0)
+        self.assertFalse(is_confident)
+        self.assertIsInstance(energy_score, float)
+        self.assertAlmostEqual(torch.sum(softmax_probs).item(), 1.0, places=4)
+
     @patch("json.load", return_value={
         "0": "objectus",
         "1": "analis",
