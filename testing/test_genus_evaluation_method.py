@@ -161,6 +161,7 @@ class TestGenusEvaluationMethod(unittest.TestCase):
         mock_binary_file = mock_open(read_data=b"\x80\x03}q\x00.")
 
         def mock_mode(_file, mode='r', **_kwargs):
+            """ helper function for deciding which mock to use """
             if "b" in mode:
                 return mock_binary_file()
             return mock_text_file()
