@@ -127,8 +127,8 @@ class EvaluationMethod:
                     top_scores, top_species = torch.topk(softmax_scores, topk)
                     # Store unknown and top 4 confidences and species as a list to the correct dictionary entry
                     # Index 0(unknown) is the highest and 4 is the lowest
-                    predictions[view]["scores"] = [0.0] + top_scores.tolist()
-                    predictions[view]["species"] = [-1] + top_species.tolist()  # -1 means unknown
+                    predictions[view]["scores"] = top_scores.tolist() + [0.0]
+                    predictions[view]["species"] = top_species.tolist() + [-1]  # -1 means unknown
                 else:
                     # Get the predicted top 5 species(or less if not enough outputs) and their indices
                     topk = min(self.k, softmax_scores.size(0))
