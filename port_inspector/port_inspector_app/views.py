@@ -287,6 +287,7 @@ def profile_view(request):
 
 @staff_member_required
 def run_custom_task(request):
+    # Retrains if the lock is available. Takes the lock until completed preventing duplicates from running
     def task():
         if lock.acquire(blocking=False):
             try:
@@ -294,6 +295,7 @@ def run_custom_task(request):
             finally:
                 lock.release()
 
+    # Only starts a thread if the lock is available
     if not lock.locked():
         threading.Thread(target=task).start()
 
