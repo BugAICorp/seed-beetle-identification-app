@@ -81,6 +81,8 @@ class SpecimenUpload(models.Model):
 
     genus = models.JSONField(default=default_genus)
     species = models.JSONField(default=default_species)
+    in_training = models.BooleanField(default=False)
+    is_validated = models.BooleanField(default=False)
 
     final_identification = models.TextField()
 
@@ -186,6 +188,7 @@ class ValidClasses(models.Model):
     species = models.CharField(max_length=80)
 
     class Meta:
+        unique_together = ('genus', 'species')
         verbose_name_plural = "Classes used for training"
         verbose_name = "allowed genus/species"
 
