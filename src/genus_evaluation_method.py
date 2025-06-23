@@ -125,7 +125,8 @@ class GenusEvaluationMethod:
 
                 # Apply OOD for out-of-distribution detection
                 # Threshold to be adjusted (If threshold is too strict (try −14) If too lenient (try −10))
-                is_confident, energy, softmax_scores = self.apply_ood(model_output, temperature=1000, threshold=-12.0)
+                # energy is not needed but is returned
+                is_confident, _, softmax_scores = self.apply_ood(model_output, temperature=1000, threshold=-12.0)
 
                 if is_confident:
                     # Use the predicted class and softmax confidence
@@ -202,7 +203,7 @@ class GenusEvaluationMethod:
             with open(self.accuracies_filename, 'r', encoding='utf-8') as f:
                 accuracy_dict = json.load(f)
 
-            # Only consider views with input   
+            # Only consider views with input
             valid_views = []
             for i, view in enumerate(view_order):
                 if genus_predictions[i] is not None:
@@ -213,7 +214,8 @@ class GenusEvaluationMethod:
                 return None, -1
 
             # Pick view with highest accuracy
-            best_view, best_index, _ = max(valid_views, key=lambda x: x[2])
+            # best view and best accuracy are not needed
+            _, best_index, _ = max(valid_views, key=lambda x: x[2])
 
         else:
             # Fallback priority order
