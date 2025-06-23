@@ -9,7 +9,6 @@ from .models import SpecimenUpload, Image, KnownSpecies, Genus, TrainingDatabase
 admin.site.register(KnownSpecies)
 admin.site.register(Genus)
 admin.site.register(TrainingDatabase)
-admin.site.register(User)
 
 
 @admin.register(SpecimenUpload)
@@ -99,6 +98,14 @@ class ValidClassesAdmin(admin.ModelAdmin):
     def delete_queryset(self, request, queryset):
         for obj in queryset:
             obj.delete()
+
+
+@admin.register(User)
+class UserAdmin(admin.ModelAdmin):
+    """Edit displayed columns for the User db"""
+    list_display = ('email', 'is_active', 'is_usda', 'admin')
+    list_filter = ('is_usda',)
+    fields = ('email', 'name', 'is_usda', 'admin', 'is_staff', 'is_superuser')
 
 # Edit the titles for the admin portal
 admin.site.site_header = "Port Inspector Admin"
