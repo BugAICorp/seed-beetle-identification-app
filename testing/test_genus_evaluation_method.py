@@ -148,10 +148,13 @@ class TestGenusEvaluationMethod(unittest.TestCase):
 
         assert result.shape == (1, 3, 224, 224)
 
-    @patch("torch.max", return_value=(None, torch.tensor([0])))
-    @patch("torch.nn.functional.softmax", return_value=torch.tensor([[0.8, 0.1, 0.1]]))
-    @patch("json.load", return_value = {"0":"acanthoscelides"})
-    def test_evaluate_image_single_input(self, mock_json, mock_softmax, mock_max):
+    @patch("json.load", return_value={"0": "Acanthoscelides"})
+    @patch.object(
+        GenusEvaluationMethod,
+        "apply_ood",
+        return_value=(True, torch.tensor(0.0), torch.tensor([0.8, 0.1, 0.1]))
+    )
+    def test_evaluate_image_single_input(self, mock_apply_ood, mock_json):
         """test proper output with a single image entered"""
         mock_models = {
             "late": MagicMock(return_value=torch.tensor([[0.1, 0.3, 0.6]])),
@@ -181,18 +184,29 @@ class TestGenusEvaluationMethod(unittest.TestCase):
 
         result_genus, result_conf = evaluation.evaluate_image(dors=Image.new("RGB", (224, 224)))
 
-        self.assertEqual(result_genus, "acanthoscelides")
+        self.assertEqual(result_genus, "Acanthoscelides")
         self.assertEqual(round(result_conf, 2), 0.8)
 
         mock_transform.assert_called_once()
-        mock_softmax.assert_called_once()
-        mock_max.assert_called_once()
+        mock_apply_ood.assert_called_once()
 
-    @patch("torch.max", return_value=(None, torch.tensor([1])))
-    @patch("torch.nn.functional.softmax", return_value=torch.tensor([[0.3, 0.6, 0.1]]))
-    @patch("json.load", return_value = {"0":"acanthoscelides", "1":"callosobruchus",
-                                        "2":"mimosestes", "3":"phaseoli"})
-    def test_evaluate_image_multiple_input(self, mock_json, mock_softmax, mock_max):
+    @patch("json.load", return_value={
+        "0": "Acanthoscelides",
+        "1": "Callosobruchus",
+        "2": "Mimosestes",
+        "3": "Phaseoli"
+    })
+    @patch.object(
+        GenusEvaluationMethod,
+        "apply_ood",
+        side_effect=[
+            (True, torch.tensor(0.0), torch.tensor([0.3, 0.6, 0.1])),
+            (True, torch.tensor(0.0), torch.tensor([0.3, 0.6, 0.1])),
+            (True, torch.tensor(0.0), torch.tensor([0.3, 0.6, 0.1])),
+            (True, torch.tensor(0.0), torch.tensor([0.3, 0.6, 0.1])),
+        ]
+    )
+    def test_evaluate_image_multiple_input(self, mock_apply_ood, mock_json):
         """test proper output with multiple images entered"""
         mock_models = {
             "late": MagicMock(return_value=torch.tensor([[0.1, 0.3, 0.6]])),
@@ -226,12 +240,11 @@ class TestGenusEvaluationMethod(unittest.TestCase):
             fron=Image.new("RGB", (224, 224)),
             caud=Image.new("RGB", (224, 224)))
 
-        self.assertEqual(result_genus, "callosobruchus")
+        self.assertEqual(result_genus, "Callosobruchus")
         self.assertEqual(round(result_conf, 2), 0.6)
 
         self.assertEqual(mock_transform.call_count, 4)
-        self.assertEqual(mock_max.call_count, 4)
-        self.assertEqual(mock_softmax.call_count, 4)
+        self.assertEqual(mock_apply_ood.call_count, 4)
 
 if __name__ == "__main__":
     unittest.main()
