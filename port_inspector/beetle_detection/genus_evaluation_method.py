@@ -114,7 +114,7 @@ class GenusEvaluationMethod:
         view_count = 0
 
         for view, (image, transformation) in inputs.items():
-            if view:
+            if image:
                 view_count += 1
                 transformed_image = self.transform_input(image, transformation).to(device)
 
