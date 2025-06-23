@@ -19,6 +19,10 @@ from .tokens import account_activation_token
 import threading
 
 
+# Lock for training to prevent multiple programs from running simultaneously
+lock = threading.Lock()
+
+
 def verify_email(request, user_id):
     if request.method == "POST":
         current_site = get_current_site(request)
@@ -196,9 +200,7 @@ def results_view(request, hashed_ID):
         for species in species_results
     ]
 
-    # Sort by confidence level (highest first)
-    formatted_species_results.sort(key=lambda x: x["confidence_level"], reverse=True)
-
+    # Species are already sorted from evaluation method
     # Include the genus at the top
     formatted_species_results.insert(0, {
         "species_name": genus_name,
@@ -285,5 +287,14 @@ def profile_view(request):
 
 @staff_member_required
 def run_custom_task(request):
-    threading.Thread(target=species_eval.retrain_models).start()
+    def task():
+        if lock.acquire(blocking=False):
+            try:
+                species_eval.retrain_models()
+            finally:
+                lock.release()
+
+    if not lock.locked():
+        threading.Thread(target=task).start()
+
     return redirect("/admin/")
