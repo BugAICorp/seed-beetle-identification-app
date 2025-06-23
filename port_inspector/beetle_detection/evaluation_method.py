@@ -127,8 +127,8 @@ class EvaluationMethod:
                     top_scores, top_species = torch.topk(softmax_scores, topk)
                     # Store unknown and top 4 confidences and species as a list to the correct dictionary entry
                     # Index 0(unknown) is the highest and 4 is the lowest
-                    predictions[view]["scores"] = top_scores.tolist() + [0.0]
-                    predictions[view]["species"] = top_species.tolist() + [-1]  # -1 means unknown
+                    predictions[view]["scores"] = [0.0] + top_scores.tolist()
+                    predictions[view]["species"] = [-1] + top_species.tolist()  # -1 means unknown
                 else:
                     # Get the predicted top 5 species(or less if not enough outputs) and their indices
                     topk = min(self.k, softmax_scores.size(0))
@@ -232,20 +232,22 @@ class EvaluationMethod:
         top_species_scores = {}
 
         for i in range(0, 5):
-            top_species_scores[
-                predictions[use_angle]["species"][i]] = predictions[use_angle]["scores"][i]
+            species_idx = predictions[use_angle]["species"][i]
+            score = predictions[use_angle]["scores"][i]
+            top_species_scores[species_idx] = score
 
-        # Create sorted list using sorted method (list with tuples nested inside(key, value))
-        sorted_scores = sorted(top_species_scores.items(), key=lambda item: item[1], reverse=True)
-        # Change key from index to correct species name
+        # Convert to list of (name, score)
         top_5 = []
-        for key, value in sorted_scores:
+        for key, value in top_species_scores.items():
             if key == -1 or key not in self.species_idx_dict:
                 top_5.append(("Unknown Species", value))
             else:
                 top_5.append((self.species_idx_dict[key], value))
 
-        return top_5
+        # Sort with "Unknown Species" first, then by confidence descending
+        sorted_top_5 = sorted(top_5, key=lambda item: (item[0] != "Unknown Species", -item[1]))
+
+        return sorted_top_5
 
 
     def weighted_eval(self, conf_scores, species_predictions, weights, view_count):
