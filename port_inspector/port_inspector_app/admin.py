@@ -34,7 +34,7 @@ def add_to_trainingdb(modeladmin, request, queryset):
             continue
         # Checks to see if the classification is meant to be trained with
         if not ValidClasses.objects.filter(genus=parsed_field[0]).exists() and not ValidClasses.objects.filter(species=parsed_field[1]).exists():
-            continue 
+            continue
         # Update object to remember it has been added already
         obj.in_training = True
         obj.save()
@@ -46,7 +46,7 @@ def add_to_trainingdb(modeladmin, request, queryset):
             TrainingDatabase.objects.create(
                 genus=parsed_field[0],
                 species=parsed_field[1],
-                uniqueid=new_uid+"FRON",
+                uniqueid=new_uid + "FRON",
                 view="FRON",
                 specimenid=new_uid,
                 image=image_binary
@@ -59,7 +59,7 @@ def add_to_trainingdb(modeladmin, request, queryset):
             TrainingDatabase.objects.create(
                 genus=parsed_field[0],
                 species=parsed_field[1],
-                uniqueid=new_uid+"CAUD",
+                uniqueid=new_uid + "CAUD",
                 view="CAUD",
                 specimenid=new_uid,
                 image=image_binary
@@ -72,7 +72,7 @@ def add_to_trainingdb(modeladmin, request, queryset):
             TrainingDatabase.objects.create(
                 genus=parsed_field[0],
                 species=parsed_field[1],
-                uniqueid=new_uid+"DORS",
+                uniqueid=new_uid + "DORS",
                 view="DORS",
                 specimenid=new_uid,
                 image=image_binary
@@ -85,7 +85,7 @@ def add_to_trainingdb(modeladmin, request, queryset):
             TrainingDatabase.objects.create(
                 genus=parsed_field[0],
                 species=parsed_field[1],
-                uniqueid=new_uid+"LATE",
+                uniqueid=new_uid + "LATE",
                 view="LATE",
                 specimenid=new_uid,
                 image=image_binary

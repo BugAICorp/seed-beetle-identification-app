@@ -19,7 +19,7 @@ from .tokens import account_activation_token
 import threading
 
 
-#Lock for training to prevent multiple programs from running simultaneously
+# Lock for training to prevent multiple programs from running simultaneously
 lock = threading.Lock()
 
 
