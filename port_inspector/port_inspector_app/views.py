@@ -4,6 +4,7 @@ from beetle_detection import species_eval
 from port_inspector_app.models import Image, SpecimenUpload, User, KnownSpecies, Genus
 from .forms import UserRegisterForm, SpecimenUploadForm, ConfirmIdForm
 from django.core import signing
+from django.core.cache import cache
 from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
@@ -14,9 +15,10 @@ from django.core.mail import EmailMessage
 from django.template.loader import render_to_string
 from django.utils.encoding import force_bytes, force_str
 from django.utils.http import urlsafe_base64_decode, urlsafe_base64_encode
-from django.http import HttpResponse
+from django.http import HttpResponse, JsonResponse
 from .tokens import account_activation_token
 import threading
+import time
 
 
 # Lock for training to prevent multiple programs from running simultaneously
@@ -286,17 +288,34 @@ def profile_view(request):
 
 
 @staff_member_required
-def run_custom_task(request):
+def retrain_models_thread(request):
     # Retrains if the lock is available. Takes the lock until completed preventing duplicates from running
     def task():
         if lock.acquire(blocking=False):
             try:
+                threading.Thread(target=animate_text, daemon=True).start()
+                cache.set("retrain_status", "running")
                 species_eval.retrain_models()
+                cache.set("retrain_status", "complete", timeout=30)
             finally:
                 lock.release()
+
+    def animate_text():
+        while lock.locked():
+            current = cache.get("retrain_status")
+            if current == "running_1":
+                cache.set("retrain_status", "running_2", timeout=None)
+            else:
+                cache.set("retrain_status", "running_1", timeout=None)
+            time.sleep(0.5)
 
     # Only starts a thread if the lock is available
     if not lock.locked():
         threading.Thread(target=task).start()
 
     return redirect("/admin/")
+
+def check_retrain_status(request):
+    """checks cache status"""
+    status = cache.get("retrain_status", "idle")
+    return JsonResponse({"status": status})

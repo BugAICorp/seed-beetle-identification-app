@@ -1,13 +1,121 @@
-{% extends "admin/index.html" %}
-{% load static %}
+{% extends "admin/base_site.html" %}
+{% load i18n static %}
+
+{% block extrastyle %}{{ block.super }}<link rel="stylesheet" href="{% static "admin/css/dashboard.css" %}">{% endblock %}
+
+{% block coltype %}colMS{% endblock %}
+
+{% block bodyclass %}{{ block.super }} dashboard{% endblock %}
+
+{% block breadcrumbs %}{% endblock %}
+
+{% block nav-sidebar %}{% endblock %}
 
 {% block content %}
-    {{ block.super }}
-    <div style="margin-top: 30px;">
-        <h2>Custom Actions</h2>
-        <form action="{% url 'run_custom_task' %}" method="post" style="display:inline;">
-            {% csrf_token %}
-            <button type="submit" class="button default">Run Custom Task</button>
-        </form>
+<div id="content-main">
+  {% include "admin/app_list.html" with app_list=app_list show_changelinks=True %}
+</div>
+{% endblock %}
+
+{% block sidebar %}
+<div id="content-related">
+    <div class="module" id="recent-actions-module">
+        <h2>{% translate 'Recent actions' %}</h2>
+        <h3>{% translate 'My actions' %}</h3>
+            {% load log %}
+            {% get_admin_log 10 as admin_log for_user user %}
+            {% if not admin_log %}
+            <p>{% translate 'None available' %}</p>
+            {% else %}
+            <ul class="actionlist">
+            {% for entry in admin_log %}
+            <li class="{% if entry.is_addition %}addlink{% endif %}{% if entry.is_change %}changelink{% endif %}{% if entry.is_deletion %}deletelink{% endif %}">
+                {% if entry.is_deletion or not entry.get_admin_url %}
+                    {{ entry.object_repr }}
+                {% else %}
+                    <a href="{{ entry.get_admin_url }}">{{ entry.object_repr }}</a>
+                {% endif %}
+                <br>
+                {% if entry.content_type %}
+                    <span class="mini quiet">{% filter capfirst %}{{ entry.content_type.name }}{% endfilter %}</span>
+                {% else %}
+                    <span class="mini quiet">{% translate 'Unknown content' %}</span>
+                {% endif %}
+            </li>
+            {% endfor %}
+            </ul>
+            {% endif %}
     </div>
+</div>
+
+<style>
+.button-7 {
+  background-color: #0095ff;
+  border: 1px solid transparent;
+  border-radius: 3px;
+  box-shadow: rgba(255, 255, 255, .4) 0 1px 0 0 inset;
+  box-sizing: border-box;
+  color: #fff;
+  cursor: pointer;
+  display: inline-block;
+  font-family: -apple-system,system-ui,"Segoe UI","Liberation Sans",sans-serif;
+  font-size: 13px;
+  font-weight: 400;
+  line-height: 1.15385;
+  margin: 0;
+  outline: none;
+  padding: 8px .8em;
+  position: relative;
+  text-align: center;
+  text-decoration: none;
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: manipulation;
+  vertical-align: baseline;
+  white-space: nowrap;
+}
+
+.button-7:hover,
+.button-7:focus {
+  background-color: #07c;
+}
+
+.button-7:focus {
+  box-shadow: 0 0 0 4px rgba(0, 149, 255, .15);
+}
+
+.button-7:active {
+  background-color: #0064bd;
+  box-shadow: none;
+}
+</style>
+<div style="margin-top: 30px;">
+    <h2>Custom Actions</h2>
+    <form action="{% url 'retrain_models_thread' %}" method="post" style="display:inline;">
+        {% csrf_token %}
+        <button type="submit" class="button">Retrain Models</button>
+        <span id="status-label" style="margin-left: 10px">Idle</span>
+    </form>
+</div>
+<script>
+    function checkStatus() {
+        fetch("{% url 'check_retrain_status' %}")
+            .then(response => response.json())
+            .then(data => {
+            const label = document.getElementById("status-label");
+            if (data.status === "running_1") {
+                label.textContent = "Running...";
+            } else if (data.status === "complete") {
+                label.textContent = "Complete";
+            } else if (data.status === "running_2") {
+                label.textContent = "Running..";
+            } else {
+                label.textContent = "Idle";
+            }
+        });
+    }
+
+    setInterval(checkStatus, 3000);  // Poll every 3 seconds
+    document.addEventListener("DOMContentLoaded", checkStatus);
+</script>
 {% endblock %}
