@@ -7,13 +7,20 @@ from django.core import signing
 from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
+from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib.auth.forms import AuthenticationForm
 from django.contrib.sites.shortcuts import get_current_site
 from django.core.mail import EmailMessage
 from django.template.loader import render_to_string
 from django.utils.encoding import force_bytes, force_str
 from django.utils.http import urlsafe_base64_decode, urlsafe_base64_encode
+from django.http import HttpResponse
 from .tokens import account_activation_token
+import threading
+
+
+# Lock for training to prevent multiple programs from running simultaneously
+lock = threading.Lock()
 
 
 def verify_email(request, user_id):
@@ -70,6 +77,7 @@ def signup_view(request):
             user = form.save(commit=False)
             password = form.cleaned_data.get("password")
             user.set_password(password)
+            user.name = form.cleaned_data.get("name")
             user.save()
             new_user = authenticate(email=user.email, password=password)
             if new_user:
@@ -192,9 +200,7 @@ def results_view(request, hashed_ID):
         for species in species_results
     ]
 
-    # Sort by confidence level (highest first)
-    formatted_species_results.sort(key=lambda x: x["confidence_level"], reverse=True)
-
+    # Species are already sorted from evaluation method
     # Include the genus at the top
     formatted_species_results.insert(0, {
         "species_name": genus_name,
@@ -277,3 +283,18 @@ def profile_view(request):
         "usda_user": user.is_usda
     }
     return render(request, 'profile.html', context)
+
+
+@staff_member_required
+def run_custom_task(request):
+    def task():
+        if lock.acquire(blocking=False):
+            try:
+                species_eval.retrain_models()
+            finally:
+                lock.release()
+
+    if not lock.locked():
+        threading.Thread(target=task).start()
+
+    return redirect("/admin/")

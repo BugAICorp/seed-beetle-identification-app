@@ -14,6 +14,7 @@ class UserRegisterForm(forms.ModelForm):
     class Meta:
         model = User
         fields = [
+            'name',
             'email',
             'password'
         ]
@@ -21,11 +22,15 @@ class UserRegisterForm(forms.ModelForm):
     def clean(self, *args, **kwargs):
         email = self.cleaned_data.get('email')
         password = self.cleaned_data.get('password')
-        email_check = User.objects.filter(email=email)
-        if email_check.exists():
-            raise forms.ValidationError('This Email already exists')
-        if len(password) < 5:
-            raise forms.ValidationError('Your password should have more than 5 characters')
+        if email and password:
+            email_check = User.objects.filter(email=email).first()
+            if email_check:
+                if email_check.is_active:
+                    raise forms.ValidationError('This Email is already registered')
+                else:
+                    email_check.delete()
+            if len(password) < 5:
+                raise forms.ValidationError('Your password should have more than 5 characters')
         return super(UserRegisterForm, self).clean(*args, **kwargs)
 
 

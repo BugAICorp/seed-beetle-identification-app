@@ -65,12 +65,12 @@ if __name__ == '__main__':
     GENUS_OUTPUTS = dbr.get_num_genus()
 
     # Run training with dataframe
-    alt_species_tp = AltTrainingProgram(df, "Species", SPECIES_OUTPUTS)
+    alt_species_tp = AltTrainingProgram(dataframe=df, class_column="Species", num_classes=SPECIES_OUTPUTS)
 
     # Training
-    alt_species_tp.train_dorsal_caudal(20)
-    alt_species_tp.train_all(20)
-    alt_species_tp.train_dorsal_lateral(20)
+    alt_species_tp.alt_train_resnet_model(num_epochs=20, view="dors_caud")
+    alt_species_tp.alt_train_resnet_model(num_epochs=20, view="all")
+    alt_species_tp.alt_train_resnet_model(num_epochs=20, view="dors_late")
 
     # Save models
     alt_species_model_filenames = {
@@ -86,12 +86,12 @@ if __name__ == '__main__':
         globals.alt_spec_accuracy_list)
 
     # Run training with dataframe
-    alt_genus_tp = AltTrainingProgram(df, "Genus", GENUS_OUTPUTS)
+    alt_genus_tp = AltTrainingProgram(dataframe=df, class_column="Genus", num_classes=GENUS_OUTPUTS)
 
     # Training
-    alt_genus_tp.train_dorsal_caudal(20)
-    alt_genus_tp.train_all(20)
-    alt_genus_tp.train_dorsal_lateral(20)
+    alt_genus_tp.alt_train_resnet_model(num_epochs=20, view="dors_caud")
+    alt_genus_tp.alt_train_resnet_model(num_epochs=20, view="all")
+    alt_genus_tp.alt_train_resnet_model(num_epochs=20, view="dors_late")
 
     # Save models
     alt_genus_model_filenames = {

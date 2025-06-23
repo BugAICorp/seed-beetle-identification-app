@@ -1,0 +1,13 @@
+{% extends "admin/index.html" %}
+{% load static %}
+
+{% block content %}
+    {{ block.super }}
+    <div style="margin-top: 30px;">
+        <h2>Custom Actions</h2>
+        <form action="{% url 'run_custom_task' %}" method="post" style="display:inline;">
+            {% csrf_token %}
+            <button type="submit" class="button default">Run Custom Task</button>
+        </form>
+    </div>
+{% endblock %}

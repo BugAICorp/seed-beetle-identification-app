@@ -5,6 +5,9 @@ from django.core.exceptions import ValidationError
 from django.core.files.storage import default_storage
 from django.contrib.auth import get_user_model
 from django.utils.translation import gettext_lazy as _
+from django.core.files.base import ContentFile
+from PIL import Image as PILImage
+from io import BytesIO
 
 
 class CustomUserManager(BaseUserManager):
@@ -14,12 +17,15 @@ class CustomUserManager(BaseUserManager):
         email = self.normalize_email(email)
         user = self.model(email=email, **extra_fields)
         user.set_password(password)
-        user.is_usda = email.endswith('@sandiego.edu')  # this needs to change to @usda.gov
+        user.is_usda = email.lower().strip().endswith('@usda.gov')  # this needs to change to @usda.gov
         user.save(using=self._db)
         return user
 
     def create_superuser(self, email, password=None, **extra_fields):
         extra_fields.setdefault('is_superuser', True)
+        extra_fields.setdefault('admin', True)
+        extra_fields.setdefault('is_staff', True)
+        extra_fields.setdefault('is_active', True)
         return self.create_user(email, password, **extra_fields)
 
 
@@ -31,6 +37,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     is_active = models.BooleanField(default=False)
     is_usda = models.BooleanField(default=False)
     admin = models.BooleanField(default=False)
+    is_staff = models.BooleanField(default=False)
 
     groups = models.ManyToManyField(
         'auth.Group',
@@ -74,6 +81,8 @@ class SpecimenUpload(models.Model):
 
     genus = models.JSONField(default=default_genus)
     species = models.JSONField(default=default_species)
+    in_training = models.BooleanField(default=False)
+    is_validated = models.BooleanField(default=False)
 
     final_identification = models.TextField()
 
@@ -109,6 +118,19 @@ class Image(models.Model):
     image = models.ImageField(upload_to="uploads/")
     uploaded_at = models.DateTimeField(auto_now_add=True)
 
+    def save(self, *args, **kwargs):
+        if self.image and not kwargs.get('raw', False):
+            img = PILImage.open(self.image)
+            img = img.convert('RGB')
+
+            buffer = BytesIO()
+            img.save(buffer, format='PNG')
+            buffer.seek(0)
+
+            self.image.save(self.image.name, ContentFile(buffer.read()), save=False)
+
+        super().save(*args, **kwargs)
+
     # TODO: fix, make sure our image files get deleted w/SpecimenUpload
     def delete(self, *args, **kwargs):
         # Delete the associated image file
@@ -126,6 +148,9 @@ class KnownSpecies(models.Model):
     species_name = models.CharField(max_length=255, unique=True)
     resource_link = models.URLField(blank=True, null=True)
 
+    class Meta:
+        verbose_name_plural = "Known Species"
+
     def __str__(self):
         return self.species_name
 
@@ -135,5 +160,46 @@ class Genus(models.Model):
     genus_name = models.CharField(max_length=255, unique=True)
     resource_link = models.URLField(blank=True, null=True)
 
+    class Meta:
+        verbose_name_plural = "Genera"
+
     def __str__(self):
         return self.genus_name
+
+
+class TrainingDatabase(models.Model):
+    genus = models.CharField(max_length=32)
+    species = models.CharField(max_length=80)
+    uniqueid = models.CharField(max_length=100, unique=True)
+    view = models.CharField(max_length=4)
+    specimenid = models.CharField(max_length=255)
+    image = models.BinaryField()
+
+    class Meta:
+        verbose_name_plural = "Training Database"
+        verbose_name = "training entry"
+
+    def __str__(self):
+        return f"{self.specimenid} - {self.view}"
+
+
+class ValidClasses(models.Model):
+    genus = models.CharField(max_length=32)
+    species = models.CharField(max_length=80)
+
+    class Meta:
+        unique_together = ('genus', 'species')
+        verbose_name_plural = "Classes used for training"
+        verbose_name = "allowed genus/species"
+
+    def save(self, *args, **kwargs):
+        from beetle_detection import species_eval
+        super().save(*args, **kwargs)
+        species_eval.refresh_database()
+
+    def delete(self, *args, **kwargs):
+        TrainingDatabase.objects.filter(species=self.species).delete()
+        super().delete(*args, **kwargs)
+
+    def __str__(self):
+        return f"{self.genus} {self.species}"

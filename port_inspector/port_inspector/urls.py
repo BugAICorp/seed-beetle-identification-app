@@ -25,6 +25,7 @@ from . import settings
 
 urlpatterns = [
     path("", RedirectView.as_view(url='/upload/', permanent=False), name="home"),
+    path("admin/run-task/", views.run_custom_task, name='run_custom_task'),
     path("admin/", admin.site.urls),
     path("upload/", views.upload_image, name="upload"),
     path("history/", views.view_history, name="history"),
