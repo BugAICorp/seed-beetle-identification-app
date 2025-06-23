@@ -196,9 +196,7 @@ def results_view(request, hashed_ID):
         for species in species_results
     ]
 
-    # Sort by confidence level (highest first)
-    formatted_species_results.sort(key=lambda x: x["confidence_level"], reverse=True)
-
+    # Species are already sorted from evaluation method
     # Include the genus at the top
     formatted_species_results.insert(0, {
         "species_name": genus_name,
