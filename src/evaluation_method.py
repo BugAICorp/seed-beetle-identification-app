@@ -237,20 +237,22 @@ class EvaluationMethod:
         top_species_scores = {}
 
         for i in range(0, 5):
-            top_species_scores[
-                predictions[use_angle]["species"][i]] = predictions[use_angle]["scores"][i]
+            species_idx = predictions[use_angle]["species"][i]
+            score = predictions[use_angle]["scores"][i]
+            top_species_scores[species_idx] = score
 
-        # Create sorted list using sorted method (list with tuples nested inside(key, value))
-        sorted_scores = sorted(top_species_scores.items(), key=lambda item: item[1], reverse=True)
-        # Change key from index to correct species name
+        # Convert to list of (name, score)
         top_5 = []
-        for key, value in sorted_scores:
-            if key in self.species_idx_dict:
-                top_5.append((self.species_idx_dict[key], value))
-            else:
+        for key, value in top_species_scores.items():
+            if key == -1 or key not in self.species_idx_dict:
                 top_5.append(("Unknown Species", value))
+            else:
+                top_5.append((self.species_idx_dict[key], value))
 
-        return top_5
+        # Sort with "Unknown Species" first, then by confidence descending
+        sorted_top_5 = sorted(top_5, key=lambda item: (item[0] != "Unknown Species", -item[1]))
+
+        return sorted_top_5
 
 
     def weighted_eval(self, conf_scores, species_predictions, weights, view_count):
@@ -282,10 +284,10 @@ class EvaluationMethod:
         # Change key from index to correct species name
         top_5 = []
         for key, value in sorted_scores:
-            if key in self.species_idx_dict:
-                top_5.append((self.species_idx_dict[key], value))
-            else:
+            if key == -1 or key not in self.species_idx_dict:
                 top_5.append(("Unknown Species", value))
+            else:
+                top_5.append((self.species_idx_dict[key], value))
 
         return top_5
 
@@ -310,3 +312,24 @@ class EvaluationMethod:
         transformed_image = transformed_image.unsqueeze(0)
 
         return transformed_image
+
+    def apply_ood(self, logits, temperature=1000.0, threshold=-10.0):
+        """
+        Applies OOD (out-of-distribution detection) using energy scores.
+
+        Args:
+            logits (Tensor): Raw model outputs.
+            temperature (float): Temperature for scaling.
+            threshold (float): Energy threshold for rejection.
+
+        Returns:
+            Tuple[bool, float, Tensor]: 
+                - is_confident (bool): True if in-distribution, False if likely OOD.
+                - energy_score (float)
+                - softmax_probs (Tensor)
+        """
+        scaled_logits = logits / temperature
+        softmax_probs = torch.nn.functional.softmax(scaled_logits, dim=1)
+        energy_score = -temperature * torch.logsumexp(scaled_logits, dim=1)
+        is_confident = energy_score.item() > threshold  # lower = less confident
+        return is_confident, energy_score.item(), softmax_probs[0]
