@@ -158,24 +158,37 @@ class TestEvaluationMethod(unittest.TestCase):
 
         assert result.shape == (1, 3, 224, 224)
 
-    @patch("torch.topk", return_value=(
-        torch.tensor([0.6, 0.5, 0.4, 0.3, 0.1]), torch.tensor([1, 4, 3, 0, 2])))
-    @patch("torch.nn.functional.softmax", return_value=torch.tensor([[0.3, 0.6, 0.1, 0.4, 0.5]]))
-    @patch("json.load", return_value = {
-        "0":"objectus", "1":"analis", "2":"maculatus", "3":"phaseoli", "4":"nubigens"})
-    def test_evaluate_image(self, mock_json, mock_softmax, mock_topk):
-        """test proper output with multiple images entered"""
+    @patch("json.load", return_value={
+        "0": "objectus",
+        "1": "analis",
+        "2": "maculatus",
+        "3": "phaseoli",
+        "4": "nubigens"
+    })
+    @patch.object(
+        EvaluationMethod,
+        "apply_ood",
+        side_effect=[
+            (True, torch.tensor(0.0), torch.tensor([0.3, 0.6, 0.1, 0.4, 0.5])),  # late
+            (True, torch.tensor(0.0), torch.tensor([0.3, 0.6, 0.1, 0.4, 0.5])),  # dors
+            (True, torch.tensor(0.0), torch.tensor([0.3, 0.6, 0.1, 0.4, 0.5])),  # fron
+            (True, torch.tensor(0.0), torch.tensor([0.3, 0.6, 0.1, 0.4, 0.5])),  # caud
+        ]
+    )
+    def test_evaluate_image(self, mock_apply_ood, mock_json):
+        """ test proper output with multiple images entered """
         mock_models = {
             "late": MagicMock(),
             "dors": MagicMock(),
             "fron": MagicMock(),
             "caud": MagicMock(),
         }
+
         mock_text_file = mock_open(read_data="224")
         mock_binary_file = mock_open(read_data=b"\x80\x03}q\x00.")
 
         def mock_mode(_file, mode='r', **_kwargs):
-            """helper function for deciding which mock to use"""
+            """ helper function for deciding which mock to use """
             if "b" in mode:
                 return mock_binary_file()
 
@@ -215,8 +228,7 @@ class TestEvaluationMethod(unittest.TestCase):
 
         # Make sure that the evaluate_image method behaved as expected
         self.assertEqual(mock_transform.call_count, 4)
-        self.assertEqual(mock_topk.call_count, 4)
-        self.assertEqual(mock_softmax.call_count, 4)
+        self.assertEqual(mock_apply_ood.call_count, 4)
 
 if __name__ == "__main__":
     unittest.main()
