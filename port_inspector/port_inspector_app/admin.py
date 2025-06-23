@@ -41,6 +41,7 @@ def add_to_trainingdb(modeladmin, request, queryset):
 
         # Check each of four possible images and add to training database
         if obj.frontal_image and obj.frontal_image.image:
+            obj.frontal_image.image.seek(0)
             image_binary = obj.frontal_image.image.read()
             TrainingDatabase.objects.create(
                 genus=parsed_field[0],
@@ -53,6 +54,7 @@ def add_to_trainingdb(modeladmin, request, queryset):
             pil_img = img.open(BytesIO(image_binary)).convert("RGB")
             pil_img.save(os.path.join(dir, f"{parsed_field[0]} {parsed_field[1]} {new_uid} USER FRON.jpg"), format="JPEG")
         if obj.caudal_image and obj.caudal_image.image:
+            obj.caudal_image.image.seek(0)
             image_binary = obj.caudal_image.image.read()
             TrainingDatabase.objects.create(
                 genus=parsed_field[0],
@@ -65,6 +67,7 @@ def add_to_trainingdb(modeladmin, request, queryset):
             pil_img = img.open(BytesIO(image_binary)).convert("RGB")
             pil_img.save(os.path.join(dir, f"{parsed_field[0]} {parsed_field[1]} {new_uid} USER CAUD.jpg"), format="JPEG")
         if obj.dorsal_image and obj.dorsal_image.image:
+            obj.dorsal_image.image.seek(0)
             image_binary = obj.dorsal_image.image.read()
             TrainingDatabase.objects.create(
                 genus=parsed_field[0],
@@ -77,6 +80,7 @@ def add_to_trainingdb(modeladmin, request, queryset):
             pil_img = img.open(BytesIO(image_binary)).convert("RGB")
             pil_img.save(os.path.join(dir, f"{parsed_field[0]} {parsed_field[1]} {new_uid} USER DORS.jpg"), format="JPEG")
         if obj.lateral_image and obj.lateral_image.image:
+            obj.lateral_image.image.seek(0)
             image_binary = obj.lateral_image.image.read()
             TrainingDatabase.objects.create(
                 genus=parsed_field[0],
