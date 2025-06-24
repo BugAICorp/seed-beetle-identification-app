@@ -25,7 +25,8 @@ from . import settings
 
 urlpatterns = [
     path("", RedirectView.as_view(url='/upload/', permanent=False), name="home"),
-    path("admin/run-task/", views.run_custom_task, name='run_custom_task'),
+    path("check_retrain_status/", views.check_retrain_status, name="check_retrain_status"),
+    path("admin/run-task/", views.retrain_models_thread, name='retrain_models_thread'),
     path("admin/", admin.site.urls),
     path("upload/", views.upload_image, name="upload"),
     path("history/", views.view_history, name="history"),

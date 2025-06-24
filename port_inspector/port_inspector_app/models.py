@@ -149,7 +149,8 @@ class KnownSpecies(models.Model):
     resource_link = models.URLField(blank=True, null=True)
 
     class Meta:
-        verbose_name_plural = "Known Species"
+        verbose_name_plural = "Species Links"
+        verbose_name = "species link"
 
     def __str__(self):
         return self.species_name
@@ -161,7 +162,8 @@ class Genus(models.Model):
     resource_link = models.URLField(blank=True, null=True)
 
     class Meta:
-        verbose_name_plural = "Genera"
+        verbose_name_plural = "Genera Links"
+        verbose_name = "genus link"
 
     def __str__(self):
         return self.genus_name
