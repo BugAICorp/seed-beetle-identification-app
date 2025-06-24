@@ -7,6 +7,7 @@ import os
 from ultralytics import YOLO
 import torchvision.transforms as T
 import numpy as np
+from types import MethodType
 from globals import yolo_model
 
 class YOLOTrainer:
@@ -42,11 +43,17 @@ class YOLOTrainer:
 
         # Initialize YOLOv8n model (pretrained)
         self.model = YOLO("yolov8n.pt")
+        # Turn off profiling
+        self.model.model._profile_one_layer = MethodType(YOLOTrainer.skip_profile_one_layer, self.model.model)
         self.model.to(self.device)
 
         # Optimizer
         self.optimizer = torch.optim.Adam(self.model.model.parameters(), lr=0.001)
 
+    @staticmethod
+    def skip_profile_one_layer(self, m, x, dt):
+        """ Used to disable profiling. """
+        pass
 
     def train(self):
         """
@@ -69,6 +76,8 @@ class YOLOTrainer:
                     targets_ultralytics.append({'boxes': boxes, 'cls': cls})
 
                 loss_dict = self.model.model(images, targets_ultralytics)
+                print(f"loss_dict type: {type(loss_dict)}")
+                print(loss_dict)
                 loss = sum(loss_dict.values())
 
                 self.optimizer.zero_grad()
@@ -213,3 +222,10 @@ class ImageDataset(Dataset):
         label = torch.tensor([[0, 0.5, 0.5, 1.0, 1.0]])
 
         return image, label
+
+if __name__ == "__main__":
+    trainer = YOLOTrainer(
+        dataset_path="dataset"
+    )
+    trainer.train()
+    trainer.save()
