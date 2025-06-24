@@ -1,0 +1,112 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Home Page</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f9f9fc;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      min-height: 100vh;
+    }
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      width: 100%;
+      padding: 10px 20px;
+      box-sizing: border-box;
+      background-color: #ffffff;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+    header a {
+      text-decoration: none;
+      color: #333;
+      font-size: 16px;
+      display: flex;
+      align-items: center;
+      margin: 0 10px;
+    }
+    header a span {
+      margin-left: 5px;
+    }
+    .container {
+      background-color: white;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+      text-align: center;
+      width: 320px;
+      margin-top: 50px;
+    }
+    h1 {
+      font-size: 18px;
+      color: #555;
+      margin-bottom: 20px;
+    }
+
+    footer {
+        margin-top: 20px;
+        font-size: 12px;
+        color: #aaa;
+    }
+
+    #title-banner {
+        width: 100%;
+        height: auto;
+    }
+    #use-case-banner {
+        width: 100%;
+        height: auto;
+    }
+    img {
+        display:block;
+    }
+    #our-text {
+        font-size: 20px;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <a href="/"><span>Home</span></a>
+    <a href="/history">📜<span>History</span></a>
+    <a href="/upload">📤<span>Upload Photo</span></a>
+    <a href="/profile">👤<span>Profile</span></a>
+    {% if not request.user.is_authenticated %}
+    <a href="/login">🔒<span>Login</span></a>
+    {% endif %}
+    {% if request.user.is_authenticated %}
+    <a href="/logout">🔓<span>Logout</span></a>
+    {% endif %}
+  </header>
+
+  <div>
+    <p>
+        <img src="{% static 'banner.png' %}" id="title-banner"/>
+        <img src="{% static 'use_pic.png' %}" id="use-case-banner"/>
+        <div>
+            <p id="our-text">
+                This program is designed to help identify different seed beetle species. Our AI assists
+                with classifying the pictures uploaded and is trained purely on a set of specified seed
+                beetle species. Our model gets more accurate with each specimen entered, helping us refine
+                and improve our accuracy and open doors to classifying more species.
+            </p>
+        </div>
+    </p>
+  </div>
+  
+
+  <footer>
+    &copy; 2024 Port Inspector App
+  </footer>
+</body>
+</html>

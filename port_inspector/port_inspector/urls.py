@@ -24,7 +24,7 @@ from port_inspector_app import views
 from . import settings
 
 urlpatterns = [
-    path("", RedirectView.as_view(url='/upload/', permanent=False), name="home"),
+    path("", views.home_view, name="home"),
     path("check_retrain_status/", views.check_retrain_status, name="check_retrain_status"),
     path("admin/run-task/", views.retrain_models_thread, name='retrain_models_thread'),
     path("admin/", admin.site.urls),
