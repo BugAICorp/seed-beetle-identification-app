@@ -11,12 +11,17 @@ from torch.utils.data import DataLoader
 from unittest.mock import patch, MagicMock
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../src')))
-from yolo_training_program import YOLOTrainer, WholeImageDataset
+from yolo_training_program import YOLOTrainer, ImageDataset
 
 
 class TestYOLOTrainer(unittest.TestCase):
-
+    """
+    Unit testing for YOLO training program.
+    """
     def setUp(self):
+        """
+        Set up test data.
+        """
         # Create a temporary image directory with fake images
         self.test_dir = "temp_test_images"
         os.makedirs(self.test_dir, exist_ok=True)
@@ -26,12 +31,15 @@ class TestYOLOTrainer(unittest.TestCase):
 
 
     def tearDown(self):
-        # Remove the temporary directory after tests
+        """
+        Remove the temporary directory after tests.
+        """
         shutil.rmtree(self.test_dir)
 
 
     def test_dataset_loading(self):
-        dataset = WholeImageDataset(self.test_dir, transform=ToTensor())
+        """ Test the dataset loads properly with the ImageDataset class """
+        dataset = ImageDataset(self.test_dir, transform=ToTensor())
         self.assertEqual(len(dataset), 5)
         img, label = dataset[0]
         self.assertIsInstance(img, torch.Tensor)
@@ -40,6 +48,7 @@ class TestYOLOTrainer(unittest.TestCase):
 
     @patch("yolo_training_program.YOLO")
     def test_trainer_initialization(self, mock_yolo):
+        """ Test the YOLO trainer initializes correctly. """
         # Mock model and parameters for optimizer
         mock_model = MagicMock()
         mock_model.parameters.return_value = [torch.nn.Parameter(torch.randn(2, 2))]
@@ -54,6 +63,7 @@ class TestYOLOTrainer(unittest.TestCase):
 
 
     def test_iou_computation(self):
+        """ Test the static method iou computation works properly. """
         boxA = [50, 50, 150, 150]
         boxB = [100, 100, 200, 200]
         iou = YOLOTrainer.compute_iou(boxA, boxB)
@@ -62,6 +72,7 @@ class TestYOLOTrainer(unittest.TestCase):
 
     @patch("yolo_training_program.YOLO")
     def test_evaluate_accuracy_no_preds(self, mock_yolo):
+        """ Test the evaluate accuracy function. """
         class DummyModel(torch.nn.Module):
             def __init__(self):
                 super().__init__()
