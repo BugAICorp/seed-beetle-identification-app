@@ -11,3 +11,4 @@ torchvision
 torch
 optuna
 dill
+ultralytics==8.1.17  # pin to a stable YOLOv8 version
