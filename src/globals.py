@@ -53,3 +53,6 @@ dors_late_transformation = "src/models/dors_late_transformation.pth"
 
 #Genus Model Tracked Files
 genus_specific_accuracies = "src/genus_models/genus_specific_accuracies.json"
+
+# YOLO Whole-Image Trainer Model
+yolo_model = "src/models/yolov8n_whole_image.pt"
