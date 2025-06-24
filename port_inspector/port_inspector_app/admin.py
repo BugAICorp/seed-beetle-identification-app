@@ -190,6 +190,7 @@ class UserAdmin(admin.ModelAdmin):
     list_filter = ('is_usda',)
     fields = ('email', 'name', 'is_usda', 'admin', 'is_staff', 'is_superuser')
 
+
 # Edit the titles for the admin portal
 admin.site.site_header = "Port Inspector Admin"
 admin.site.site_title = "Port Inspector Admin Portal"

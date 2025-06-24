@@ -305,6 +305,7 @@ def retrain_models_thread(request):
 
     return redirect("/admin/")
 
+
 def check_retrain_status(request):
     """checks cache status"""
     status = cache.get("retrain_status", "idle")
