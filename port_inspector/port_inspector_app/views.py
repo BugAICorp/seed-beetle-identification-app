@@ -293,21 +293,11 @@ def retrain_models_thread(request):
     def task():
         if lock.acquire(blocking=False):
             try:
-                threading.Thread(target=animate_text, daemon=True).start()
                 cache.set("retrain_status", "running")
                 species_eval.retrain_models()
                 cache.set("retrain_status", "complete", timeout=30)
             finally:
                 lock.release()
-
-    def animate_text():
-        while lock.locked():
-            current = cache.get("retrain_status")
-            if current == "running_1":
-                cache.set("retrain_status", "running_2", timeout=None)
-            else:
-                cache.set("retrain_status", "running_1", timeout=None)
-            time.sleep(0.5)
 
     # Only starts a thread if the lock is available
     if not lock.locked():

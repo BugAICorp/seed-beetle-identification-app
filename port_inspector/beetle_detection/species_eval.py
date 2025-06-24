@@ -102,14 +102,14 @@ def retrain_models():
     species_tp = TrainingProgram('species', 'image')
     genus_tp = TrainingProgram('genus', 'image')
 
-    #species_tp.train_resnet_model(20, 'late')
-    #genus_tp.train_resnet_model(20, 'late')
+    species_tp.train_resnet_model(20, 'late')
+    genus_tp.train_resnet_model(20, 'late')
     species_tp.train_resnet_model(20, 'dors')
-    #genus_tp.train_resnet_model(20, 'dors')
-    #species_tp.train_resnet_model(20, 'fron')
-    #enus_tp.train_resnet_model(20, 'fron')
-    #species_tp.train_resnet_model(20, 'caud')
-    #genus_tp.train_resnet_model(20, 'caud')
+    genus_tp.train_resnet_model(20, 'dors')
+    species_tp.train_resnet_model(20, 'fron')
+    genus_tp.train_resnet_model(20, 'fron')
+    species_tp.train_resnet_model(20, 'caud')
+    genus_tp.train_resnet_model(20, 'caud')
 
     species_model_filenames = {
         "caud" : globals.spec_caud_model,

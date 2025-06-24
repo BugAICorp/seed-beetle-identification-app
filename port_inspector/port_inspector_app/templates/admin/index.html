@@ -49,44 +49,52 @@
 </div>
 
 <style>
-.button-7 {
-  background-color: #0095ff;
-  border: 1px solid transparent;
-  border-radius: 3px;
-  box-shadow: rgba(255, 255, 255, .4) 0 1px 0 0 inset;
-  box-sizing: border-box;
-  color: #fff;
-  cursor: pointer;
-  display: inline-block;
-  font-family: -apple-system,system-ui,"Segoe UI","Liberation Sans",sans-serif;
-  font-size: 13px;
-  font-weight: 400;
-  line-height: 1.15385;
-  margin: 0;
-  outline: none;
-  padding: 8px .8em;
-  position: relative;
-  text-align: center;
-  text-decoration: none;
-  user-select: none;
-  -webkit-user-select: none;
-  touch-action: manipulation;
-  vertical-align: baseline;
-  white-space: nowrap;
-}
+    .button-7 {
+    background-color: #0095ff;
+    border: 1px solid transparent;
+    border-radius: 3px;
+    box-shadow: rgba(255, 255, 255, .4) 0 1px 0 0 inset;
+    box-sizing: border-box;
+    color: #fff;
+    cursor: pointer;
+    display: inline-block;
+    font-family: -apple-system,system-ui,"Segoe UI","Liberation Sans",sans-serif;
+    font-size: 13px;
+    font-weight: 400;
+    line-height: 1.15385;
+    margin: 0;
+    outline: none;
+    padding: 8px .8em;
+    position: relative;
+    text-align: center;
+    text-decoration: none;
+    user-select: none;
+    -webkit-user-select: none;
+    touch-action: manipulation;
+    vertical-align: baseline;
+    white-space: nowrap;
+    }
 
-.button-7:hover,
-.button-7:focus {
-  background-color: #07c;
-}
+    .button-7:hover,
+    .button-7:focus {
+        background-color: #07c;
+    }
 
-.button-7:focus {
-  box-shadow: 0 0 0 4px rgba(0, 149, 255, .15);
-}
+    .button-7:focus {
+        box-shadow: 0 0 0 4px rgba(0, 149, 255, .15);
+    }
 
-.button-7:active {
-  background-color: #0064bd;
-  box-shadow: none;
+    .button-7:active {
+        background-color: #0064bd;
+        box-shadow: none;
+    }
+    @keyframes blink {
+        0% { opacity: 1; }
+        50% { opacity: 0; }
+        100% { opacity: 1; }
+    }
+    #blinkingText {
+    animation: blink 1s linear infinite; /* Apply the animation to the element */
 }
 </style>
 <div style="margin-top: 30px;">
@@ -94,7 +102,7 @@
     <form action="{% url 'retrain_models_thread' %}" method="post" style="display:inline;">
         {% csrf_token %}
         <button type="submit" class="button">Retrain Models</button>
-        <span id="status-label" style="margin-left: 10px">Idle</span>
+        <span id="status-label" style="margin-left: 10px">Idle</span><span id="blinkingText"></span>
     </form>
 </div>
 <script>
@@ -103,14 +111,16 @@
             .then(response => response.json())
             .then(data => {
             const label = document.getElementById("status-label");
-            if (data.status === "running_1") {
-                label.textContent = "Running...";
+            const blinker = document.getElementById("blinkingText");
+            if (data.status === "running") {
+                label.textContent = "Running..";
+                blinker.textContent = ".";
             } else if (data.status === "complete") {
                 label.textContent = "Complete";
-            } else if (data.status === "running_2") {
-                label.textContent = "Running..";
+                blinker.textContent = "";
             } else {
                 label.textContent = "Idle";
+                blinker.textContent = "";
             }
         });
     }
