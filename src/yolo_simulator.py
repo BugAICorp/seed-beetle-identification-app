@@ -1,12 +1,10 @@
 """ yolo_simulator.py """
 
 from pathlib import Path
+from ultralytics import YOLO
 from generate_yolo_dataset import YoloDatasetBuilder
 from yolo_training_program import YOLOTrainer
-from ultralytics import YOLO
 from globals import yolo_model
-
-import cv2
 
 if __name__ == "__main__":
     print("Would you like to train a new model? (Press Enter to skip, or type anything to train)")
