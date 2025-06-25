@@ -1,101 +1,78 @@
 """ test_yolo_training_program.py """
 
 import unittest
+from unittest.mock import patch, MagicMock
+import torch
 import sys
 import os
-import shutil
-import torch
-from PIL import Image
-from torchvision.transforms import ToTensor
-from torch.utils.data import DataLoader
-from unittest.mock import patch, MagicMock
-
+from pathlib import Path
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../src')))
-from yolo_training_program import YOLOTrainer, ImageDataset
+from yolo_training_program import YOLOTrainer
 
 
 class TestYOLOTrainer(unittest.TestCase):
-    """
-    Unit testing for YOLO training program.
-    """
     def setUp(self):
-        """
-        Set up test data.
-        """
-        # Create a temporary image directory with fake images
-        self.test_dir = "temp_test_images"
-        os.makedirs(self.test_dir, exist_ok=True)
-        for i in range(5):
-            img = Image.new("RGB", (512, 512), color=(255, 0, 0))
-            img.save(os.path.join(self.test_dir, f"img_{i}.jpg"))
-
-
-    def tearDown(self):
-        """
-        Remove the temporary directory after tests.
-        """
-        shutil.rmtree(self.test_dir)
-
-
-    def test_dataset_loading(self):
-        """ Test the dataset loads properly with the ImageDataset class """
-        dataset = ImageDataset(self.test_dir, transform=ToTensor())
-        self.assertEqual(len(dataset), 5)
-        img, label = dataset[0]
-        self.assertIsInstance(img, torch.Tensor)
-        self.assertEqual(label.shape, (1, 5))  # [cls, x_center, y_center, width, height]
-
+        """ Setup the arguements for the YOLOTrainer """
+        self.dataset_yaml = "dataset.yaml"
+        self.epochs = 3
+        self.batch_size = 4
+        self.img_size = 320
 
     @patch("yolo_training_program.YOLO")
-    def test_trainer_initialization(self, mock_yolo):
-        """ Test the YOLO trainer initializes correctly. """
-        # Mock model and parameters for optimizer
-        mock_model = MagicMock()
-        mock_model.parameters.return_value = [torch.nn.Parameter(torch.randn(2, 2))]
-        mock_yolo.return_value.model = mock_model
+    def test_initializer(self, mock_yolo):
+        """ Test initializer works correctly. """
+        # Mock YOLO instance and its .to() method
+        mock_model_instance = MagicMock()
+        mock_yolo.return_value = mock_model_instance
 
-        trainer = YOLOTrainer(self.test_dir, epochs=2, batch_size=2, img_size=256)
-        self.assertEqual(trainer.epochs, 2)
-        self.assertEqual(trainer.batch_size, 2)
-        self.assertIsInstance(trainer.dataloader, DataLoader)
-        # Check optimizer is created without error
-        self.assertIsNotNone(trainer.optimizer)
+        trainer = YOLOTrainer(
+            dataset_yaml=self.dataset_yaml,
+            epochs=self.epochs,
+            batch_size=self.batch_size,
+            img_size=self.img_size,
+            device=torch.device("cpu")
+        )
 
-
-    def test_iou_computation(self):
-        """ Test the static method iou computation works properly. """
-        boxA = [50, 50, 150, 150]
-        boxB = [100, 100, 200, 200]
-        iou = YOLOTrainer.compute_iou(boxA, boxB)
-        self.assertTrue(0.0 < iou < 1.0)
-
+        # Check attributes
+        self.assertEqual(trainer.dataset_yaml, self.dataset_yaml)
+        self.assertEqual(trainer.epochs, self.epochs)
+        self.assertEqual(trainer.batch_size, self.batch_size)
+        self.assertEqual(trainer.img_size, self.img_size)
+        self.assertEqual(trainer.device.type, "cpu")
+        # Check that YOLO was instantiated with correct model name
+        mock_yolo.assert_called_once_with("yolov8n.pt")
+        # Check model.to was called with the device
+        mock_model_instance.to.assert_called_once_with(trainer.device)
 
     @patch("yolo_training_program.YOLO")
-    def test_evaluate_accuracy_no_preds(self, mock_yolo):
-        """ Test the evaluate accuracy function. """
-        class DummyModel(torch.nn.Module):
-            def __init__(self):
-                super().__init__()
-                self.dummy_param = torch.nn.Parameter(torch.tensor(1.0))
+    def test_train(self, mock_yolo):
+        """ Test train calls YOLO train. """
+        mock_model_instance = MagicMock()
+        mock_yolo.return_value = mock_model_instance
 
-            def forward(self, images, augment=False):
-                batch_size = images.size(0)
-                return [[torch.empty((0, 6)) for _ in range(batch_size)]]
+        trainer = YOLOTrainer(self.dataset_yaml, epochs=2, batch_size=2, img_size=256)
+        trainer.train()
 
-            def eval(self):
-                pass
+        # Check YOLO.train called once with correct args
+        mock_model_instance.train.assert_called_once_with(
+            data=self.dataset_yaml,
+            epochs=2,
+            batch=2,
+            imgsz=256,
+            device=str(trainer.device)
+        )
 
-        dummy_model = DummyModel()
-        dummy_model.eval = MagicMock()
+    @patch("yolo_training_program.YOLO")
+    def test_save(self, mock_yolo):
+        """ Test save calls YOLO save. """
+        mock_model_instance = MagicMock()
+        mock_yolo.return_value = mock_model_instance
 
-        mock_yolo_instance = MagicMock()
-        mock_yolo_instance.model = dummy_model
-        mock_yolo.return_value = mock_yolo_instance
+        trainer = YOLOTrainer(self.dataset_yaml)
+        save_path = "my_model.pt"
+        trainer.save(save_path)
 
-        trainer = YOLOTrainer(self.test_dir, epochs=1, batch_size=1, img_size=128)
-        acc = trainer.evaluate_accuracy()
-        self.assertEqual(acc, 0.0)
+        mock_model_instance.save.assert_called_once_with(save_path)
 
-
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()
