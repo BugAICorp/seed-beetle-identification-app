@@ -1,4 +1,4 @@
-""" generate_yolo_dataset.py """
+""" yolo_dataset_builder.py """
 
 import os
 import shutil

@@ -2,7 +2,7 @@
 
 from pathlib import Path
 from ultralytics import YOLO
-from generate_yolo_dataset import YoloDatasetBuilder
+from yolo_dataset_builder import YoloDatasetBuilder
 from yolo_training_program import YOLOTrainer
 from globals import yolo_model
 

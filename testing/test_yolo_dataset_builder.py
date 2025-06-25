@@ -1,4 +1,4 @@
-""" test_genrate_yolo_dataset.py """
+""" test_yolo_dataset_builder.py """
 
 import unittest
 import tempfile
@@ -8,7 +8,7 @@ import os
 from pathlib import Path
 import yaml
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../src')))
-from generate_yolo_dataset import YoloDatasetBuilder
+from yolo_dataset_builder import YoloDatasetBuilder
 
 class TestYoloDatasetBuilder(unittest.TestCase):
     """
