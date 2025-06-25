@@ -21,15 +21,18 @@ torch.load = patched_torch_load
 class YOLOTrainer:
     """
     YOLOv8 training class for whole image bounding box detection of a single class.
-
-    Args:
-        dataset_path (str): Directory with all images.
-        epochs (int): Number of training epochs.
-        batch_size (int): Batch size for DataLoader.
-        img_size (int): Image resize size.
-        device (torch.device): Device for training (auto-selected if None).
     """
     def __init__(self, dataset_yaml, epochs=10, batch_size=8, img_size=512, device=None):
+        """
+        Initializer for the YOLOTrainer class.
+
+        Args:
+            dataset_path (str): Directory with all images.
+            epochs (int): Number of training epochs.
+            batch_size (int): Batch size for DataLoader.
+            img_size (int): Image resize size.
+            device (torch.device): Device for training (auto-selected if None).
+        """
         self.dataset_yaml = dataset_yaml
         self.epochs = epochs
         self.batch_size = batch_size
