@@ -11,6 +11,9 @@ from yolo_training_program import YOLOTrainer
 
 
 class TestYOLOTrainer(unittest.TestCase):
+    """ 
+    Unit tests for the YOLOTrainer class.
+    """
     def setUp(self):
         """ Setup the arguements for the YOLOTrainer """
         self.dataset_yaml = "dataset.yaml"
