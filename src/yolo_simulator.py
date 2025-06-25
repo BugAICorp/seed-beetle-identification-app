@@ -1,10 +1,10 @@
 """ yolo_simulator.py """
 
 from pathlib import Path
-from ultralytics import YOLO
 from torch.serialization import add_safe_globals
 from ultralytics.nn.tasks import DetectionModel
 add_safe_globals([DetectionModel])
+from ultralytics import YOLO
 from yolo_dataset_builder import YoloDatasetBuilder
 from yolo_training_program import YOLOTrainer
 from globals import yolo_model

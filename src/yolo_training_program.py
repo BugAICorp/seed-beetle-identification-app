@@ -1,10 +1,10 @@
 """ yolo_training_program.py """
 
-from ultralytics import YOLO
-import torch
 from torch.serialization import add_safe_globals
 from ultralytics.nn.tasks import DetectionModel
 add_safe_globals([DetectionModel])
+from ultralytics import YOLO
+import torch
 from globals import yolo_model
 
 class YOLOTrainer:
