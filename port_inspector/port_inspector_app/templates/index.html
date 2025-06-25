@@ -5,6 +5,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Home Page</title>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono&display=swap" rel="stylesheet">
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -18,6 +19,7 @@
       min-height: 100vh;
     }
     header {
+      position: fixed;
       display: flex;
       justify-content: space-between;
       align-items: center;
@@ -48,15 +50,19 @@
       margin-top: 50px;
     }
     h1 {
-      font-size: 18px;
+      font-family: 'Roboto mono', monospace;
+      font-size: 40px;
       color: #555;
-      margin-bottom: 20px;
+      margin: 5%;
+      align-items: center;
+      text-align: center;
     }
 
     footer {
         margin-top: 20px;
         font-size: 12px;
         color: #aaa;
+        margin-bottom: 10px;
     }
 
     #title-banner {
@@ -66,12 +72,37 @@
     #use-case-banner {
         width: 100%;
         height: auto;
+        background-color: whitesmoke;
     }
     img {
         display:block;
     }
+    #mission-div {
+      display: flex;
+      width: 100%;
+      height: auto;
+    }
     #our-text {
+      display: flex;
         font-size: 20px;
+        font-family: 'Roboto mono', monospace;
+        background-color: black;
+        color: whitesmoke;
+        margin: 0;
+        padding: 2.5% 5% 2.5% 7.5%;
+        width: 50vw;
+        box-sizing: border-box;
+        align-items: center;
+    }
+    #mission-img {
+      width: 50%;
+      height: auto;
+      object-fit: cover;
+    }
+    #additional-resources-p {
+      font-size: 20px;
+      font-family: 'Roboto mono', monospace;
+      text-align: center;
     }
   </style>
 </head>
@@ -90,20 +121,33 @@
   </header>
 
   <div>
-    <p>
-        <img src="{% static 'banner.png' %}" id="title-banner"/>
-        <img src="{% static 'use_pic.png' %}" id="use-case-banner"/>
-        <div>
-            <p id="our-text">
-                This program is designed to help identify different seed beetle species. Our AI assists
-                with classifying the pictures uploaded and is trained purely on a set of specified seed
-                beetle species. Our model gets more accurate with each specimen entered, helping us refine
-                and improve our accuracy and open doors to classifying more species.
-            </p>
-        </div>
+      <img src="{% static 'banner.png' %}" id="title-banner"/>
+      <img src="{% static 'use_product.png' %}" id="use-case-banner" usemap="#use-case-map"/>
+      <map name="use-case-map">
+        <area shape="circle" coords="1900,550,250" href="/upload" alt="Link 1">
+      </map>
+      <div id="mission-div">
+        <p id="our-text">
+            This program is designed to help identify different seed beetle species. Our AI assists
+            with classifying the pictures uploaded and is trained purely on a set of specified seed
+            beetle species. Our model gets more accurate with each specimen entered, helping us refine
+            and improve our accuracy and open doors to classifying more species.
+        </p>
+        <img src="{% static 'little_guy.png' %}" id="mission-img"/>
+      </div>
+  </div>
+  <div>
+    <h1>
+      Additional Resources
+    </h1>
+    <p id="additional-resources-p">
+      For resources to assist with identification by hand, you can visit this curated page.
     </p>
   </div>
-  
+  <script src="https://unpkg.com/image-map-resizer@1.0.10/js/imageMapResizer.min.js"></script>
+  <script>
+    window.onload = () => imageMapResize();
+  </script>
 
   <footer>
     &copy; 2024 Port Inspector App
