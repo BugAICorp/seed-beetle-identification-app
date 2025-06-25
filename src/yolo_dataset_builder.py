@@ -17,7 +17,7 @@ class YoloDatasetBuilder:
         Args:
             source_dir (str): Directory containing all source images.
             output_dir (str): Directory where the train/val split will be created.
-            train_ratio (float): Proportion of images to use for training (e.g., 0.8 = 80% train, 20% val).
+            train_ratio (float): Proportion of images to use for training (0.8 = 80% train, 20% val).
         """
         self.source_dir = Path(source_dir)
         self.output_dir = Path(output_dir)
