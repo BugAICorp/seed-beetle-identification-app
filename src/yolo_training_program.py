@@ -3,9 +3,20 @@
 from torch.serialization import add_safe_globals
 from ultralytics.nn.tasks import DetectionModel
 add_safe_globals([DetectionModel])
+
 from ultralytics import YOLO
 import torch
 from globals import yolo_model
+
+# Patch torch.load to force weights_only=False during load
+_original_torch_load = torch.load
+
+def patched_torch_load(f, *args, **kwargs):
+    # Always force weights_only=False when loading weights (security warning below)
+    kwargs['weights_only'] = False
+    return _original_torch_load(f, *args, **kwargs)
+
+torch.load = patched_torch_load
 
 class YOLOTrainer:
     """
