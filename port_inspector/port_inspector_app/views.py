@@ -310,3 +310,7 @@ def check_retrain_status(request):
     """checks cache status"""
     status = cache.get("retrain_status", "idle")
     return JsonResponse({"status": status})
+
+
+def home_view(request):
+    return render(request, 'index.html')
