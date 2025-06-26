@@ -6,6 +6,7 @@ add_safe_globals([DetectionModel])
 
 from ultralytics import YOLO
 import torch
+import shutil
 from globals import yolo_model
 
 # Patch torch.load to force weights_only=False during load
@@ -29,7 +30,7 @@ class YOLOTrainer:
         img_size (int): Image resize size.
         device (torch.device): Device for training (auto-selected if None).
     """
-    def __init__(self, dataset_yaml, epochs=10, batch_size=8, img_size=512, device=None):
+    def __init__(self, dataset_yaml, epochs=40, batch_size=8, img_size=512, device=None):
         self.dataset_yaml = dataset_yaml
         self.epochs = epochs
         self.batch_size = batch_size
@@ -59,10 +60,10 @@ class YOLOTrainer:
         """
         Save trained model weights.
         """
-        self.model.save(save_path)
+        shutil.copy("runs/detect/train/weights/best.pt", yolo_model)
         print(f"Model saved to {save_path}")
 
 if __name__ == "__main__":
-    trainer = YOLOTrainer(dataset_yaml="dataset.yaml")
+    trainer = YOLOTrainer(dataset_yaml="yolo_dataset/data.yaml")
     trainer.train()
     trainer.save()
