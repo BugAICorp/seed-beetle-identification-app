@@ -56,3 +56,6 @@ genus_specific_accuracies = "src/genus_models/genus_specific_accuracies.json"
 
 # YOLO Whole-Image Trainer Model
 yolo_model = "src/models/yolov8n_whole_image.pt"
+
+# Cropped Dataset
+cropped_dataset = "cropped_dataset"
