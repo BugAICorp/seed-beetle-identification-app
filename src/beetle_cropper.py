@@ -3,7 +3,7 @@
 import shutil
 from pathlib import Path
 from ultralytics import YOLO
-from PIL import Image
+from PIL import Image, UnidentifiedImageError
 import numpy as np
 from globals import yolo_model
 
@@ -52,8 +52,12 @@ class BeetleCropper:
 
                 cropped.save(output_dir / img_file.name, format="JPEG")
 
-            except Exception as e:
-                print(f"Failed to process {img_file.name}: {e}")
+            except UnidentifiedImageError:
+                print(f"Cannot identify image file: {img_file.name}")
+                dropped_count += 1
+            except OSError as e:
+                print(f"OS error processing {img_file.name}: {e}")
+                dropped_count += 1
 
         print(f"Dropped {dropped_count} image(s) from the dataset.")
         print(f"Cropped dataset saved to {output_dir}")
