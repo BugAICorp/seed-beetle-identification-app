@@ -2,6 +2,7 @@
 import sys
 import os
 from PIL import Image
+from beetle_cropper import BeetleCropper
 from training_data_converter import TrainingDataConverter
 from training_database_reader import DatabaseReader
 from training_program import TrainingProgram
@@ -58,8 +59,13 @@ if __name__ == '__main__':
             break
         print("Invalid Input. Please enter 1 or 2.")
 
+    # Create the beetle cropper object to be used in dataset creation and image cropping
+    beetle_cropper = BeetleCropper()
+    # Crop the images in the original dataset so that the image is only the beetle
+    beetle_cropper.build(image_dir="dataset", output_dir=globals.cropped_dataset)
+
     # Set up data converter
-    tdc = TrainingDataConverter("dataset")
+    tdc = TrainingDataConverter(globals.cropped_dataset)
     tdc.conversion(globals.training_database)
     # Read converted data
     dbr = DatabaseReader(database=globals.training_database, class_file_path=globals.class_list)
@@ -168,11 +174,11 @@ if __name__ == '__main__':
     FRON_PATH = "dataset/Callosobruchus chinensis GEM_187686348 5XEXT FRON.jpg"
     CAUD_PATH = "dataset/Callosobruchus chinensis GEM_187686348 5XEXT CAUD.jpg"
 
-    # Load the provided images
-    LATE_IMG = Image.open(LATE_PATH) if LATE_PATH else None
-    DORS_IMG = Image.open(DORS_PATH) if DORS_PATH else None
-    FRON_IMG = Image.open(FRON_PATH) if FRON_PATH else None
-    CAUD_IMG = Image.open(CAUD_PATH) if CAUD_PATH else None
+    # Load and crop the provided images
+    LATE_IMG = beetle_cropper.crop_beetle(Image.open(LATE_PATH)) if LATE_PATH else None
+    DORS_IMG = beetle_cropper.crop_beetle(Image.open(DORS_PATH)) if DORS_PATH else None
+    FRON_IMG = beetle_cropper.crop_beetle(Image.open(FRON_PATH)) if FRON_PATH else None
+    CAUD_IMG = beetle_cropper.crop_beetle(Image.open(CAUD_PATH)) if CAUD_PATH else None
 
     # Run the evaluation method to find the predicted genus
     top_genus, genus_conf_score = genus_evaluator.evaluate_image(
