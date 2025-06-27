@@ -10,9 +10,7 @@ from ultralytics import YOLO
 import torch
 from globals import yolo_model
 
-# Patch torch.load to force weights_only=False during load
 _original_torch_load = torch.load
-
 def patched_torch_load(f, *args, **kwargs):
     """
     Patched version of torch.load that forces weights_only=False.
@@ -36,8 +34,6 @@ def patched_torch_load(f, *args, **kwargs):
     """
     kwargs['weights_only'] = False
     return _original_torch_load(f, *args, **kwargs)
-
-torch.load = patched_torch_load
 
 class YOLOTrainer:
     """
@@ -63,7 +59,10 @@ class YOLOTrainer:
             "mps" if torch.backends.mps.is_built() else
             "cpu"
         )
+        # Patch torch.load to force weights_only=False during load
+        torch.load = patched_torch_load
         self.model = YOLO("yolov8n.pt")
+        torch.load = _original_torch_load
         self.model.to(self.device)
 
     def train(self):
