@@ -39,8 +39,7 @@ class ImageForm(forms.ModelForm):
     image = forms.ImageField(
         required=False,
         widget=ClearableFileInput(attrs={
-            'class': 'custom-upload-bttn',
-            'style': 'border: 2px solid #1a73e8; background: #1a73e8; color: white; padding: 10px; border-radius: 6px;'
+            'class': 'custom-upload-bttn'
         })
     )
     class Meta:
@@ -49,14 +48,21 @@ class ImageForm(forms.ModelForm):
 
 
 class SpecimenUploadForm(forms.ModelForm):
-    frontal_upload = forms.ImageField()
-    dorsal_upload = forms.ImageField()
-    caudal_upload = forms.ImageField()
-    lateral_upload = forms.ImageField()
+    frontal_upload = forms.ImageField(required=False)
+    dorsal_upload = forms.ImageField(required=False)
+    caudal_upload = forms.ImageField(required=False)
+    lateral_upload = forms.ImageField(required=False)
 
     class Meta:
         model = models.SpecimenUpload
         fields = []
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['frontal_upload'].widget.attrs.update({'id': 'id_frontal_upload', 'class': 'file-input'})
+        self.fields['dorsal_upload'].widget.attrs.update({'id': 'id_dorsal_upload', 'class': 'file-input'})
+        self.fields['caudal_upload'].widget.attrs.update({'id': 'id_caudal_upload', 'class': 'file-input'})
+        self.fields['lateral_upload'].widget.attrs.update({'id': 'id_lateral_upload', 'class': 'file-input'})
 
     def clean(self):
         cleaned_data = super().clean()
