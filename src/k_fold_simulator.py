@@ -51,6 +51,11 @@ if __name__ == '__main__':
                 k_fold_fron = True
             elif input == 4:
                 k_fold_late = True
+            elif input == 5:
+                train_dors = True
+                train_caud = True
+                train_fron = True
+                train_late = True
             else:
                 print("Invalid Input")
             del input
