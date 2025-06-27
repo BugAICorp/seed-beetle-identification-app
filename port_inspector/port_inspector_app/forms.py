@@ -42,6 +42,7 @@ class ImageForm(forms.ModelForm):
             'class': 'custom-upload-bttn'
         })
     )
+
     class Meta:
         model = models.Image
         fields = ['image']
