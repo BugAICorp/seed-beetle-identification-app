@@ -2,11 +2,41 @@
 
 import shutil
 from pathlib import Path
+
+from torch.serialization import add_safe_globals
+from ultralytics.nn.tasks import DetectionModel
+add_safe_globals([DetectionModel])
+
 from ultralytics import YOLO
+import torch
 from PIL import Image, UnidentifiedImageError
 import numpy as np
 from globals import yolo_model
 
+_original_torch_load = torch.load
+def patched_torch_load(f, *args, **kwargs):
+    """
+    Patched version of torch.load that forces weights_only=False.
+
+    This function overrides the default behavior of torch.load in PyTorch >=2.6,
+    where weights_only=True is the new default. By explicitly setting 
+    weights_only=False, it ensures that full model objects can be deserialized 
+    properly.
+
+    WARNING: Setting weights_only=False can execute arbitrary code during 
+    unpickling. Only use this patch if the source of the checkpoint file is 
+    fully trusted.
+
+    Args:
+        f (str or file-like): The file path or object from which to load the model.
+        *args: Additional positional arguments to pass to torch.load.
+        **kwargs: Additional keyword arguments to pass to torch.load.
+
+    Returns:
+        The deserialized object (a model or checkpoint dictionary).
+    """
+    kwargs['weights_only'] = False
+    return _original_torch_load(f, *args, **kwargs)
 
 class BeetleCropper:
     """
@@ -17,7 +47,15 @@ class BeetleCropper:
         """
         Initialize the YOLO model.
         """
+        self.device = torch.device(
+            "cuda" if torch.cuda.is_available() else
+            "mps" if torch.backends.mps.is_built() else
+            "cpu"
+        )
+        torch.load = patched_torch_load
         self.yolo_model = YOLO(yolo_model)
+        torch.load = _original_torch_load
+        self.yolo_model.to(self.device)
 
     def build(self, image_dir, output_dir):
         """
