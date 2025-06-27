@@ -62,6 +62,8 @@ def verify_email_confirm(request, uidb64, token):
     if user is not None and account_activation_token.check_token(user, token):
         user.is_email_verified = True
         user.is_active = True
+        if user.email.lower().strip().endswith("@usda.gov"):
+            user.is_usda = True
         user.save()
         messages.success(request, "Your email has been verified.")
         return redirect("/login/")
