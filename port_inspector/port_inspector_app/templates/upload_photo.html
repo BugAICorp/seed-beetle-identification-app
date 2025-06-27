@@ -271,6 +271,7 @@
         </div>
       </label>
       {{ form.dorsal_upload }}
+      <!-- Overload the original upload form and insert a custom label instead for better style control -->
       <div style="display: flex; gap: 5px;">
         <label for="id_dorsal_upload" class="custom-upload-bttn" id="label-id_dorsal_upload">Choose File</label>
         <span id="filename-id_dorsal_upload" class="filename-text">No file selected</span>
@@ -347,6 +348,7 @@
 </html>
 <script>
   document.addEventListener('DOMContentLoaded', function () {
+    // Function that changes file path display upon file upload/deletion
     const fileInputs = document.querySelectorAll('input[type="file"]');
     fileInputs.forEach(input => {
       input.addEventListener('change', function () {
@@ -358,9 +360,9 @@
       });
     });
   });
-</script>
-<script>
+
 document.addEventListener('DOMContentLoaded', function () {
+  // Function that changes choose file button to delete mode when a file is uploaded
   const fileInputs = document.querySelectorAll('input[type="file"]');
   
   fileInputs.forEach(input => {
