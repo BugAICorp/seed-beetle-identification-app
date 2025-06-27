@@ -1,5 +1,7 @@
 """ yolo_training_program.py """
 
+import shutil
+
 from torch.serialization import add_safe_globals
 from ultralytics.nn.tasks import DetectionModel
 add_safe_globals([DetectionModel])
@@ -8,9 +10,7 @@ from ultralytics import YOLO
 import torch
 from globals import yolo_model
 
-# Patch torch.load to force weights_only=False during load
 _original_torch_load = torch.load
-
 def patched_torch_load(f, *args, **kwargs):
     """
     Patched version of torch.load that forces weights_only=False.
@@ -35,13 +35,11 @@ def patched_torch_load(f, *args, **kwargs):
     kwargs['weights_only'] = False
     return _original_torch_load(f, *args, **kwargs)
 
-torch.load = patched_torch_load
-
 class YOLOTrainer:
     """
     YOLOv8 training class for whole image bounding box detection of a single class.
     """
-    def __init__(self, dataset_yaml, epochs=10, batch_size=8, img_size=512, device=None):
+    def __init__(self, dataset_yaml, epochs=40, batch_size=8, img_size=512, device=None):
         """
         Initializer for the YOLOTrainer class.
 
@@ -61,7 +59,10 @@ class YOLOTrainer:
             "mps" if torch.backends.mps.is_built() else
             "cpu"
         )
+        # Patch torch.load to force weights_only=False during load
+        torch.load = patched_torch_load
         self.model = YOLO("yolov8n.pt")
+        torch.load = _original_torch_load
         self.model.to(self.device)
 
     def train(self):
@@ -81,10 +82,10 @@ class YOLOTrainer:
         """
         Save trained model weights.
         """
-        self.model.save(save_path)
+        shutil.copy("runs/detect/train/weights/best.pt", yolo_model)
         print(f"Model saved to {save_path}")
 
 if __name__ == "__main__":
-    trainer = YOLOTrainer(dataset_yaml="dataset.yaml")
+    trainer = YOLOTrainer(dataset_yaml="yolo_dataset/data.yaml")
     trainer.train()
     trainer.save()

@@ -21,12 +21,12 @@ if __name__ == "__main__":
             output_dir="yolo_dataset",
             train_ratio=0.8
         )
-        builder.build(total_images=2000)
+        builder.build(total_images=8000)
         print("Dataset split built!")
 
         # Train the YOLO model
         print("\nStarting training...")
-        trainer = YOLOTrainer(dataset_yaml=builder.yaml, epochs=10, batch_size=8, img_size=512)
+        trainer = YOLOTrainer(dataset_yaml=builder.yaml, epochs=40, batch_size=8, img_size=512)
         trainer.train()
         trainer.save()
         print("Training complete and model saved!")
@@ -47,6 +47,7 @@ if __name__ == "__main__":
 
         # Load trained model and predict
         model = YOLO(yolo_model)
+        print(model.names)
         results = model(img_path, imgsz=512, conf=0.25)
 
         # Extract and display bounding box info

@@ -65,9 +65,10 @@ class TestYOLOTrainer(unittest.TestCase):
             device=str(trainer.device)
         )
 
+    @patch("yolo_training_program.shutil.copy")
     @patch("yolo_training_program.YOLO")
-    def test_save(self, mock_yolo):
-        """ Test save calls YOLO save. """
+    def test_save(self, mock_yolo, mock_copy):
+        """ Test save calls shutil.copy to save model weights. """
         mock_model_instance = MagicMock()
         mock_yolo.return_value = mock_model_instance
 
@@ -75,7 +76,8 @@ class TestYOLOTrainer(unittest.TestCase):
         save_path = "my_model.pt"
         trainer.save(save_path)
 
-        mock_model_instance.save.assert_called_once_with(save_path)
+        # We only expect shutil.copy
+        mock_copy.assert_called_once_with("runs/detect/train/weights/best.pt", "src/models/yolov8n_whole_image.pt")
 
 if __name__ == "__main__":
     unittest.main()

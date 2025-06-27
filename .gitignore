@@ -2,6 +2,9 @@
 *db
 *pth
 *.png
+yolo_dataset/*
+yolov8n.pt
+runs/*
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
