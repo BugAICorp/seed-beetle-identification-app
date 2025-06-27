@@ -222,3 +222,6 @@ if __name__ == '__main__':
     print(f"3. Predicted Species: {top_5_species[2][0]}, Confidence: {top_5_species[2][1]:.2f}\n")
     print(f"4. Predicted Species: {top_5_species[3][0]}, Confidence: {top_5_species[3][1]:.2f}\n")
     print(f"5. Predicted Species: {top_5_species[4][0]}, Confidence: {top_5_species[4][1]:.2f}\n")
+
+    # Final cleanup: remove cropped dataset
+    beetle_cropper.cleanup(globals.cropped_dataset)
