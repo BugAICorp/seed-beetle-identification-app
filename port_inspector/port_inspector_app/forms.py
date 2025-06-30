@@ -4,6 +4,7 @@ from . import models
 from django.contrib.auth import authenticate, get_user_model
 from django.core.exceptions import ValidationError
 from django.forms import inlineformset_factory
+from django.forms.widgets import ClearableFileInput
 
 User = get_user_model()
 
@@ -35,6 +36,13 @@ class UserRegisterForm(forms.ModelForm):
 
 
 class ImageForm(forms.ModelForm):
+    image = forms.ImageField(
+        required=False,
+        widget=ClearableFileInput(attrs={
+            'class': 'custom-upload-bttn'
+        })
+    )
+
     class Meta:
         model = models.Image
         fields = ['image']
@@ -49,6 +57,13 @@ class SpecimenUploadForm(forms.ModelForm):
     class Meta:
         model = models.SpecimenUpload
         fields = []
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['frontal_upload'].widget.attrs.update({'id': 'id_frontal_upload', 'class': 'file-input'})
+        self.fields['dorsal_upload'].widget.attrs.update({'id': 'id_dorsal_upload', 'class': 'file-input'})
+        self.fields['caudal_upload'].widget.attrs.update({'id': 'id_caudal_upload', 'class': 'file-input'})
+        self.fields['lateral_upload'].widget.attrs.update({'id': 'id_lateral_upload', 'class': 'file-input'})
 
     def clean(self):
         cleaned_data = super().clean()
@@ -96,15 +111,21 @@ class SpecimenUploadForm(forms.ModelForm):
         if commit:
             specimen.save()  # Must save the SpecimenUpload first
 
-            def generate_image_object(data):
-                if data:
+            def generate_image_object(data, existing_image):
+                # Delete previous image if there is one
+                if data is False:
+                    if existing_image:
+                        existing_image.delete()
+                    return None
+
+                elif data:
                     return models.Image.objects.create(specimen_upload=specimen, image=data)
                 return None
 
-            frontal_obj = generate_image_object(self.cleaned_data.get("frontal_upload"))
-            dorsal_obj = generate_image_object(self.cleaned_data.get("dorsal_upload"))
-            caudal_obj = generate_image_object(self.cleaned_data.get("caudal_upload"))
-            lateral_obj = generate_image_object(self.cleaned_data.get("lateral_upload"))
+            frontal_obj = generate_image_object(self.cleaned_data.get("frontal_upload"), specimen.frontal_image)
+            dorsal_obj = generate_image_object(self.cleaned_data.get("dorsal_upload"), specimen.dorsal_image)
+            caudal_obj = generate_image_object(self.cleaned_data.get("caudal_upload"), specimen.caudal_image)
+            lateral_obj = generate_image_object(self.cleaned_data.get("lateral_upload"), specimen.lateral_image)
 
             specimen.frontal_image = frontal_obj
             specimen.dorsal_image = dorsal_obj
