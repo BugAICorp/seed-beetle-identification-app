@@ -72,6 +72,10 @@ if __name__ == '__main__':
     # Set up data converter
     tdc = TrainingDataConverter(globals.cropped_dataset)
     tdc.conversion(globals.training_database)
+
+    # Final cleanup: remove cropped dataset
+    beetle_cropper.cleanup(globals.cropped_dataset)
+
     # Read converted data
     dbr = DatabaseReader(database=globals.training_database, class_file_path=globals.class_list)
     df = dbr.get_dataframe()
@@ -222,6 +226,3 @@ if __name__ == '__main__':
     print(f"3. Predicted Species: {top_5_species[2][0]}, Confidence: {top_5_species[2][1]:.2f}\n")
     print(f"4. Predicted Species: {top_5_species[3][0]}, Confidence: {top_5_species[3][1]:.2f}\n")
     print(f"5. Predicted Species: {top_5_species[4][0]}, Confidence: {top_5_species[4][1]:.2f}\n")
-
-    # Final cleanup: remove cropped dataset
-    beetle_cropper.cleanup(globals.cropped_dataset)
