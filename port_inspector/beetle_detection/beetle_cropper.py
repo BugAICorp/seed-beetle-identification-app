@@ -2,6 +2,7 @@
 
 import shutil
 from pathlib import Path
+import os
 
 from torch.serialization import add_safe_globals
 from ultralytics.nn.tasks import DetectionModel
@@ -11,7 +12,6 @@ from ultralytics import YOLO
 import torch
 from PIL import Image, UnidentifiedImageError
 import numpy as np
-from globals import yolo_model
 
 _original_torch_load = torch.load
 def patched_torch_load(f, *args, **kwargs):
@@ -53,7 +53,7 @@ class BeetleCropper:
             "cpu"
         )
         torch.load = patched_torch_load
-        self.yolo_model = YOLO(yolo_model)
+        self.yolo_model = YOLO(os.path.join(os.path.dirname(os.path.abspath(__file__)), "models/yolov8n_whole_image.pt"))
         torch.load = _original_torch_load
         self.yolo_model.to(self.device)
 
