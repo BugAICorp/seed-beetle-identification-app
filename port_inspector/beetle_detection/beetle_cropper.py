@@ -1,30 +1,30 @@
 """ beetle_cropper.py """
-
 import shutil
 from pathlib import Path
 import os
-
 from torch.serialization import add_safe_globals
 from ultralytics.nn.tasks import DetectionModel
 add_safe_globals([DetectionModel])
-
 from ultralytics import YOLO
 import torch
 from PIL import Image, UnidentifiedImageError
+
 import numpy as np
 
 _original_torch_load = torch.load
+
+
 def patched_torch_load(f, *args, **kwargs):
     """
     Patched version of torch.load that forces weights_only=False.
 
     This function overrides the default behavior of torch.load in PyTorch >=2.6,
-    where weights_only=True is the new default. By explicitly setting 
-    weights_only=False, it ensures that full model objects can be deserialized 
+    where weights_only=True is the new default. By explicitly setting
+    weights_only=False, it ensures that full model objects can be deserialized
     properly.
 
-    WARNING: Setting weights_only=False can execute arbitrary code during 
-    unpickling. Only use this patch if the source of the checkpoint file is 
+    WARNING: Setting weights_only=False can execute arbitrary code during
+    unpickling. Only use this patch if the source of the checkpoint file is
     fully trusted.
 
     Args:
@@ -37,6 +37,7 @@ def patched_torch_load(f, *args, **kwargs):
     """
     kwargs['weights_only'] = False
     return _original_torch_load(f, *args, **kwargs)
+
 
 class BeetleCropper:
     """

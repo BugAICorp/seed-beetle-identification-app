@@ -141,7 +141,7 @@ class SpecimenUploadForm(forms.ModelForm):
                         print(f"Could not identify uploaded image: {data.name}")
                     except Exception as e:
                         print(f"Error processing image: {e}")
-                    
+
                 return None
 
             frontal_obj = generate_image_object(self.cleaned_data.get("frontal_upload"), specimen.frontal_image)
