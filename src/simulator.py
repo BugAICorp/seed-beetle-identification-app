@@ -129,7 +129,8 @@ if __name__ == '__main__':
         species_model_filenames,
         globals.img_height,
         globals.spec_class_dictionary,
-        globals.spec_accuracy_list)
+        globals.spec_accuracy_list,
+        False)
 
     # Run training with dataframe
     genus_tp = TrainingProgram(df, "Genus", GENUS_OUTPUTS)
@@ -156,7 +157,8 @@ if __name__ == '__main__':
         genus_model_filenames,
         globals.img_height,
         globals.gen_class_dictionary,
-        globals.gen_accuracy_list)
+        globals.gen_accuracy_list,
+        False)
 
     # Load Genus models
     genus_model_paths = {
