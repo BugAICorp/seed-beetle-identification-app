@@ -6,9 +6,9 @@ import numpy as np
 from torch.serialization import add_safe_globals
 from ultralytics.nn.tasks import DetectionModel
 add_safe_globals([DetectionModel])
-from ultralytics import YOLO # noqa: E402
-import torch # noqa: E402
-from PIL import Image, UnidentifiedImageError # noqa: E402
+from ultralytics import YOLO  # noqa: E402
+import torch  # noqa: E402
+from PIL import Image, UnidentifiedImageError  # noqa: E402
 
 
 _original_torch_load = torch.load
