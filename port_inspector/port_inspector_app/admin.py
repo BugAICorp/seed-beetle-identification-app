@@ -104,6 +104,13 @@ class SpecimenUploadAdmin(admin.ModelAdmin):
     fields = ('display_all_images', 'formatted_genus', 'formatted_species', 'final_identification', 'is_validated')
     actions = [add_to_trainingdb]
 
+    def get_queryset(self, request):
+        """
+        Override original query so that only is_usda user's uploads appear for the admin
+        """
+        qs = super().get_queryset(request)
+        return qs.filter(user__is_usda=True)
+
     def formatted_genus(self, obj):
         """
         Format the genus column to be more admin reader friendly
