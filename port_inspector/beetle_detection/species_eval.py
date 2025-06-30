@@ -17,11 +17,11 @@ if "runserver" in sys.argv:
     import globals
 
     # read json to see size of outputs
-    spec_dict_path = os.path.join(BASE_DIR, "spec_dict.json")
+    spec_dict_path = os.path.join(BASE_DIR, "model_data/spec_dict.json")
     with open(spec_dict_path, 'r', encoding='utf-8') as spec_dict:
         SPECIES_OUTPUTS = len(json.load(spec_dict))
 
-    gen_dict_path = os.path.join(BASE_DIR, "gen_dict.json")
+    gen_dict_path = os.path.join(BASE_DIR, "model_data/gen_dict.json")
     with open(gen_dict_path, 'r', encoding='utf-8') as gen_dict:
         GENUS_OUTPUTS = len(json.load(gen_dict))
 

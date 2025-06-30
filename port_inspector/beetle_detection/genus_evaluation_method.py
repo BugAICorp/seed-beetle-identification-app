@@ -67,16 +67,16 @@ class GenusEvaluationMethod:
         """
         transformations = []
 
-        with open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "caud_transformation.pth"), "rb") as f:
+        with open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "models/caud_transformation.pth"), "rb") as f:
             transformations.append(dill.load(f))
 
-        with open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "dors_transformation.pth"), "rb") as f:
+        with open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "models/dors_transformation.pth"), "rb") as f:
             transformations.append(dill.load(f))
 
-        with open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "fron_transformation.pth"), "rb") as f:
+        with open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "models/fron_transformation.pth"), "rb") as f:
             transformations.append(dill.load(f))
 
-        with open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "late_transformation.pth"), "rb") as f:
+        with open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "models/late_transformation.pth"), "rb") as f:
             transformations.append(dill.load(f))
 
         return transformations
