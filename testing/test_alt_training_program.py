@@ -249,7 +249,8 @@ class TestAltTrainingProgram(unittest.TestCase):
                 },
                 "height.txt",
                 "alt_dict.json",
-                "alt_test_accuracies.json"
+                "alt_test_accuracies.json",
+                False
             )
 
         # Verify torch.save is called for each model, ignoring exact state_dict() content

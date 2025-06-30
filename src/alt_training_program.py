@@ -452,7 +452,8 @@ class AltTrainingProgram:
         return model
 
     def save_models(self, model_filenames = None, height_filename = None,
-                    class_dict_filename = None, accuracy_dict_filename = None):
+                    class_dict_filename = None, accuracy_dict_filename = None,
+                    overwrite_accuracies = False):
         """
         Saves trained models to their respective files and image height file
         
@@ -460,7 +461,7 @@ class AltTrainingProgram:
         """
         # Update/Initialize Model Accuracy Dictionary
         # update_flags indicates which models weights need to be updated and saved
-        update_flags = self.update_accuracies(accuracy_dict_filename)
+        update_flags = self.update_accuracies(accuracy_dict_filename, overwrite_accuracies)
         views = ["dors_caud", "all", "dors_late"]
 
         for view in views:
@@ -481,7 +482,7 @@ class AltTrainingProgram:
                 file.write(str(self.height))
             print(f"Height saved to {height_filename}.")
 
-    def update_accuracies(self, accuracy_dict_filename = None):
+    def update_accuracies(self, accuracy_dict_filename = None, overwrite_accuracy = False):
         """
         Reads in the previously saved model accuracies(if exists), and updates and saves 
         accuracy dictionary if accuracies increased during training. If model accuracies
@@ -499,7 +500,9 @@ class AltTrainingProgram:
 
             for model in model_names:
                 accuracy = accuracy_dict.get(model, 0)
-                if accuracy < self.model_accuracies[model]:
+                if self.model_accuracies[model] == 0:
+                    update_flags[model] = False
+                elif accuracy < self.model_accuracies[model] or overwrite_accuracy:
                     # accuracy from most recent train is better than saved, so update
                     update_flags[model] = True
                     print(f"Updated Accuracy in Dictionary - Improved for {model} model.")
