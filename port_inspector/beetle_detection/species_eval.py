@@ -17,42 +17,42 @@ if "runserver" in sys.argv:
     import globals
 
     # read json to see size of outputs
-    spec_dict_path = os.path.join(BASE_DIR, "spec_dict.json")
+    spec_dict_path = os.path.join(BASE_DIR, "model_data/spec_dict.json")
     with open(spec_dict_path, 'r', encoding='utf-8') as spec_dict:
         SPECIES_OUTPUTS = len(json.load(spec_dict))
 
-    gen_dict_path = os.path.join(BASE_DIR, "gen_dict.json")
+    gen_dict_path = os.path.join(BASE_DIR, "model_data/gen_dict.json")
     with open(gen_dict_path, 'r', encoding='utf-8') as gen_dict:
         GENUS_OUTPUTS = len(json.load(gen_dict))
 
     # Load species models
     species_model_paths = {
-            "caud" : os.path.join(os.path.dirname(os.path.abspath(__file__)), "spec_caud.pth"), 
-            "dors" : os.path.join(os.path.dirname(os.path.abspath(__file__)), "spec_dors.pth"),
-            "fron" : os.path.join(os.path.dirname(os.path.abspath(__file__)), "spec_fron.pth"),
-            "late" : os.path.join(os.path.dirname(os.path.abspath(__file__)), "spec_late.pth")
+            "caud" : os.path.join(os.path.dirname(os.path.abspath(__file__)), "models/spec_caud.pth"), 
+            "dors" : os.path.join(os.path.dirname(os.path.abspath(__file__)), "models/spec_dors.pth"),
+            "fron" : os.path.join(os.path.dirname(os.path.abspath(__file__)), "models/spec_fron.pth"),
+            "late" : os.path.join(os.path.dirname(os.path.abspath(__file__)), "models/spec_late.pth")
         }
     species_ml = ModelLoader(species_model_paths, SPECIES_OUTPUTS)
     species_models = species_ml.get_models()
 
     # Load genus models
     genus_model_paths = {
-            "caud" : os.path.join(os.path.dirname(os.path.abspath(__file__)), "gen_caud.pth"), 
-            "dors" : os.path.join(os.path.dirname(os.path.abspath(__file__)), "gen_dors.pth"),
-            "fron" : os.path.join(os.path.dirname(os.path.abspath(__file__)), "gen_fron.pth"),
-            "late" : os.path.join(os.path.dirname(os.path.abspath(__file__)), "gen_late.pth")
+            "caud" : os.path.join(os.path.dirname(os.path.abspath(__file__)), "models/gen_caud.pth"), 
+            "dors" : os.path.join(os.path.dirname(os.path.abspath(__file__)), "models/gen_dors.pth"),
+            "fron" : os.path.join(os.path.dirname(os.path.abspath(__file__)), "models/gen_fron.pth"),
+            "late" : os.path.join(os.path.dirname(os.path.abspath(__file__)), "models/gen_late.pth")
         }
     genus_ml = ModelLoader(genus_model_paths, GENUS_OUTPUTS)
     genus_models = genus_ml.get_models()
 
 
     # Initialize the EvaluationMethod object with the heaviest eval method set
-    species_evaluator = EvaluationMethod(os.path.join(os.path.dirname(os.path.abspath(__file__)), "height.txt"), species_models, 1, 
-                                         os.path.join(os.path.dirname(os.path.abspath(__file__)), "spec_dict.json"), 
-                                         os.path.join(os.path.dirname(os.path.abspath(__file__)), "spec_accuracies.json"))
-    genus_evaluator = GenusEvaluationMethod(os.path.join(os.path.dirname(os.path.abspath(__file__)), "height.txt"), genus_models, 1, 
-                                            os.path.join(os.path.dirname(os.path.abspath(__file__)), "gen_dict.json"), 
-                                            os.path.join(os.path.dirname(os.path.abspath(__file__)), "gen_accuracies.json"))
+    species_evaluator = EvaluationMethod(os.path.join(os.path.dirname(os.path.abspath(__file__)), "model_data/height.txt"), species_models, 1, 
+                                         os.path.join(os.path.dirname(os.path.abspath(__file__)), "model_data/spec_dict.json"), 
+                                         os.path.join(os.path.dirname(os.path.abspath(__file__)), "model_data/spec_accuracies.json"))
+    genus_evaluator = GenusEvaluationMethod(os.path.join(os.path.dirname(os.path.abspath(__file__)), "model_data/height.txt"), genus_models, 1, 
+                                            os.path.join(os.path.dirname(os.path.abspath(__file__)), "model_data/gen_dict.json"), 
+                                            os.path.join(os.path.dirname(os.path.abspath(__file__)), "model_data/gen_accuracies.json"))
 
     print("!!! ML Models loaded in evaluation mode !!!")
 

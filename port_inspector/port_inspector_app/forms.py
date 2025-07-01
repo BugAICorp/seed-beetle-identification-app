@@ -3,8 +3,13 @@ from django.conf import settings
 from . import models
 from django.contrib.auth import authenticate, get_user_model
 from django.core.exceptions import ValidationError
+from django.core.files.base import ContentFile
 from django.forms import inlineformset_factory
 from django.forms.widgets import ClearableFileInput
+from PIL import Image
+from PIL import UnidentifiedImageError
+from beetle_detection import beetle_cropper
+import io
 
 User = get_user_model()
 
@@ -119,7 +124,24 @@ class SpecimenUploadForm(forms.ModelForm):
                     return None
 
                 elif data:
-                    return models.Image.objects.create(specimen_upload=specimen, image=data)
+                    try:
+                        cropper = beetle_cropper.BeetleCropper()
+                        img = Image.open(data).convert("RGB")
+                        cropped_img = cropper.crop_beetle(img)
+
+                        img_bytes = io.BytesIO()
+                        cropped_img.save(img_bytes, format='JPEG')
+                        img_bytes.seek(0)
+
+                        img_file = ContentFile(img_bytes.read(), name=data.name)
+
+                        return models.Image.objects.create(specimen_upload=specimen, image=img_file)
+
+                    except UnidentifiedImageError:
+                        print(f"Could not identify uploaded image: {data.name}")
+                    except Exception as e:
+                        print(f"Error processing image: {e}")
+
                 return None
 
             frontal_obj = generate_image_object(self.cleaned_data.get("frontal_upload"), specimen.frontal_image)

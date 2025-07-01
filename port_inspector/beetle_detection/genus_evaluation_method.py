@@ -67,16 +67,16 @@ class GenusEvaluationMethod:
         """
         transformations = []
 
-        with open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "caud_transformation.pth"), "rb") as f:
+        with open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "models/caud_transformation.pth"), "rb") as f:
             transformations.append(dill.load(f))
 
-        with open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "dors_transformation.pth"), "rb") as f:
+        with open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "models/dors_transformation.pth"), "rb") as f:
             transformations.append(dill.load(f))
 
-        with open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "fron_transformation.pth"), "rb") as f:
+        with open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "models/fron_transformation.pth"), "rb") as f:
             transformations.append(dill.load(f))
 
-        with open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "late_transformation.pth"), "rb") as f:
+        with open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "models/late_transformation.pth"), "rb") as f:
             transformations.append(dill.load(f))
 
         return transformations
@@ -123,7 +123,7 @@ class GenusEvaluationMethod:
 
                 # Apply OOD for out-of-distribution detection
                 # Threshold to be adjusted (If threshold is too strict (try −14) If too lenient (try −10))
-                is_confident, energy, softmax_scores = self.apply_ood(model_output, temperature=1000, threshold=-12.0)
+                is_confident, energy, softmax_scores = self.apply_ood(model_output, temperature=1, threshold=-12.0)
 
                 if is_confident:
                     # Use the predicted class and softmax confidence

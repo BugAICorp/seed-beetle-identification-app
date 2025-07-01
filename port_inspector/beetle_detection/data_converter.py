@@ -1,8 +1,11 @@
 """data_converter.py"""
 
 # flake8: noqa
-import json, os, sys
+import json, os, sys, io
+from PIL import Image
 from port_inspector_app.models import TrainingDatabase, ValidClasses
+from .beetle_cropper import BeetleCropper
+from PIL import UnidentifiedImageError
 
  
 class DjangoTrainingDatabaseConverter:
@@ -10,10 +13,25 @@ class DjangoTrainingDatabaseConverter:
     def __init__(self, dir):
         base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '../../'))
         self.dir = os.path.join(base_dir, dir)
+        self.beetle_cropper = BeetleCropper()
 
     def img_to_binary(self, image):
-        with open(image, 'rb') as file:
-            return file.read()
+        try:
+            # Crop the image before saving to the database
+            img = Image.open(image).convert("RGB")
+            cropped = self.beetle_cropper.crop_beetle(img)
+
+            img_binary = io.BytesIO()
+            cropped.save(img_binary, format='JPEG')
+            img_binary.seek(0)
+            return img_binary.read()
+
+        except UnidentifiedImageError:
+                print(f"Cannot identify image file: {image}")
+        except OSError as e:
+            print(f"OS error processing {image}: {e}")
+
+        return None
 
     def parse_name(self, name: str):
         name_parts = name.split(' ')
