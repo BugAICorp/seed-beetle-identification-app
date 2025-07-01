@@ -19,7 +19,7 @@
       min-height: 100vh;
     }
     header {
-      position: fixed;
+      position: relative;
       display: flex;
       justify-content: space-between;
       align-items: center;
@@ -29,16 +29,34 @@
       background-color: #ffffff;
       box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     }
+    .header-underline {
+      position: absolute;
+      bottom: 0;
+      height: 4px;
+      background-color: rgb(4, 80, 4);
+      left: 0; /* Align with edge of screen */
+      width: calc(7.2%); /* Adjust to cover only under "Home" and some space after */
+    }
     header a {
       text-decoration: none;
       color: #333;
-      font-size: 16px;
+      font-size: 14px;
       display: flex;
-      align-items: center;
       margin: 0 10px;
     }
     header a span {
       margin-left: 5px;
+    }
+    .header-left,
+    .header-right {
+      display: flex;
+      align-items: center;
+    }
+    .header-left {
+      gap: 10px;
+    }
+    .header-right {
+      gap: 10px;
     }
     .container {
       background-color: white;
@@ -64,7 +82,10 @@
         color: #aaa;
         margin-bottom: 10px;
     }
-
+    .highlight-link {
+      position: relative;
+      display: flex;
+    }
     #title-banner {
         width: 100%;
         height: auto;
@@ -100,6 +121,12 @@
       height: auto;
       object-fit: cover;
     }
+    #header-bar-icon {
+      width: auto;
+      height: 24px;
+      vertical-align: middle;
+      object-fit: contain;
+    }
     #additional-resources-p {
       font-size: 20px;
       font-family: 'Roboto mono', monospace;
@@ -109,16 +136,21 @@
 </head>
 <body>
   <header>
-    <a href="/"><span>Home</span></a>
-    <a href="/history">📜<span>History</span></a>
-    <a href="/upload">📤<span>Upload Photo</span></a>
-    <a href="/profile">👤<span>Profile</span></a>
-    {% if not request.user.is_authenticated %}
-    <a href="/login">🔒<span>Login</span></a>
-    {% endif %}
-    {% if request.user.is_authenticated %}
-    <a href="/logout">🔓<span>Logout</span></a>
-    {% endif %}
+    <div class="header-left">
+      <a href="/" style="align-items: center;"><img src="{% static 'Bug_icon.png' %}" id="header-bar-icon"/><span>Home</span></a>
+      <a href="/history"><span>History</span></a>
+      <a href="/upload"><span>Upload Photo</span></a>
+    </div>
+    <div class="header-right">
+      <a href="/profile"><span>Profile</span></a>
+      {% if not request.user.is_authenticated %}
+      <a href="/login"><span>Login</span></a>
+      {% endif %}
+      {% if request.user.is_authenticated %}
+      <a href="/logout"><span>Logout</span></a>
+      {% endif %}
+    </div>
+    <div class="header-underline"></div>
   </header>
 
   <div>
