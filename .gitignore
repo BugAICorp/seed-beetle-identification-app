@@ -24,6 +24,7 @@ db.sqlite3
 media/
 
 # Static files
+!static/port_inspector_app/
 static/
 uploads/uploads
 

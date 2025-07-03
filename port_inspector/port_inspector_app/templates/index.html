@@ -1,4 +1,6 @@
 {% load static %}
+<link rel="stylesheet" href="{% static 'port_inspector_app/header.css' %}">
+<link rel="stylesheet" href="{% static 'port_inspector_app/index_elements.css' %}">
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -18,119 +20,15 @@
       justify-content: flex-start;
       min-height: 100vh;
     }
-    header {
-      position: relative;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      width: 100%;
-      padding: 10px 20px;
-      box-sizing: border-box;
-      background-color: #ffffff;
-      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    }
-    .header-underline {
-      position: absolute;
-      bottom: 0;
-      height: 4px;
-      background-color: rgb(4, 80, 4);
-      left: 0; /* Align with edge of screen */
-      width: calc(7.2%); /* Adjust to cover only under "Home" and some space after */
-    }
-    header a {
-      text-decoration: none;
-      color: #333;
-      font-size: 14px;
-      display: flex;
-      margin: 0 10px;
-    }
-    header a span {
-      margin-left: 5px;
-    }
-    .header-left,
-    .header-right {
-      display: flex;
-      align-items: center;
-    }
-    .header-left {
-      gap: 10px;
-    }
-    .header-right {
-      gap: 10px;
-    }
     .container {
       background-color: white;
       padding: 20px;
       border-radius: 10px;
       box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
       text-align: center;
-      width: 320px;
-      margin-top: 50px;
-    }
-    h1 {
-      font-family: 'Roboto mono', monospace;
-      font-size: 40px;
-      color: #555;
-      margin: 5%;
-      align-items: center;
-      text-align: center;
-    }
-
-    footer {
-        margin-top: 20px;
-        font-size: 12px;
-        color: #aaa;
-        margin-bottom: 10px;
-    }
-    .highlight-link {
-      position: relative;
-      display: flex;
-    }
-    #title-banner {
-        width: 100%;
-        height: auto;
-    }
-    #use-case-banner {
-        width: 90%;
-        margin: auto;
-        height: auto;
-        background-color: whitesmoke;
-    }
-    img {
-        display:block;
-    }
-    #mission-div {
-      display: flex;
-      width: 100%;
-      height: auto;
-    }
-    #our-text {
-      display: flex;
-        font-size: 20px;
-        font-family: 'Roboto mono', monospace;
-        background-color: black;
-        color: whitesmoke;
-        margin: 0;
-        padding: 2.5% 5% 2.5% 7.5%;
-        width: 50vw;
-        box-sizing: border-box;
-        align-items: center;
-    }
-    #mission-img {
-      width: 50%;
-      height: auto;
-      object-fit: cover;
-    }
-    #header-bar-icon {
-      width: auto;
-      height: 24px;
-      vertical-align: middle;
-      object-fit: contain;
-    }
-    #additional-resources-p {
-      font-size: 20px;
-      font-family: 'Roboto mono', monospace;
-      text-align: center;
+      width: 90%;
+      max-width: 320px;
+      margin-top: 50px auto;
     }
   </style>
 </head>
