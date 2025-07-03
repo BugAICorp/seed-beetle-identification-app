@@ -1,5 +1,6 @@
 """ ood_tester.py """
 
+import io
 import torch
 import numpy as np
 import matplotlib.pyplot as plt
@@ -7,7 +8,6 @@ from torch.utils.data import DataLoader, Dataset
 from torchvision import transforms
 from sklearn.metrics import roc_auc_score, precision_recall_curve, auc
 from PIL import Image
-import io
 
 class ImageDataset(Dataset):
     """
@@ -71,7 +71,7 @@ class OODTester:
         id_dataset = ImageDataset(id_dataframe, transform=transform)
         ood_dataset = ImageDataset(ood_dataframe, transform=transform)
 
-        # shuffe=false for deterministic results 
+        # shuffe=false for deterministic results
         self.id_loader = DataLoader(id_dataset, batch_size=32, shuffle=False)
         self.ood_loader = DataLoader(ood_dataset, batch_size=32, shuffle=False)
 
@@ -113,7 +113,7 @@ class OODTester:
 
         return np.concatenate(energies)
 
-    def test_ood(self, temperatures=[1.0, 2.0, 5.0, 10.0]):
+    def test_ood(self, temperatures):
         """
         Tests OOD detection performance across multiple temperatures.
 
