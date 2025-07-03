@@ -24,12 +24,6 @@
     height: auto;
     object-fit: cover;
 }
-#header-bar-icon {
-    width: auto;
-    height: clamp(14px, 2.5vw, 24px);
-    vertical-align: middle;
-    object-fit: contain;
-}
 #additional-resources-p {
     margin: 5%;
     font-size: 20px;
