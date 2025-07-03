@@ -185,14 +185,14 @@ class TrainingProgram:
         image_binaries, labels, test_size=0.2, random_state=42)
         return [train_x, test_x, train_y, test_y]
 
-    def training_evaluation_resnet(self, num_epochs, train_loader, test_loader, view):
+    def training_evaluation_resnet(self, num_epochs, train_loader, test_loader, view, loss=0.001):
         """
         Code for training algorithm and evaluating model
         """
         # Model Training
         # define loss function, optimization function, and image transformation
         criterion = torch.nn.CrossEntropyLoss()
-        optimizer = torch.optim.Adam(self.models[view].parameters(), lr=0.001)
+        optimizer = torch.optim.Adam(self.models[view].parameters(), lr=loss)
 
         best_epoch = 0
         best_macro_f1 = 0.0
@@ -258,7 +258,7 @@ class TrainingProgram:
             self.model_accuracies[view] = best_macro_f1
             print(f"Best Macro F1: {100 * best_macro_f1:.2f}% — model loaded.")
 
-    def train_resnet_model(self, num_epochs, view):
+    def train_resnet_model(self, num_epochs, view, batch, rotation=5, brightness=0.1, loss=0.001):
         """
         Trains resnet model with subset of specified image views
         and save model to respective save file.
@@ -267,17 +267,23 @@ class TrainingProgram:
         # Get training and testing data
         train_x, test_x, train_y, test_y = self.get_train_test_split(self.subsets[view])
         # Define image training transformations, placeholder for preprocessing
+        self.train_transformations = self.create_train_transformations(
+            rotation_degree=rotation,
+            brightness=brightness,
+            contrast=0.1,
+            erasing=(0.5, (0.02, 0.15))
+        )
         transformation = self.train_transformations[view]
 
         # Create DataLoaders
         train_dataset = ImageDataset(train_x, train_y, transform=transformation)
         test_dataset = ImageDataset(test_x, test_y, transform=transformation)
-        training_loader = DataLoader(train_dataset, batch_size=32, shuffle=True)
-        testing_loader = DataLoader(test_dataset, batch_size=32, shuffle=False)
+        training_loader = DataLoader(train_dataset, batch_size=batch, shuffle=True)
+        testing_loader = DataLoader(test_dataset, batch_size=batch, shuffle=False)
 
-        self.training_evaluation_resnet(num_epochs, training_loader, testing_loader, view)
+        self.training_evaluation_resnet(num_epochs, training_loader, testing_loader, view, loss=loss)
 
-    def k_fold_resnet(self, num_epochs, view, k_folds=5):
+    def k_fold_resnet(self, num_epochs, view, k_folds=5, batch=32, rotation=5, brightness=0.1, loss=0.001):
         """
         Trains the caudal model using Stratified K-Fold Cross Validation.
         """
@@ -289,6 +295,12 @@ class TrainingProgram:
         labels = [self.class_string_dictionary[label] for label in classes]
 
         # Define transformation for training
+        self.train_transformations = self.create_train_transformations(
+            rotation_degree=rotation,
+            brightness=brightness,
+            contrast=0.1,
+            erasing=(0.5, (0.02, 0.15))
+        )
         transformation = self.train_transformations[view]
         skf = StratifiedKFold(n_splits=k_folds, shuffle=True)
 
@@ -304,14 +316,14 @@ class TrainingProgram:
 
             train_dataset = ImageDataset(train_x, train_y, transform=transformation)
             val_dataset = ImageDataset(val_x, val_y, transform=transformation)
-            train_loader = DataLoader(train_dataset, batch_size=32, shuffle=True)
-            val_loader = DataLoader(val_dataset, batch_size=32, shuffle=False)
+            train_loader = DataLoader(train_dataset, batch_size=batch, shuffle=True)
+            val_loader = DataLoader(val_dataset, batch_size=batch, shuffle=False)
 
             # Reinitialize model before each fold
             self.model_accuracies[view] = 0.0
             self.models[view] = self.load_model()
 
-            self.training_evaluation_resnet(num_epochs, train_loader, val_loader, view)
+            self.training_evaluation_resnet(num_epochs, train_loader, val_loader, view, loss=loss)
 
             fold_f1 = self.model_accuracies.get(view, 0.0)
             all_fold_f1s.append(fold_f1)
