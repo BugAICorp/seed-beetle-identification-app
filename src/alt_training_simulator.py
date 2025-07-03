@@ -41,6 +41,17 @@ if __name__ == '__main__':
     dbr = DatabaseReader(globals.training_database, class_file_path=globals.class_list)
     original_df = dbr.get_dataframe()
 
+    while True:
+        print("\nWould you like to overwrite previous models no matter the new accuracy?")
+        user_input = int(input("Enter 1 for YES, and 2 for NO: "))
+        if user_input == 1:
+            overwrite = True
+            break
+        if user_input == 2:
+            overwrite = False
+            break
+        print("Invalid input. Please try again.")
+
     # Display how many images we have for each angle
     print("Number of Images for Each Angle in the Original Dataset:")
     print(f"CAUD: {(original_df['View'] == 'CAUD').sum()}")
@@ -83,7 +94,8 @@ if __name__ == '__main__':
         alt_species_model_filenames,
         globals.alt_img_height,
         globals.alt_spec_class_dictionary,
-        globals.alt_spec_accuracy_list)
+        globals.alt_spec_accuracy_list,
+        overwrite)
 
     # Run training with dataframe
     alt_genus_tp = AltTrainingProgram(dataframe=df, class_column="Genus", num_classes=GENUS_OUTPUTS)
@@ -104,6 +116,7 @@ if __name__ == '__main__':
         alt_genus_model_filenames,
         globals.alt_img_height,
         globals.alt_gen_class_dictionary,
-        globals.alt_gen_accuracy_list)
+        globals.alt_gen_accuracy_list,
+        overwrite)
 
     log_file.close()

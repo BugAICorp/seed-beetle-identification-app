@@ -5,9 +5,10 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Upload an Image</title>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono&display=swap" rel="stylesheet">
   <style>
     body {
-      font-family: Arial, sans-serif;
+      font-family: 'Roboto mono', monospace;
       background-color: #f9f9fc;
       margin: 0;
       padding: 0;
@@ -66,6 +67,7 @@
       margin-bottom: 10px;
     }
     .upload-btn {
+      font-family: 'Roboto Mono', monospace;
       background-color: #1a73e8;
       color: white;
       border: none;
@@ -73,9 +75,11 @@
       padding: 10px 20px;
       cursor: pointer;
       font-size: 14px;
+      font-weight: bold;
       margin-top: 20px;
     }
     .upload-btn:hover {
+      font-family: 'Roboto Mono', monospace;
       background-color: #155cb0;
     }
 
@@ -158,29 +162,68 @@
       color: #a00;
       border-radius: 5px;
       margin-top: 30px;
-  }
-  .form-errors ul,
-  .form-errors li {
-      margin: 0;
-      padding: 0;
-      list-style: none;
-  }
-  .non-field-error-block {
-    margin-top: 50px;
-    padding-top: 50px;
-  }
-  .field-error:not(:last-of-type) {
-      margin-bottom: 15px;
-  }
-  .error-type-block:not(:last-of-type):has(li) {
-      margin-bottom: 15px
-  }
+    }
+    .form-errors ul,
+    .form-errors li {
+        margin: 0;
+        padding: 0;
+        list-style: none;
+    }
+    .non-field-error-block {
+      margin-top: 50px;
+      padding-top: 50px;
+    }
+    .field-error:not(:last-of-type) {
+        margin-bottom: 15px;
+    }
+    .error-type-block:not(:last-of-type):has(li) {
+        margin-bottom: 15px
+    }
 
-  footer {
-    margin-top: 20px;
-    font-size: 12px;
-    color: #aaa;
-  }
+    footer {
+      margin-top: 20px;
+      font-size: 12px;
+      color: #aaa;
+    }
+    .custom-upload-bttn {
+      display: inline-block;
+      font-family: 'Roboto Mono', monospace;
+      font-size: 10px;
+      background-color: #1a73e8;
+      color: white;
+      border: none;
+      padding: 2px 3px;
+      border-radius: 6px;
+      font-weight: 500;
+      cursor: pointer;
+      display: inline-block;
+      margin-top: 3px;
+    }
+    .custom-upload-bttn:hover {
+      font-family: 'Roboto Mono', monospace;
+      background-color: #155cb0;
+    }
+    .filename-text {
+      display: inline-block;
+      white-space: nowrap;
+      margin-top: 6px;
+      font-family: 'Roboto Mono', monospace;
+      font-size: 12px;
+      color: #333;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 30ch;
+    }
+    input[type="file"] {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      border: 0;
+    }
   </style>
 </head>
 <body>
@@ -202,20 +245,25 @@
     <form method="POST" enctype="multipart/form-data">
       {% csrf_token %}
 
-      <label for="id_frontal_image">
-        Frontal Image:
-        <div class="tooltip-container">
-          <div class="tooltip-icon">i</div>
-          <div class="tooltip-text">
-            The frontal aspect can be informative, although variable positioning of the antennae and mouthparts means that this aspect will improve as more data are added to train the AI model.<br><br>
-            Currently the model performs best if the image is captured with the frons (the area between the eyes) in alignment with the clypeus.
-            <img src="{% static 'frontal.png' %}" class="tooltip-image" />
+        <label for="id_frontal_upload" class="upload-label">
+          Frontal Image:
+          <div class="tooltip-container">
+            <div class="tooltip-icon">i</div>
+            <div class="tooltip-text">
+              The frontal aspect can be informative, although variable positioning of the antennae and mouthparts means that this aspect will improve as more data are added to train the AI model.<br><br>
+              Currently the model performs best if the image is captured with the frons (the area between the eyes) in alignment with the clypeus.
+              <img src="{% static 'frontal.png' %}" class="tooltip-image" />
+            </div>
           </div>
+        </label>
+        {{ form.frontal_upload }}
+        <div style="display: flex; gap: 5px;">
+          <label for="id_frontal_upload" class="custom-upload-bttn" id="label-id_frontal_upload">Choose File</label>
+          <span id="filename-id_frontal_upload" class="filename-text">No file selected</span>
         </div>
-      </label>
-      {{ form.frontal_upload }}
+        
 
-      <label for="id_dorsal_image">
+      <label for="id_dorsal_upload" class="upload-label">
         Dorsal Image:
         <div class="tooltip-container">
           <div class="tooltip-icon">i</div>
@@ -227,8 +275,13 @@
         </div>
       </label>
       {{ form.dorsal_upload }}
+      <!-- Overload the original upload form and insert a custom label instead for better style control -->
+      <div style="display: flex; gap: 5px;">
+        <label for="id_dorsal_upload" class="custom-upload-bttn" id="label-id_dorsal_upload">Choose File</label>
+        <span id="filename-id_dorsal_upload" class="filename-text">No file selected</span>
+      </div>
 
-      <label for="id_caudal_image">
+      <label for="id_caudal_upload" class="upload-label">
         Caudal Image:
         <div class="tooltip-container">
           <div class="tooltip-icon">i</div>
@@ -240,8 +293,12 @@
         </div>
       </label>
       {{ form.caudal_upload }}
+      <div style="display: flex; gap: 5px;">
+        <label for="id_caudal_upload" class="custom-upload-bttn" id="label-id_caudal_upload">Choose File</label>
+        <span id="filename-id_caudal_upload" class="filename-text">No file selected</span>
+      </div>
 
-      <label for="id_lateral_image">
+      <label for="id_lateral_upload" class="upload-label">
         Lateral Image:
         <div class="tooltip-container">
           <div class="tooltip-icon">i</div>
@@ -253,6 +310,10 @@
         </div>
       </label>
       {{ form.lateral_upload }}
+      <div style="display: flex; gap: 5px;">
+        <label for="id_lateral_upload" class="custom-upload-bttn" id="label-id_lateral_upload">Choose File</label>
+        <span id="filename-id_lateral_upload" class="filename-text">No file selected</span>
+      </div>
 
       <button type="submit" class="upload-btn">Upload</button>
     </form>
@@ -289,3 +350,49 @@
   </footer>
 </body>
 </html>
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    // Function that changes file path display upon file upload/deletion
+    const fileInputs = document.querySelectorAll('input[type="file"]');
+    fileInputs.forEach(input => {
+      input.addEventListener('change', function () {
+        const fileName = input.files.length > 0 ? input.files[0].name : 'No file selected';
+        const display = document.getElementById(`filename-${input.id}`);
+        if (display) {
+          display.textContent = fileName;
+        }
+      });
+    });
+  });
+
+document.addEventListener('DOMContentLoaded', function () {
+  // Function that changes choose file button to delete mode when a file is uploaded
+  const fileInputs = document.querySelectorAll('input[type="file"]');
+  
+  fileInputs.forEach(input => {
+    const label = document.getElementById(`label-${input.id}`);
+    const display = document.getElementById(`filename-${input.id}`);
+
+    input.addEventListener('change', function () {
+      if (input.files.length > 0) {
+        display.textContent = input.files[0].name;
+        label.textContent = 'Delete';
+
+        // Change behavior to delete if clicked again
+        label.addEventListener('click', function handleDelete(e) {
+          e.preventDefault();  // Prevent default file dialog
+          input.value = '';    // Clear the input
+          display.textContent = 'No file selected';
+          label.textContent = 'Choose File';
+          
+          // Remove the handler so next click opens the dialog again
+          label.removeEventListener('click', handleDelete);
+        });
+      } else {
+        display.textContent = 'No file selected';
+        label.textContent = 'Choose File';
+      }
+    });
+  });
+});
+</script>

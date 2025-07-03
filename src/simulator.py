@@ -64,6 +64,17 @@ if __name__ == '__main__':
             break
         print("Invalid Input. Please enter 1 or 2.")
 
+    while True:
+        print("\nWould you like to overwrite previous models no matter the new accuracy?")
+        user_input = int(input("Enter 1 for YES, and 2 for NO: "))
+        if user_input == 1:
+            overwrite = True
+            break
+        if user_input == 2:
+            overwrite = False
+            break
+        print("Invalid input. Please try again.")
+
     # Create the beetle cropper object to be used in dataset creation and image cropping
     beetle_cropper = BeetleCropper()
     # Crop the images in the original dataset so that the image is only the beetle
@@ -129,7 +140,8 @@ if __name__ == '__main__':
         species_model_filenames,
         globals.img_height,
         globals.spec_class_dictionary,
-        globals.spec_accuracy_list)
+        globals.spec_accuracy_list,
+        overwrite)
 
     # Run training with dataframe
     genus_tp = TrainingProgram(df, "Genus", GENUS_OUTPUTS)
@@ -156,7 +168,8 @@ if __name__ == '__main__':
         genus_model_filenames,
         globals.img_height,
         globals.gen_class_dictionary,
-        globals.gen_accuracy_list)
+        globals.gen_accuracy_list,
+        overwrite)
 
     # Load Genus models
     genus_model_paths = {
