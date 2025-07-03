@@ -26,7 +26,7 @@
 }
 #header-bar-icon {
     width: auto;
-    height: 24px;
+    height: clamp(14px, 2.5vw, 24px);
     vertical-align: middle;
     object-fit: contain;
 }
@@ -69,7 +69,7 @@ img {
     height: auto;
     display:block;
 }
-@media (max-width: 600px){
+@media (max-width: 600px), (max-height: 500px) {
     h1 {
         font-size: 16px;
     }
