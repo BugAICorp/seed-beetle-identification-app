@@ -125,7 +125,10 @@ class TestTrainingProgram(unittest.TestCase):
         })
 
         # Mocks for transformations and model methods
-        self.training_program.transformations = {"caud": MagicMock()}
+        self.training_program.transformations = {"caud": MagicMock(),
+                                                 "dors": MagicMock(),
+                                                 "fron": MagicMock(),
+                                                 "late": MagicMock()}
         self.training_program.load_model = MagicMock(return_value=MagicMock())
         self.training_program.training_evaluation_resnet = MagicMock()
         self.training_program.model_accuracies = {}
