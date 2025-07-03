@@ -5,6 +5,7 @@ from training_data_converter import TrainingDataConverter
 from training_database_reader import DatabaseReader
 from training_program import TrainingProgram
 from data_augmenter import DataAugmenter
+from beetle_cropper import BeetleCropper
 import globals
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../')))
@@ -81,9 +82,17 @@ if __name__ == '__main__':
                 break
             print("Invalid Input. Please enter 1 or 2.")
 
+        # Create the beetle cropper object to be used in dataset creation and image cropping
+        beetle_cropper = BeetleCropper()
+        # Crop the images in the original dataset so that the image is only the beetle
+        beetle_cropper.build(image_dir="dataset", output_dir=globals.cropped_dataset)
+
         # Set up data converter
-        tdc = TrainingDataConverter("dataset")
+        tdc = TrainingDataConverter(globals.cropped_dataset)
         tdc.conversion(globals.training_database)
+
+        # Final cleanup: remove cropped dataset
+        beetle_cropper.cleanup(globals.cropped_dataset)
         # Read converted data
         dbr = DatabaseReader(database=globals.training_database, class_file_path=globals.class_list)
         df = dbr.get_dataframe()
