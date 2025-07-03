@@ -106,7 +106,7 @@ class TestTrainingProgram(unittest.TestCase):
         # Mock evaluation function
         self.training_program.training_evaluation_resnet = MagicMock()
         # Run train_caudal
-        self.training_program.train_resnet_model(1, "caud")
+        self.training_program.train_resnet_model(1, "caud", batch=32)
         # Ensure training_evaluation_caudal was called once
         self.training_program.training_evaluation_resnet.assert_called_once()
 
