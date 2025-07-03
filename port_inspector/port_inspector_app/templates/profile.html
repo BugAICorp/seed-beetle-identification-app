@@ -1,3 +1,6 @@
+{% load static %}
+<link rel="stylesheet" href="{% static 'port_inspector_app/header.css' %}">
+<link rel="stylesheet" href="{% static 'port_inspector_app/profile_elements.css' %}">
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -5,75 +8,33 @@
     <title>Your Profile</title>
     <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono&display=swap" rel="stylesheet">
     <style>
-        body {
-            font-family: 'Roboto mono', monospace;
-            background-color: #f9f9fc;
-            margin: 0;
-            padding: 0;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        }
-        header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            width: 100%;
-            padding: 10px 20px;
-            box-sizing: border-box;
-            background-color: #ffffff;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-        }
-        header a {
-            text-decoration: none;
-            color: #333;
-            font-size: 16px;
-            display: flex;
-            align-items: center;
-            margin: 0 10px;
-        }
-        header a span {
-            margin-left: 5px;
-        }
-        .container {
-            margin-top: 50px;
-            background-color: #fff;
-            padding: 30px;
-            border-radius: 10px;
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-            width: 350px;
-            text-align: center;
-        }
-        h1 {
-            margin-bottom: 20px;
-        }
-        p {
-            font-size: 16px;
-            margin: 10px 0;
-        }
-        .usda-flag {
-            font-weight: bold;
-            {% if usda_user %}
-                color: green;
-            {% else %}
-                color: red;
-            {% endif %}
-        }
-        footer {
-            margin-top: 20px;
-            font-size: 12px;
-            color: #aaa;
-        }
+    .usda-flag {
+        font-weight: bold;
+        {% if usda_user %}
+            color: green;
+        {% else %}
+            color: red;
+        {% endif %}
+    }
     </style>
 </head>
 <body>
     <header>
-        <a href="/"><span>Home</span></a>
-        <a href="/history" class="icon">📜<span>History</span></a>
-        <a href="/upload" class="icon">📤<span>Upload Photo</span></a>
-        <a href="/profile" class="icon">👤<span>Profile</span></a>
-        <a href="/logout" class="icon">🔓<span>Logout</span></a>
-    </header>
+    <div class="header-left">
+      <a href="/" style="align-items: center;"><img src="{% static 'Bug_icon.png' %}" id="header-bar-icon"/><span>Home</span></a>
+      <a href="/history"><span>History</span></a>
+      <a href="/upload"><span>Upload Photo</span></a>
+    </div>
+    <div class="header-right">
+      <a href="/profile"><span>Profile</span></a>
+      {% if not request.user.is_authenticated %}
+      <a href="/login"><span>Login</span></a>
+      {% endif %}
+      {% if request.user.is_authenticated %}
+      <a href="/logout"><span>Logout</span></a>
+      {% endif %}
+    </div>
+  </header>
     <div class="container">
         <h1>User Profile</h1>
         <p><strong>Email:</strong> {{ email }}</p>
