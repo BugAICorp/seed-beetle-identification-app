@@ -1,5 +1,6 @@
 """ ood_tester.py """
 
+import os
 import io
 import torch
 import numpy as np
@@ -157,19 +158,26 @@ class OODTester:
         print(f"\nBest temperature: {best_temp} with AUROC={best_auroc:.3f}")
         return best_temp, results
 
-    def plot_distributions(self, id_energies, ood_energies, temperature):
+    def plot_distributions(self, id_energies, ood_energies, temperature, output_dir="plots"):
         """
-        Plots histograms of energy score distributions for ID and OOD data.
+        Plots histograms of energy score distributions for ID and OOD data and saves the plot to a file.
 
         Args:
             id_energies (np.ndarray): Energy scores for in-distribution data.
             ood_energies (np.ndarray): Energy scores for out-of-distribution data.
             temperature (float): Temperature value corresponding to the scores.
+            output_dir (str): Directory to save the output plot.
         """
+        os.makedirs(output_dir, exist_ok=True)
+        filename = os.path.join(output_dir, f"energy_distribution_T{temperature}.png")
+
+        plt.figure()
         plt.hist(id_energies, bins=50, alpha=0.5, label='ID', density=True)
         plt.hist(ood_energies, bins=50, alpha=0.5, label='OOD', density=True)
         plt.xlabel('Energy Score')
         plt.ylabel('Density')
         plt.title(f'Energy Score Distribution (T={temperature})')
         plt.legend()
-        plt.show()
+        plt.tight_layout()
+        plt.savefig(filename)
+        plt.close()  # Close the figure to free memory
