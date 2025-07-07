@@ -40,7 +40,7 @@ if __name__ == '__main__':
     # Get the id converted data using the class list and exclude_classes = True
     ood_dbr = DatabaseReader(
         database=globals.training_database, class_file_path=globals.class_list, exclude_classes = True)
-    
+
     ood_df = ood_dbr.get_dataframe()
 
     # Data Augmentation - Add images for rare classes
@@ -59,7 +59,7 @@ if __name__ == '__main__':
         "fron" : globals.spec_fron_model,
         "late" : globals.spec_late_model
     }
-    
+
     genus_model_filenames = {
         "caud" : globals.gen_caud_model, 
         "dors" : globals.gen_dors_model,
@@ -96,7 +96,7 @@ if __name__ == '__main__':
     for key, model in species_models.items():
         species_tester = OODTester(
             model = model, id_dataframe = id_df, ood_dataframe = ood_df, transform = transformations[key])
-        
+
         best_temp, results = species_tester.test_ood(temperatures = temperatures)
         species_tester.plot_distributions(
             results[best_temp]['id_energies'],
@@ -108,7 +108,7 @@ if __name__ == '__main__':
     for key, model in genus_models.items():
         genus_tester = OODTester(
             model = model, id_dataframe = id_df, ood_dataframe = ood_df, transform = transformations[key])
-        
+
         best_temp, results = genus_tester.test_ood(temperatures = temperatures)
         genus_tester.plot_distributions(
             results[best_temp]['id_energies'],
