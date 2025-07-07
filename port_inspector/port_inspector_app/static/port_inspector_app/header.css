@@ -49,6 +49,7 @@ header a span {
 }
 @media (max-width: 600px), (max-height: 500px) {
     header {
+        padding: 5px 10px;
         align-items: flex-start;
         overflow-x: auto;
     }
@@ -56,7 +57,7 @@ header a span {
         margin-left: 0px;
     }
     .header-left, .header-right {
-        gap: 10px;
-        margin: 5px 0;
+        gap: 5px;
+        margin: 2px 0;
     }
 }
