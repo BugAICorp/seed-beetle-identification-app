@@ -122,4 +122,33 @@ class TestDatabaseReader(unittest.TestCase):
         self.assertTrue(df.empty)
 
     def test_class_file_inclusion(self):
-      
+        """ Test that DatabaseReader includes only species from class file. """
+        # Create a temp file with SpeciesA
+        with open("test_classes.txt", "w") as f:
+            f.write("GenusA SpeciesA\n")
+
+        reader = DatabaseReader(self.test_db, connection=self.connection, class_file_path="test_classes.txt")
+        df = reader.dataframe
+
+        self.assertEqual(len(df), 1)
+        self.assertEqual(df.iloc[0]["Species"], "SpeciesA")
+
+        os.remove("test_classes.txt")
+
+    def test_class_file_exclusion(self):
+        """ Test that DatabaseReader excludes species from class file. """
+        # Create a temp file with SpeciesA
+        with open("test_classes.txt", "w") as f:
+            f.write("GenusA SpeciesA\n")
+
+        reader = DatabaseReader(self.test_db, connection=self.connection, class_file_path="test_classes.txt", exclude_classes=True)
+        df = reader.dataframe
+
+        self.assertEqual(len(df), 2)
+        self.assertNotIn("SpeciesA", df["Species"].values)
+
+        os.remove("test_classes.txt")
+
+
+if __name__ == "__main__":
+    unittest.main()
