@@ -5,6 +5,7 @@ from training_data_converter import TrainingDataConverter
 from training_database_reader import DatabaseReader
 from training_program import TrainingProgram
 from data_augmenter import DataAugmenter
+from beetle_cropper import BeetleCropper
 import globals
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../')))
@@ -52,10 +53,10 @@ if __name__ == '__main__':
             elif input == 4:
                 k_fold_late = True
             elif input == 5:
-                train_dors = True
-                train_caud = True
-                train_fron = True
-                train_late = True
+                k_fold_dors = True
+                k_fold_caud = True
+                k_fold_fron = True
+                k_fold_late = True
             else:
                 print("Invalid Input")
             del input
@@ -81,9 +82,17 @@ if __name__ == '__main__':
                 break
             print("Invalid Input. Please enter 1 or 2.")
 
+        # Create the beetle cropper object to be used in dataset creation and image cropping
+        beetle_cropper = BeetleCropper()
+        # Crop the images in the original dataset so that the image is only the beetle
+        beetle_cropper.build(image_dir="dataset", output_dir=globals.cropped_dataset)
+
         # Set up data converter
-        tdc = TrainingDataConverter("dataset")
+        tdc = TrainingDataConverter(globals.cropped_dataset)
         tdc.conversion(globals.training_database)
+
+        # Final cleanup: remove cropped dataset
+        beetle_cropper.cleanup(globals.cropped_dataset)
         # Read converted data
         dbr = DatabaseReader(database=globals.training_database, class_file_path=globals.class_list)
         df = dbr.get_dataframe()
@@ -117,26 +126,34 @@ if __name__ == '__main__':
 
         # Training
         if k_fold_caud:
-            species_tp.k_fold_resnet(20, "caud", k_folds=5)
+            species_tp.k_fold_resnet(20, "caud", k_folds=5, batch=16, rotation=16,
+                                     brightness=0.04160844, lrate=0.0002188637)
         if k_fold_dors:
-            species_tp.k_fold_resnet(20, "dors", k_folds=5)
+            species_tp.k_fold_resnet(20, "dors", k_folds=5, batch=64, rotation=4,
+                                     brightness=0.2320837289, lrate=0.00042698)
         if k_fold_fron:
-            species_tp.k_fold_resnet(20, "fron", k_folds=5)
+            species_tp.k_fold_resnet(20, "fron", k_folds=5, batch=32, rotation=3,
+                                     brightness=0.124352955, lrate=0.0002323599)
         if k_fold_late:
-            species_tp.k_fold_resnet(20, "late", k_folds=5)
+            species_tp.k_fold_resnet(20, "late", k_folds=5, batch=32, rotation=16,
+                                     brightness=0.05717608, lrate=0.00036962807)
 
         # Run training with dataframe
         genus_tp = TrainingProgram(df, "Genus", GENUS_OUTPUTS)
 
         # Training
         if k_fold_caud:
-            genus_tp.k_fold_resnet(20, "caud", k_folds=5)
+            genus_tp.k_fold_resnet(20, "caud", k_folds=5, batch=16, rotation=2,
+                                   brightness=0.121347939, lrate=0.000414240154)
         if k_fold_dors:
-            genus_tp.k_fold_resnet(20, "dors", k_folds=5)
+            genus_tp.k_fold_resnet(20, "dors", k_folds=5, batch=16, rotation=13,
+                                   brightness=0.169855976, lrate=0.000179720464)
         if k_fold_fron:
-            genus_tp.k_fold_resnet(20, "fron", k_folds=5)
+            genus_tp.k_fold_resnet(20, "fron", k_folds=5, batch=16, rotation=6,
+                                   brightness=0.05464547869, lrate=0.0002265474186)
         if k_fold_late:
-            genus_tp.k_fold_resnet(20, "late", k_folds=5)
+            genus_tp.k_fold_resnet(20, "late", k_folds=5, batch=32, rotation=10,
+                                   brightness=0.29610847517, lrate=0.0001860446889)
 
     finally:
         log_file.close()

@@ -120,13 +120,13 @@ if __name__ == '__main__':
 
     # Training
     if train_caud:
-        species_tp.train_resnet_model(20, "caud")
+        species_tp.train_resnet_model(20, "caud", batch=16, rotation=16, brightness=0.04160844, lrate=0.0002188637)
     if train_dors:
-        species_tp.train_resnet_model(20, "dors")
+        species_tp.train_resnet_model(20, "dors", batch=64, rotation=4, brightness=0.2320837289, lrate=0.00042698)
     if train_fron:
-        species_tp.train_resnet_model(20, "fron")
+        species_tp.train_resnet_model(20, "fron", batch=32, rotation=3, brightness=0.124352955, lrate=0.0002323599)
     if train_late:
-        species_tp.train_resnet_model(20, "late")
+        species_tp.train_resnet_model(20, "late", batch=32, rotation=16, brightness=0.05717608, lrate=0.00036962807)
 
     # Save models
     species_model_filenames = {
@@ -148,13 +148,13 @@ if __name__ == '__main__':
 
     # Training
     if train_caud:
-        genus_tp.train_resnet_model(20, "caud")
+        genus_tp.train_resnet_model(20, "caud", batch=16, rotation=2, brightness=0.121347939, lrate=0.000414240154)
     if train_dors:
-        genus_tp.train_resnet_model(20, "dors")
+        genus_tp.train_resnet_model(20, "dors", batch=16, rotation=13, brightness=0.169855976, lrate=0.000179720464)
     if train_fron:
-        genus_tp.train_resnet_model(20, "fron")
+        genus_tp.train_resnet_model(20, "fron", batch=16, rotation=6, brightness=0.05464547869, lrate=0.0002265474186)
     if train_late:
-        genus_tp.train_resnet_model(20, "late")
+        genus_tp.train_resnet_model(20, "late", batch=32, rotation=10, brightness=0.29610847517, lrate=0.0001860446889)
 
     # Save models
     genus_model_filenames = {
