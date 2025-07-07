@@ -13,24 +13,28 @@ body {
     align-items: flex-start;
     margin-top: 30px;
     width: 80%;
+    flex-wrap: wrap;
+    justify-content: center;
 }
 
 .image-section {
-    width: 40%;
+    width: 100%;
     display: flex;
     flex-wrap: wrap;
     justify-content: center;
-    border: 2px solid purple;
     padding: 10px;
     margin-right: 20px;
+    box-sizing: border-box;
 }
 
 .image-section img {
-    width: 100px;
-    height: 100px;
+    width: 100%;
+    max-width: 120px;
+    height: auto;
     margin: 5px;
     border: 1px solid #ccc;
     object-fit: cover;
+    flex: 1 0 auto;
 }
 
 img.deleted-image {
@@ -39,6 +43,8 @@ img.deleted-image {
 
 .results-section {
     width: 60%;
+    box-sizing: border-box;
+    align-items: center;
 }
 
 h1 {
@@ -124,4 +130,41 @@ th {
 
 .unknown-btn:hover {
     background-color: #a71d2a;
+}
+
+@media (max-width: 600px), (max-height: 500px) {
+    h1 {
+        font-size: 12px;
+    }
+    p {
+        font-size: 12px;
+    }
+    th {
+        font-size: 12px;
+    }
+    td {
+        font-size: 12px;
+    }
+    .image-section, .results-section {
+        width: 100%;
+        margin-right: 0;
+    }
+    .container {
+        flex-direction: column;
+        align-items: center;
+        width: 95%;
+    }
+    .image-section img {
+        max-width: 20%;
+        height: auto;
+    }
+    .confirm-btn, .unknown-btn {
+        font-size: 12px;
+    }
+    .confirm-form select {
+        font-size: 12px;
+    }
+    .confirm-form, .unknown-form {
+        font-size: 12px;
+    }
 }

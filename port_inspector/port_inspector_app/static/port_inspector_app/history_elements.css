@@ -131,3 +131,14 @@ footer {
     color: #aaa;
     margin-bottom: 10px;
 }
+
+@media (max-width: 600px), (max-height: 500px) {
+    table th {
+        font-size: 13px;
+    }
+    table td {
+        padding-top: 5px;
+        padding-bottom: 5px;
+        font-size: 11px;
+    }
+}
