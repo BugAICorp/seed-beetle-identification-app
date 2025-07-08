@@ -64,7 +64,7 @@ class TrainingDataConverter:
             table.commit()
             print(f"Inserted Image UniqueID: {image_data[2]}")
         except sqlite3.IntegrityError:
-            print(f"Image labeled, UniqueID {image_data[2]}, already exists.")
+            pass
         finally:
             table.close()
 
@@ -105,9 +105,7 @@ class TrainingDataConverter:
             # loop through image files
             if filename.lower().endswith(('png', 'jpg', 'jpeg', 'bmp', 'gif')):
                 file_path = os.path.join(self.dir_path, filename)
-                print(filename)
                 name_parts = self.parse_name(filename) # placeholder parsing
-                print(name_parts)
                 if name_parts:
                     image_data = name_parts[:5]
                     image_binary = self.img_to_binary(file_path)
