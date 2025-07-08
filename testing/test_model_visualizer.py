@@ -27,7 +27,7 @@ class DummyModel(nn.Module):
     def forward(self, x):
         """ Defines the forward pass of the dummy model. """
         x = self.conv(x)
-        self.activations = x  # for manual reference
+        self.activations = x
         x = self.pool(x).view(x.size(0), -1)
         return self.fc(x)
 
@@ -44,7 +44,6 @@ class TestGradCAMVisualizer(unittest.TestCase):
         self.target_layer = self.model.conv
         self.visualizer = GradCAMVisualizer(self.model, self.target_layer)
 
-        # Create a dummy image tensor (1, 3, 300, 300)
         self.image_tensor = torch.randn(1, 3, 300, 300)
         self.original_image = Image.fromarray((np.random.rand(300, 300, 3) * 255).astype(np.uint8))
 
