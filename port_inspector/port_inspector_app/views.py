@@ -2,7 +2,7 @@ from django.shortcuts import render, redirect
 from django.conf import settings
 from beetle_detection import species_eval
 from port_inspector_app.models import Image, SpecimenUpload, User, KnownSpecies, Genus
-from .forms import UserRegisterForm, SpecimenUploadForm, ConfirmIdForm
+from .forms import UserRegisterForm, SpecimenUploadForm, ConfirmIdForm, ResetPasswordForm, ResetRequestForm
 from django.core import signing
 from django.core.cache import cache
 from django.contrib import messages
@@ -116,6 +116,62 @@ def login_view(request):
     else:
         form = AuthenticationForm()
     return render(request, "login.html", {"form": form})
+
+
+def forgot_password(request):
+    if request.method == "POST":
+        print("reset POST request received\n")
+        next_page = request.GET.get("next")
+        form = ResetRequestForm(request.POST)
+        if form.is_valid():
+            user = form.save(commit=False)
+            password = form.cleaned_data.get("password")
+            user.set_password(password)
+            user.name = form.cleaned_data.get("name")
+            user.save()
+            new_user = authenticate(email=user.email, password=password)
+            if new_user:
+                return redirect("verify-email", user_id=user.user_id)
+            else:
+                print("Authentication failed")
+            if next_page:
+                return redirect(next_page)
+            else:
+                return redirect("verify-email", user_id=user.user_id)
+        else:
+            print("ERROR: Email already in use or passwords do not match\n")
+    else:
+        form = UserRegisterForm()
+    context = {"form": form}
+    return render(request, "signup.html", context)
+        
+
+def reset_password(request):
+    if request.method == "POST":
+        next_page = request.GET.get("next")
+        form = ResetPasswordForm(request.POST)
+        if form.is_valid():
+            user = form.save(commit=False)
+            password = form.cleaned_data.get("password")
+            user.set_password(password)
+            user.name = form.cleaned_data.get("name")
+            user.save()
+            new_user = authenticate(email=user.email, password=password)
+            if new_user:
+                return redirect("verify-email", user_id=user.user_id)
+            else:
+                print("Authentication failed")
+            if next_page:
+                return redirect(next_page)
+            else:
+                return redirect("verify-email", user_id=user.user_id)
+        else:
+            print("ERROR: Email already in use or passwords do not match\n")
+    else:
+        form = UserRegisterForm()
+    context = {"form": form}
+    return render(request, "signup.html", context)
+        
 
 
 # log the user out and send them back to the upload page

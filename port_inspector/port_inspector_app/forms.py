@@ -14,6 +14,40 @@ import io
 User = get_user_model()
 
 
+class ResetRequestForm(forms.ModelForm):
+    email = forms.CharField(label='Email')
+
+    class Meta:
+        model = User
+        fields = ['email']
+
+    def clean(self, *args, **kwargs):
+        email = self.cleaned_data.get('email')
+        if email:
+            email_check = User.objects.filter(email=email).first()
+            if email_check:
+                if not email_check.is_active:
+                    raise forms.ValidationError('This Email is not registered yet')
+
+        return super(ResetRequestForm, self).clean(*args, **kwargs)
+
+
+class ResetPasswordForm(forms.ModelForm):
+    password = forms.CharField(label='Password')
+
+    class Meta:
+        model = User
+        fields = ['password']
+
+    def clean(self, *args, **kwargs):
+        password = self.cleaned_data.get('password')
+        if password:
+            if len(password) < 5:
+                raise forms.ValidationError('Your password should have more than 5 characters')
+
+        return super(ResetPasswordForm, self).clean(*args, **kwargs)
+
+
 class UserRegisterForm(forms.ModelForm):
     password = forms.CharField(label='Password')
 

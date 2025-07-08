@@ -33,6 +33,8 @@ urlpatterns = [
     path("login/", views.login_view, name="login"),
     path("logout/", views.logout_view, name="logout"),
     path("signup/", views.signup_view, name="signup"),
+    path("forgot-password/", views.forgot_password, name="forgot-password"),
+    path("reset-password/", views.reset_password, name="reset-password"),
     path("verify-email/<int:user_id>/", views.verify_email, name="verify-email"),
     path("verify-email/done/", views.verify_email_done, name="verify-email-done"),
     path(
