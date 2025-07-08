@@ -1,4 +1,6 @@
 {% load static %}
+<link rel="stylesheet" href="{% static 'port_inspector_app/header.css' %}">
+<link rel="stylesheet" href="{% static 'port_inspector_app/index_elements.css' %}">
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -6,126 +8,30 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Home Page</title>
   <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono&display=swap" rel="stylesheet">
-  <style>
-    body {
-      font-family: 'Roboto mono', monospace;
-      background-color: #f9f9fc;
-      margin: 0;
-      padding: 0;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: flex-start;
-      min-height: 100vh;
-    }
-    header {
-      position: fixed;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      width: 100%;
-      padding: 10px 20px;
-      box-sizing: border-box;
-      background-color: #ffffff;
-      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    }
-    header a {
-      text-decoration: none;
-      color: #333;
-      font-size: 16px;
-      display: flex;
-      align-items: center;
-      margin: 0 10px;
-    }
-    header a span {
-      margin-left: 5px;
-    }
-    .container {
-      background-color: white;
-      padding: 20px;
-      border-radius: 10px;
-      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-      text-align: center;
-      width: 320px;
-      margin-top: 50px;
-    }
-    h1 {
-      font-family: 'Roboto mono', monospace;
-      font-size: 40px;
-      color: #555;
-      margin: 5%;
-      align-items: center;
-      text-align: center;
-    }
-
-    footer {
-        margin-top: 20px;
-        font-size: 12px;
-        color: #aaa;
-        margin-bottom: 10px;
-    }
-
-    #title-banner {
-        width: 100%;
-        height: auto;
-    }
-    #use-case-banner {
-        width: 90%;
-        margin: auto;
-        height: auto;
-        background-color: whitesmoke;
-    }
-    img {
-        display:block;
-    }
-    #mission-div {
-      display: flex;
-      width: 100%;
-      height: auto;
-    }
-    #our-text {
-      display: flex;
-        font-size: 20px;
-        font-family: 'Roboto mono', monospace;
-        background-color: black;
-        color: whitesmoke;
-        margin: 0;
-        padding: 2.5% 5% 2.5% 7.5%;
-        width: 50vw;
-        box-sizing: border-box;
-        align-items: center;
-    }
-    #mission-img {
-      width: 50%;
-      height: auto;
-      object-fit: cover;
-    }
-    #additional-resources-p {
-      font-size: 20px;
-      font-family: 'Roboto mono', monospace;
-      text-align: center;
-    }
-  </style>
 </head>
 <body>
   <header>
-    <a href="/"><span>Home</span></a>
-    <a href="/history">📜<span>History</span></a>
-    <a href="/upload">📤<span>Upload Photo</span></a>
-    <a href="/profile">👤<span>Profile</span></a>
-    {% if not request.user.is_authenticated %}
-    <a href="/login">🔒<span>Login</span></a>
-    {% endif %}
-    {% if request.user.is_authenticated %}
-    <a href="/logout">🔓<span>Logout</span></a>
-    {% endif %}
+    <div class="header-left">
+      <a href="/" style="align-items: center;"><img src="{% static 'Bug_icon.png' %}" id="header-bar-icon"/><span>BruchinAI</span></a>
+      <a href="/history"><span>History</span></a>
+      <a href="/upload"><span>Upload Photo</span></a>
+    </div>
+    <div class="header-right">
+      <a href="/profile"><span>Profile</span></a>
+      {% if not request.user.is_authenticated %}
+      <a href="/login"><span>Login</span></a>
+      {% endif %}
+      {% if request.user.is_authenticated %}
+      <a href="/logout"><span>Logout</span></a>
+      {% endif %}
+    </div>
   </header>
 
   <div>
       <img src="{% static 'banner.png' %}" id="title-banner"/>
       <img src="{% static 'use_product.png' %}" id="use-case-banner" usemap="#use-case-map"/>
       <map name="use-case-map">
-        <area shape="circle" coords="1900,550,250" href="/upload" alt="Link 1">
+        <area shape="circle" coords="1812,512,200" href="/upload" alt="Link 1">
       </map>
       <div id="mission-div">
         <p id="our-text">

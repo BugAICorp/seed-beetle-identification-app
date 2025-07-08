@@ -1,0 +1,170 @@
+body {
+    font-family: 'Roboto mono', monospace;
+    background-color: #f9f9fc;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+.container {
+    display: flex;
+    flex-direction: row;
+    align-items: flex-start;
+    margin-top: 30px;
+    width: 80%;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+.image-section {
+    width: 100%;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    padding: 10px;
+    margin-right: 20px;
+    box-sizing: border-box;
+}
+
+.image-section img {
+    width: 100%;
+    max-width: 120px;
+    height: auto;
+    margin: 5px;
+    border: 1px solid #ccc;
+    object-fit: cover;
+    flex: 1 0 auto;
+}
+
+img.deleted-image {
+    filter: invert(100%) ;
+}
+
+.results-section {
+    width: 60%;
+    box-sizing: border-box;
+    align-items: center;
+}
+
+h1 {
+    font-size: 22px;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+}
+
+th, td {
+    border: 1px solid #ddd;
+    padding: 10px;
+    text-align: left;
+}
+
+th {
+    background-color: #f2f2f2;
+}
+
+.confidence-high {
+    color: green;
+    font-weight: bold;
+}
+
+.confidence-medium {
+    color: orange;
+    font-weight: bold;
+}
+
+.confidence-low {
+    color: red;
+    font-weight: bold;
+}
+
+.action-buttons {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    margin-top: 30px;
+    gap: 15px;
+}
+
+.confirm-form,
+.unknown-form {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.confirm-form select {
+    font-family: 'Roboto mono', sans-serif;
+    padding: 8px;
+    font-size: 16px;
+}
+
+.confirm-btn,
+.unknown-btn {
+    font-family: 'Roboto mono', monospace;
+    padding: 10px 20px;
+    font-size: 16px;
+    border: none;
+    cursor: pointer;
+    border-radius: 4px;
+}
+
+.confirm-btn {
+    font-family: 'Roboto mono', sans-serif;
+    background-color: #007bff;
+    color: white;
+}
+
+.confirm-btn:hover {
+    background-color: #0056b3;
+}
+
+.unknown-btn {
+    background-color: #dc3545;
+    color: white;
+}
+
+.unknown-btn:hover {
+    background-color: #a71d2a;
+}
+
+@media (max-width: 600px), (max-height: 500px) {
+    h1 {
+        font-size: 12px;
+    }
+    p {
+        font-size: 12px;
+    }
+    th {
+        font-size: 12px;
+    }
+    td {
+        font-size: 12px;
+    }
+    .image-section, .results-section {
+        width: 100%;
+        margin-right: 0;
+    }
+    .container {
+        flex-direction: column;
+        align-items: center;
+        width: 95%;
+    }
+    .image-section img {
+        max-width: 20%;
+        height: auto;
+    }
+    .confirm-btn, .unknown-btn {
+        font-size: 12px;
+    }
+    .confirm-form select {
+        font-size: 12px;
+    }
+    .confirm-form, .unknown-form {
+        font-size: 12px;
+    }
+}
