@@ -189,7 +189,7 @@ class UserAdmin(admin.ModelAdmin):
     search_fields = ('email',)
     list_display = ('email', 'is_active', 'is_usda', 'admin')
     list_filter = ('is_usda', 'is_special_status')
-    fields = ('email', 'name', 'is_usda', 'admin', 'is_staff', 'is_superuser', 'is_special_status')
+    fields = ('email', 'name', 'is_usda', 'admin', 'is_staff', 'is_superuser', 'is_special_status', 'is_active')
 
 
 # Edit the titles for the admin portal
