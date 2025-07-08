@@ -99,17 +99,10 @@ class SpecimenUploadAdmin(admin.ModelAdmin):
     Add formatting for the specimen upload view on the admin page
     """
     list_display = ('id', 'formatted_genus', 'formatted_species', 'final_identification', 'display_all_images')
-    list_filter = ('final_identification', 'is_validated', )
+    list_filter = ('final_identification', 'is_validated', 'user__is_usda', 'user__is_special_status')
     readonly_fields = ['display_all_images', 'formatted_genus', 'formatted_species']
     fields = ('display_all_images', 'formatted_genus', 'formatted_species', 'final_identification', 'is_validated')
     actions = [add_to_trainingdb]
-
-    def get_queryset(self, request):
-        """
-        Override original query so that only is_usda user's uploads appear for the admin
-        """
-        qs = super().get_queryset(request)
-        return qs.filter(user__is_usda=True)
 
     def formatted_genus(self, obj):
         """
@@ -194,8 +187,8 @@ class ValidClassesAdmin(admin.ModelAdmin):
 class UserAdmin(admin.ModelAdmin):
     """Edit displayed columns for the User db"""
     list_display = ('email', 'is_active', 'is_usda', 'admin')
-    list_filter = ('is_usda',)
-    fields = ('email', 'name', 'is_usda', 'admin', 'is_staff', 'is_superuser')
+    list_filter = ('is_usda', 'is_special_status')
+    fields = ('email', 'name', 'is_usda', 'admin', 'is_staff', 'is_superuser', 'is_special_status')
 
 
 # Edit the titles for the admin portal
