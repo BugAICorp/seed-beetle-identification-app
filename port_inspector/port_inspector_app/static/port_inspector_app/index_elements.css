@@ -1,0 +1,104 @@
+#mission-div {
+    display: flex;
+    flex-wrap: wrap;
+    width: 100%;
+    box-sizing: border-box;
+    height: auto;
+}
+#our-text {
+    display: flex;
+    font-size: 1.25rem;
+    font-family: 'Roboto mono', monospace;
+    background-color: black;
+    color: whitesmoke;
+    margin: 0;
+    padding: 2.5% 5% 2.5% 7.5%;
+    width: 50%;
+    box-sizing: border-box;
+    align-items: center;
+}
+#mission-img {
+    width: 50%;
+    max-width: 100%;
+    box-sizing: border-box;
+    height: auto;
+    object-fit: cover;
+}
+#additional-resources-p {
+    margin: 5%;
+    font-size: 20px;
+    font-family: 'Roboto mono', monospace;
+    text-align: center;
+}
+#title-banner {
+    width: 100%;
+    height: auto;
+}
+#use-case-banner {
+    width: 90%;
+    margin: auto;
+    height: auto;
+    background-color: whitesmoke;
+}
+body {
+    font-family: 'Roboto mono', monospace;
+    background-color: #f9f9fc;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    min-height: 100vh;
+}
+.container {
+    background-color: white;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    text-align: center;
+    width: 90%;
+    max-width: 320px;
+    margin-top: 50px auto;
+}
+h1 {
+    font-family: 'Roboto mono', monospace;
+    font-size: 40px;
+    color: #555;
+    margin: 5%;
+    align-items: center;
+    text-align: center;
+}
+footer {
+    margin-top: 20px;
+    font-size: 12px;
+    color: #aaa;
+    margin-bottom: 10px;
+}
+.highlight-link {
+    position: relative;
+    display: flex;
+}
+img {
+    max-width: 100%;
+    height: auto;
+    display:block;
+}
+@media (max-width: 600px), (max-height: 500px) {
+    h1 {
+        font-size: 16px;
+    }
+    #additional-resources-p {
+        font-size: 12px;
+    }
+    #our-text, #mission-img {
+        width: 50%;
+    }
+    #our-text {
+        padding: 4% 2%;
+        font-size: 0.50rem;
+    }
+    #mission-img {
+        height: auto;
+    }
+}
