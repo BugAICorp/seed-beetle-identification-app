@@ -186,6 +186,7 @@ class ValidClassesAdmin(admin.ModelAdmin):
 @admin.register(User)
 class UserAdmin(admin.ModelAdmin):
     """Edit displayed columns for the User db"""
+    search_fields = ('email',)
     list_display = ('email', 'is_active', 'is_usda', 'admin')
     list_filter = ('is_usda', 'is_special_status')
     fields = ('email', 'name', 'is_usda', 'admin', 'is_staff', 'is_superuser', 'is_special_status')
