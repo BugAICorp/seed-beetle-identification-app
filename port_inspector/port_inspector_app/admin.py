@@ -145,28 +145,36 @@ class SpecimenUploadAdmin(admin.ModelAdmin):
             html += mark_safe(f'''
                 <div style="display: inline-block; margin-right: 10px; text-align: center;">
                     <strong>Frontal</strong><br>
-                    <img src="{obj.frontal_image.image.url}" width="150" />
+                    <a href="{obj.frontal_image.image.url}" target="_blank">
+                        <img src="{obj.frontal_image.image.url}" width="150" />
+                    </a>
                 </div>
             ''')
         if obj.dorsal_image and obj.dorsal_image.image:
             html += mark_safe(f'''
                 <div style="display: inline-block; margin-right: 10px; text-align: center;">
                     <strong>Dorsal</strong><br>
-                    <img src="{obj.dorsal_image.image.url}" width="150" />
+                    <a href="{obj.dorsal_image.image.url}" target="_blank">
+                        <img src="{obj.dorsal_image.image.url}" width="150" />
+                    </a>
                 </div>
             ''')
         if obj.caudal_image and obj.caudal_image.image:
             html += mark_safe(f'''
                 <div style="display: inline-block; margin-right: 10px; text-align: center;">
                     <strong>Caudal</strong><br>
-                    <img src="{obj.caudal_image.image.url}" width="150" />
+                    <a href="{obj.caudal_image.image.url}" target="_blank">
+                        <img src="{obj.caudal_image.image.url}" width="150" />
+                    </a>
                 </div>
             ''')
         if obj.lateral_image and obj.lateral_image.image:
             html += mark_safe(f'''
                 <div style="display: inline-block; margin-right: 10px; text-align: center;">
                     <strong>Lateral</strong><br>
-                    <img src="{obj.lateral_image.image.url}" width="150" />
+                    <a href="{obj.lateral_image.image.url}" target="_blank">
+                        <img src="{obj.lateral_image.image.url}" width="150" />
+                    </a>
                 </div>
             ''')
         if not html:
