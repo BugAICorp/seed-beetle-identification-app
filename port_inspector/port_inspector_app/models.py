@@ -36,6 +36,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     is_email_verified = models.BooleanField(default=False)
     is_active = models.BooleanField(default=False)
     is_usda = models.BooleanField(default=False)
+    is_special_status = models.BooleanField(default=False)
     admin = models.BooleanField(default=False)
     is_staff = models.BooleanField(default=False)
 

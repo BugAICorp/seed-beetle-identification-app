@@ -10,7 +10,8 @@ class DatabaseReader:
     Reads from SQLite database, and creates a pandas dataframe
     """
     def __init__(self, database, connection=None,
-                 table="TrainingData", query=None, class_file_path=None):
+                 table="TrainingData", query=None,
+                 class_file_path=None, exclude_classes=False):
         """
         Initialize DatabaseReader and loads data into a Pandas DataFrame. 
         
@@ -20,6 +21,7 @@ class DatabaseReader:
             table (str): name of the table in the database to query.
             query (str): SQL query to execute(this is optional).
             class_file_path (str): File path of specified class to be in the models
+            exclude_classes (bool): This flag lets you control if the class file is inclusion or exclusion
         """
         self.database = database
         self.connection = connection
@@ -27,13 +29,19 @@ class DatabaseReader:
 
         if class_file_path:
             self.allowed_species = self.load_valid_classes(class_file_path)
-            # Use ?'s as placeholders for the species, as they will be fit in later
-            allowed_species = ','.join(['?'] * len(self.allowed_species))
-            self.query = f"""
-                SELECT Genus, Species, UniqueID, View, SpecimenID, Image
-                FROM {self.table}
-                WHERE Species IN ({allowed_species})
-            """
+            placeholders = ','.join(['?'] * len(self.allowed_species))
+            if exclude_classes:
+                self.query = f"""
+                    SELECT Genus, Species, UniqueID, View, SpecimenID, Image
+                    FROM {self.table}
+                    WHERE Species NOT IN ({placeholders})
+                """
+            else:
+                self.query = f"""
+                    SELECT Genus, Species, UniqueID, View, SpecimenID, Image
+                    FROM {self.table}
+                    WHERE Species IN ({placeholders})
+                """
         else:
             self.allowed_species = None
             default_query = f"""
