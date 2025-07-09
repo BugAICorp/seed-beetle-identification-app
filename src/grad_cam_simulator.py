@@ -17,7 +17,7 @@ def get_image_path(view_name, default_path):
     Prompt user for an image path, or use the default if none is entered.
     """
     path = input(f"Enter path to {view_name.upper()} image or press ENTER for [{default_path}]: ").strip()
-    return path if path else default_path
+    return "dataset/"+path if path else default_path
 
 def load_and_crop_images(paths_dict):
     """
