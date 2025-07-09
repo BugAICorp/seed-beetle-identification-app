@@ -16,7 +16,7 @@ from django.template.loader import render_to_string
 from django.utils.encoding import force_bytes, force_str
 from django.utils.http import urlsafe_base64_decode, urlsafe_base64_encode
 from django.http import HttpResponse, JsonResponse
-from .tokens import account_activation_token
+from .tokens import account_activation_token, reset_account_token
 import threading
 import time
 
@@ -140,8 +140,19 @@ def reset_password(request, uidb64, token):
     except (TypeError, ValueError, OverflowError, User.DoesNotExist):
         user = None
 
-    if user is not None and account_activation_token.check_token(user, token):
-        pass
+    if user is not None and reset_account_token.check_token(user, token):
+        if request.method == "POST":
+            form = ResetPasswordForm(request.POST)
+            if form.is_valid():
+                new_password = form.cleaned_data.get("password")
+                user.set_password(new_password)
+                user.save()
+                return redirect('/login/')
+        else:
+            form = ResetPasswordForm()
+        return render(request, 'reset-password.html', {"form": form, "validLink": True})
+    else:
+        return render(request, "reset-password.html", {"validLink": False})
         
 
 def reset_password_sent(request, user_id):
@@ -151,20 +162,20 @@ def reset_password_sent(request, user_id):
         email = user.email
         subject = "Reset Password"
         message = render_to_string(
-            "verify-email-message.html",
+            "reset-email-message.html",
             {
                 "request": request,
                 "user": user,
                 "domain": current_site.domain,
                 "uid": urlsafe_base64_encode(force_bytes(user.pk)),
-                "token": account_activation_token.make_token(user),
+                "token": reset_account_token.make_token(user),
             },
         )
         email = EmailMessage(subject, message, to=[email])
         email.content_subtype = "html"
         email.send()
-        return render(request, "reset-password-sent.html")
-    return render(request, "reset-password-sent.html")
+        return render(request, "reset-password-sent.html", {"email_sent": True})
+    return render(request, "reset-password-sent.html", {"email_sent": False})
 
 
 # log the user out and send them back to the upload page
