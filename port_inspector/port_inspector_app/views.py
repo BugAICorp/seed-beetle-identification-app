@@ -125,13 +125,11 @@ def forgot_password(request):
             user_email = form.cleaned_data.get("email")
             user = User.objects.get(email=user_email)
             return redirect("reset-password-sent", user_id=user.user_id)
-        else:
-            print("ERROR: Email already in use or passwords do not match\n")
     else:
         form = ResetRequestForm()
     context = {"form": form}
     return render(request, "forgot-password.html", context)
-        
+
 
 def reset_password(request, uidb64, token):
     try:
@@ -153,7 +151,7 @@ def reset_password(request, uidb64, token):
         return render(request, 'reset-password.html', {"form": form, "validLink": True})
     else:
         return render(request, "reset-password.html", {"validLink": False})
-        
+
 
 def reset_password_sent(request, user_id):
     if request.method == "POST":
