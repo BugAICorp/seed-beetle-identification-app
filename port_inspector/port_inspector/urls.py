@@ -35,7 +35,7 @@ urlpatterns = [
     path("signup/", views.signup_view, name="signup"),
     path("forgot-password/", views.forgot_password, name="forgot-password"),
     path("reset-password-sent/<int:user_id>/", views.reset_password_sent, name="reset-password-sent"),
-    path("reset-password/", views.reset_password, name="reset-password"),
+    path("reset-password/<int:user_id>/<token>/", views.reset_password, name="reset-password"),
     path("verify-email/<int:user_id>/", views.verify_email, name="verify-email"),
     path("verify-email/done/", views.verify_email_done, name="verify-email-done"),
     path(

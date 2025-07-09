@@ -14,7 +14,7 @@ import io
 User = get_user_model()
 
 
-class ResetRequestForm(forms.ModelForm):
+class ResetRequestForm(forms.Form):
     email = forms.CharField(label='Email')
 
     class Meta:
@@ -23,12 +23,13 @@ class ResetRequestForm(forms.ModelForm):
 
     def clean(self, *args, **kwargs):
         email = self.cleaned_data.get('email')
-        if email:
-            email_check = User.objects.filter(email=email).first()
-            if email_check:
-                if not email_check.is_active:
-                    raise forms.ValidationError('This Email is not registered yet')
+        try:
+            user = User.objects.get(email=email)
+            if not user.is_active:
+                raise forms.ValidationError("This account is not set up yet. Please use the sign up page")
 
+        except User.DoesNotExist:
+            raise forms.ValidationError("This email does not have an account")
         return super(ResetRequestForm, self).clean(*args, **kwargs)
 
 

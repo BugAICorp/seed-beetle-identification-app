@@ -120,30 +120,17 @@ def login_view(request):
 
 def forgot_password(request):
     if request.method == "POST":
-        print("reset POST request received\n")
-        next_page = request.GET.get("next")
         form = ResetRequestForm(request.POST)
         if form.is_valid():
-            user = form.save(commit=False)
-            password = form.cleaned_data.get("password")
-            user.set_password(password)
-            user.name = form.cleaned_data.get("name")
-            user.save()
-            new_user = authenticate(email=user.email, password=password)
-            if new_user:
-                return redirect("verify-email", user_id=user.user_id)
-            else:
-                print("Authentication failed")
-            if next_page:
-                return redirect(next_page)
-            else:
-                return redirect("verify-email", user_id=user.user_id)
+            user_email = form.cleaned_data.get("email")
+            user = User.objects.get(email=user_email)
+            return redirect("reset-password-sent", user_id=user.user_id)
         else:
             print("ERROR: Email already in use or passwords do not match\n")
     else:
-        form = UserRegisterForm()
+        form = ResetRequestForm()
     context = {"form": form}
-    return render(request, "signup.html", context)
+    return render(request, "forgot-password.html", context)
         
 
 def reset_password(request, uidb64, token):
@@ -157,8 +144,27 @@ def reset_password(request, uidb64, token):
         pass
         
 
-def reset_password_sent(request):
-    pass
+def reset_password_sent(request, user_id):
+    if request.method == "POST":
+        current_site = get_current_site(request)
+        user = User.objects.get(pk=user_id)
+        email = user.email
+        subject = "Reset Password"
+        message = render_to_string(
+            "verify-email-message.html",
+            {
+                "request": request,
+                "user": user,
+                "domain": current_site.domain,
+                "uid": urlsafe_base64_encode(force_bytes(user.pk)),
+                "token": account_activation_token.make_token(user),
+            },
+        )
+        email = EmailMessage(subject, message, to=[email])
+        email.content_subtype = "html"
+        email.send()
+        return render(request, "reset-password-sent.html")
+    return render(request, "reset-password-sent.html")
 
 
 # log the user out and send them back to the upload page
