@@ -50,6 +50,7 @@ class ResetPasswordForm(forms.ModelForm):
 
 class UserRegisterForm(forms.ModelForm):
     password = forms.CharField(label='Password')
+    confirm_password = forms.CharField(label='Confirm Password')
 
     class Meta:
         model = User
@@ -62,6 +63,7 @@ class UserRegisterForm(forms.ModelForm):
     def clean(self, *args, **kwargs):
         email = self.cleaned_data.get('email')
         password = self.cleaned_data.get('password')
+        confirm_password = self.cleaned_data.get('confirm_password')
         if email and password:
             email_check = User.objects.filter(email=email).first()
             if email_check:
@@ -71,6 +73,8 @@ class UserRegisterForm(forms.ModelForm):
                     email_check.delete()
             if len(password) < 5:
                 raise forms.ValidationError('Your password should have more than 5 characters')
+            if password != confirm_password:
+                raise forms.ValidationError('Please ensure the same password is entered twice')
         return super(UserRegisterForm, self).clean(*args, **kwargs)
 
 
