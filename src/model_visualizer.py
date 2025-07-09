@@ -1,12 +1,12 @@
 """ model_visualizer.py """
 
+import os
 import torch
 import torch.nn.functional as F
 from torchvision import transforms
 import matplotlib.pyplot as plt
 import numpy as np
 from PIL import Image
-import os
 
 
 class GradCAMVisualizer:
@@ -49,11 +49,11 @@ class GradCAMVisualizer:
             target_layer (torch.nn.Module): Layer to register hooks on.
         """
         # Save forward activations
-        def forward_hook(module, input, output):
+        def forward_hook(_module, _input, output):
             self.activations = output.detach()
 
         # Save backward gradients
-        def backward_hook(module, grad_input, grad_output):
+        def backward_hook(_module, _grad_input, grad_output):
             self.gradients = grad_output[0].detach()
 
         try:

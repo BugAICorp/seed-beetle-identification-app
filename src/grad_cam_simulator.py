@@ -5,27 +5,27 @@ import sys
 import json
 from PIL import Image
 import torch
+import dill
 from torchvision import transforms
 from model_visualizer import GradCAMVisualizer
 from model_loader import ModelLoader
 from beetle_cropper import BeetleCropper
 import globals
-import dill
 
 def get_image_path(view_name, default_path):
     """
     Prompt user for an image path, or use the default if none is entered.
     """
-    path = input(f"Enter path to {view_name.upper()} image [{default_path}]: ").strip()
+    path = input(f"Enter path to {view_name.upper()} image or press ENTER for [{default_path}]: ").strip()
     return path if path else default_path
 
-def load_and_crop_images(image_paths):
+def load_and_crop_images(paths_dict):
     """
     Crop the provided image paths using the BeetleCropper.
     """
     cropper = BeetleCropper()
     cropped = {}
-    for view, path in image_paths.items():
+    for view, path in paths_dict.items():
         if not os.path.exists(path):
             print(f"Warning! Image for {view} not found at {path}. Skipping.")
             continue
@@ -33,21 +33,22 @@ def load_and_crop_images(image_paths):
         cropped[view] = cropper.crop_beetle(img)
     return cropped
 
-def run_gradcam(models, mode_name, cropped_images, transformations):
+def run_gradcam(models, mode_name, images_dict, transform_dict):
     """
     Run Grad-CAM and save visualizations.
     """
     for view, model in models.items():
-        if view not in cropped_images:
+        if view not in images_dict:
             print(f"Skipping {view} view for {mode_name} due to missing image.")
             continue
 
         print(f"Generating Grad-CAM for {mode_name} model: {view}")
-        original_image = cropped_images[view]
-        transform = transformations[view]
+        original_image = images_dict[view]
+        transform = transform_dict[view]
         image_tensor = transform(original_image)
 
         last_conv_layer = model.layer4[-1]  # Assumes ResNet50
+
         visualizer = GradCAMVisualizer(model, target_layer=last_conv_layer)
 
         output_path = f"grad_cam_outputs/{view}_{mode_name}.png"
