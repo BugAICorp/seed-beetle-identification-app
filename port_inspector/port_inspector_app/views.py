@@ -2,7 +2,7 @@ from django.shortcuts import render, redirect
 from django.conf import settings
 from beetle_detection import species_eval
 from port_inspector_app.models import Image, SpecimenUpload, User, KnownSpecies, Genus
-from .forms import UserRegisterForm, SpecimenUploadForm, ConfirmIdForm
+from .forms import UserRegisterForm, SpecimenUploadForm, ConfirmIdForm, ResetPasswordForm, ResetRequestForm
 from django.core import signing
 from django.core.cache import cache
 from django.contrib import messages
@@ -16,7 +16,7 @@ from django.template.loader import render_to_string
 from django.utils.encoding import force_bytes, force_str
 from django.utils.http import urlsafe_base64_decode, urlsafe_base64_encode
 from django.http import HttpResponse, JsonResponse
-from .tokens import account_activation_token
+from .tokens import account_activation_token, reset_account_token
 import threading
 import time
 
@@ -116,6 +116,64 @@ def login_view(request):
     else:
         form = AuthenticationForm()
     return render(request, "login.html", {"form": form})
+
+
+def forgot_password(request):
+    if request.method == "POST":
+        form = ResetRequestForm(request.POST)
+        if form.is_valid():
+            user_email = form.cleaned_data.get("email")
+            user = User.objects.get(email=user_email)
+            return redirect("reset-password-sent", user_id=user.user_id)
+    else:
+        form = ResetRequestForm()
+    context = {"form": form}
+    return render(request, "forgot-password.html", context)
+
+
+def reset_password(request, uidb64, token):
+    try:
+        uid = force_str(urlsafe_base64_decode(uidb64))
+        user = User.objects.get(pk=uid)
+    except (TypeError, ValueError, OverflowError, User.DoesNotExist):
+        user = None
+
+    if user is not None and reset_account_token.check_token(user, token):
+        if request.method == "POST":
+            form = ResetPasswordForm(request.POST)
+            if form.is_valid():
+                new_password = form.cleaned_data.get("password")
+                user.set_password(new_password)
+                user.save()
+                return redirect('/login/')
+        else:
+            form = ResetPasswordForm()
+        return render(request, 'reset-password.html', {"form": form, "validLink": True})
+    else:
+        return render(request, "reset-password.html", {"validLink": False})
+
+
+def reset_password_sent(request, user_id):
+    if request.method == "POST":
+        current_site = get_current_site(request)
+        user = User.objects.get(pk=user_id)
+        email = user.email
+        subject = "Reset Password"
+        message = render_to_string(
+            "reset-email-message.html",
+            {
+                "request": request,
+                "user": user,
+                "domain": current_site.domain,
+                "uid": urlsafe_base64_encode(force_bytes(user.pk)),
+                "token": reset_account_token.make_token(user),
+            },
+        )
+        email = EmailMessage(subject, message, to=[email])
+        email.content_subtype = "html"
+        email.send()
+        return render(request, "reset-password-sent.html", {"email_sent": True})
+    return render(request, "reset-password-sent.html", {"email_sent": False})
 
 
 # log the user out and send them back to the upload page

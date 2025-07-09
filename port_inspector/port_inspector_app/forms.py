@@ -14,8 +14,48 @@ import io
 User = get_user_model()
 
 
+class ResetRequestForm(forms.Form):
+    email = forms.CharField(label='Email')
+
+    class Meta:
+        model = User
+        fields = ['email']
+
+    def clean(self, *args, **kwargs):
+        email = self.cleaned_data.get('email')
+        try:
+            user = User.objects.get(email=email)
+            if not user.is_active:
+                raise forms.ValidationError("This account is not set up yet. Please use the sign up page")
+
+        except User.DoesNotExist:
+            raise forms.ValidationError("This email does not have an account")
+        return super(ResetRequestForm, self).clean(*args, **kwargs)
+
+
+class ResetPasswordForm(forms.ModelForm):
+    password = forms.CharField(label='Password')
+    confirm_password = forms.CharField(label='Confirm Password')
+
+    class Meta:
+        model = User
+        fields = ['password']
+
+    def clean(self, *args, **kwargs):
+        password = self.cleaned_data.get('password')
+        confirm_password = self.cleaned_data.get('confirm_password')
+        if password:
+            if len(password) < 5:
+                raise forms.ValidationError('Your password should have more than 5 characters')
+            if password != confirm_password:
+                raise forms.ValidationError('Please ensure the same password is entered twice')
+
+        return super(ResetPasswordForm, self).clean(*args, **kwargs)
+
+
 class UserRegisterForm(forms.ModelForm):
     password = forms.CharField(label='Password')
+    confirm_password = forms.CharField(label='Confirm Password')
 
     class Meta:
         model = User
@@ -28,6 +68,7 @@ class UserRegisterForm(forms.ModelForm):
     def clean(self, *args, **kwargs):
         email = self.cleaned_data.get('email')
         password = self.cleaned_data.get('password')
+        confirm_password = self.cleaned_data.get('confirm_password')
         if email and password:
             email_check = User.objects.filter(email=email).first()
             if email_check:
@@ -37,6 +78,8 @@ class UserRegisterForm(forms.ModelForm):
                     email_check.delete()
             if len(password) < 5:
                 raise forms.ValidationError('Your password should have more than 5 characters')
+            if password != confirm_password:
+                raise forms.ValidationError('Please ensure the same password is entered twice')
         return super(UserRegisterForm, self).clean(*args, **kwargs)
 
 
