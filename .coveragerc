@@ -12,3 +12,4 @@ omit =
     src/hyperparameter_simulator.py
     src/alt_hyperparameter_simulator.py
     src/yolo_simulator.py
+    src/grad_cam_simulator.py
