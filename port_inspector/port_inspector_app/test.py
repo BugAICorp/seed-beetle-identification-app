@@ -43,6 +43,7 @@ class SignupTestCase(TestCase):
         response = self.client.post(reverse("signup"), {
             "email": "test@example.com",
             "password": "securepassword",
+            "confirm_password": "securepassword"
         })
 
         if response.context and "form" in response.context:
