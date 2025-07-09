@@ -146,32 +146,19 @@ def forgot_password(request):
     return render(request, "signup.html", context)
         
 
-def reset_password(request):
-    if request.method == "POST":
-        next_page = request.GET.get("next")
-        form = ResetPasswordForm(request.POST)
-        if form.is_valid():
-            user = form.save(commit=False)
-            password = form.cleaned_data.get("password")
-            user.set_password(password)
-            user.name = form.cleaned_data.get("name")
-            user.save()
-            new_user = authenticate(email=user.email, password=password)
-            if new_user:
-                return redirect("verify-email", user_id=user.user_id)
-            else:
-                print("Authentication failed")
-            if next_page:
-                return redirect(next_page)
-            else:
-                return redirect("verify-email", user_id=user.user_id)
-        else:
-            print("ERROR: Email already in use or passwords do not match\n")
-    else:
-        form = UserRegisterForm()
-    context = {"form": form}
-    return render(request, "signup.html", context)
+def reset_password(request, uidb64, token):
+    try:
+        uid = force_str(urlsafe_base64_decode(uidb64))
+        user = User.objects.get(pk=uid)
+    except (TypeError, ValueError, OverflowError, User.DoesNotExist):
+        user = None
+
+    if user is not None and account_activation_token.check_token(user, token):
+        pass
         
+
+def reset_password_sent(request):
+    pass
 
 
 # log the user out and send them back to the upload page
