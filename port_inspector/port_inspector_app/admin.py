@@ -29,7 +29,7 @@ def add_to_trainingdb(modeladmin, request, queryset):
         # Generate a new id for the specimen and parse its classication
         new_is_unique = False
         new_uid = str(uuid.uuid4())
-        while(not new_is_unique):
+        while (not new_is_unique):
             if TrainingDatabase.objects.filter(uniqueid=new_uid).exists():
                 new_uid = str(uuid.uuid4())
             else:
