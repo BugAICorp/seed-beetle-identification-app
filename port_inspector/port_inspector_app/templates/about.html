@@ -1,0 +1,86 @@
+{% load static %}
+<link rel="stylesheet" href="{% static 'port_inspector_app/header.css' %}">
+<link rel="stylesheet" href="{% static 'port_inspector_app/about_elements.css' %}">
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Home Page</title>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono&display=swap" rel="stylesheet">
+</head>
+<body>
+  <header>
+    <div class="header-left">
+      <a href="/" style="align-items: center;"><img src="{% static 'Bug_icon.png' %}" id="header-bar-icon"/><span>BruchinAI</span></a>
+      <a href="/history"><span>History</span></a>
+      <a href="/upload"><span>Upload Photo</span></a>
+    </div>
+    <div class="header-right">
+      <a href="/profile"><span>Profile</span></a>
+      {% if not request.user.is_authenticated %}
+      <a href="/login"><span>Login</span></a>
+      {% endif %}
+      {% if request.user.is_authenticated %}
+      <a href="/logout"><span>Logout</span></a>
+      {% endif %}
+    </div>
+  </header>
+  <h1>About Us</h1>
+  <div class="div-custom">
+    <p class="text-custom">
+        Our AI models are trained to recognize the species listed to the right. More common species with more 
+        data tend to be easier for our program to recognize while species with less samples are harder 
+        to identify. As more specimens are identified using our app, our dataset grows and our models improve 
+        their accuracy on the most common species uploaded.
+    </p>
+    <p class="text-custom" id="genus-list">
+        {% for class in valid_classes %}
+            •{{ class.genus }} {{ class.species }}<br>
+        {% endfor %}
+    </p>
+  </div>
+  <div class="div-custom">
+    <img src="{% static 'good_example.jpg' %}" class="img-custom"/>
+    <p class="text-custom">
+        Our program focuses on quick, easy, and reliable Bruchinae classification. Our AI models 
+        provide their best results when the provided images are kept consistent with their training. 
+        The tool tips on our upload page provide examples and explanations of how to create a consistent
+        image for our program to evaluate. Cropping the image is not necessary as long as the beetle 
+        appears in a similar manner to the image to the left.
+    </p>
+  </div>
+  <div class="div-custom">
+    <p class="text-custom">
+        Some factors may influence the accuracy of the program when evaluating an image. Aligning the beetle 
+        properly under the microscope and ensuring that the specimen appears clearly separated from the 
+        microscope's vignette helps the model by preventing excess dark spots in the cropped image. Another 
+        part of alignment to consider is the focus of the image. Key features should be in focus in the image 
+        such as the elytra for the dorsal view and the head for the frontal view. If unsure about what to focus 
+        the microscope on, try and get as much of the beetle in focus as possible for the best results. The 
+        image on the left shows an improperly aligned specimen which is very close to the vignette and mostly out 
+        of focus.
+    </p>
+    <img src="{% static 'improper_alignment.jpg' %}" class="img-custom"/>
+  </div>
+  <div class="div-custom">
+    <img src="{% static 'underexposed.jpg' %}" class="img-custom"/>
+    <p class="text-custom">
+        Exposing the specimen properly can also help with improving the classification results. Under and overexposed 
+        beetles may cause their coloration to be harder to distinguish. Our image preprocessing will help reduce 
+        differences caused by exposure levels and enhance the colors provided, but a well exposed image will always 
+        provide better results.
+    </p>
+  </div>
+  <p class="text-custom" id="bottom-text">
+    Our preprocessing utilizes a simple object detection model to crop images down so that the beetle fills the whole 
+    image. We then use some color and feature enhancing techniques before feeding the images to their respective 
+    models. We use Resnet50 models from pyTorch and our database of over 10,000 images to create strong image recognition 
+    models trained purely for recognizing Bruchinae species.
+  </p>
+
+  <footer>
+    &copy; 2025 Port Inspector App
+  </footer>
+</body>
+</html>
