@@ -104,7 +104,6 @@ if __name__ == '__main__':
             spec_fron_model = globals.spec_fron_model
             spec_late_model = globals.spec_late_model
             spec_class_dictionary = globals.spec_class_dictionary
-            spec_accuracy_list = globals.spec_accuracy_list
 
             # Genus paths
             gen_caud_model = globals.gen_caud_model
@@ -112,7 +111,6 @@ if __name__ == '__main__':
             gen_fron_model = globals.gen_fron_model
             gen_late_model = globals.gen_late_model
             gen_class_dictionary = globals.gen_class_dictionary
-            gen_accuracy_list = globals.gen_accuracy_list
             break
         print("Invalid Input. Please enter 1 or 2.")
 
