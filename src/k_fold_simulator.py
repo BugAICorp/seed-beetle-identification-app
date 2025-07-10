@@ -78,43 +78,11 @@ if __name__ == '__main__':
             if user_input == 1:
                 # set create other flag to true
                 create_other = True
-
-                # Species paths
-                spec_caud_model = globals.spec_caud_model_with_other
-                spec_dors_model = globals.spec_dors_model_with_other
-                spec_fron_model = globals.spec_fron_model_with_other
-                spec_late_model = globals.spec_late_model_with_other
-                spec_class_dictionary = globals.spec_class_dictionary_with_other
-                spec_accuracy_list = globals.spec_accuracy_list_with_other
-
-                # Genus paths
-                gen_caud_model = globals.gen_caud_model_with_other
-                gen_dors_model = globals.gen_dors_model_with_other
-                gen_fron_model = globals.gen_fron_model_with_other
-                gen_late_model = globals.gen_late_model_with_other
-                gen_class_dictionary = globals.gen_class_dictionary_with_other
-                gen_accuracy_list = globals.gen_accuracy_list_with_other
                 break
             # if no, set model paths to the normal paths
             if user_input == 2:
                 # set create other flag to false
                 create_other = False
-
-                # Species paths
-                spec_caud_model = globals.spec_caud_model
-                spec_dors_model = globals.spec_dors_model
-                spec_fron_model = globals.spec_fron_model
-                spec_late_model = globals.spec_late_model
-                spec_class_dictionary = globals.spec_class_dictionary
-                spec_accuracy_list = globals.spec_accuracy_list
-
-                # Genus paths
-                gen_caud_model = globals.gen_caud_model
-                gen_dors_model = globals.gen_dors_model
-                gen_fron_model = globals.gen_fron_model
-                gen_late_model = globals.gen_late_model
-                gen_class_dictionary = globals.gen_class_dictionary
-                gen_accuracy_list = globals.gen_accuracy_list
                 break
             print("Invalid Input. Please enter 1 or 2.")
 
