@@ -85,7 +85,6 @@ if __name__ == '__main__':
             spec_fron_model = globals.spec_fron_model_with_other
             spec_late_model = globals.spec_late_model_with_other
             spec_class_dictionary = globals.spec_class_dictionary_with_other
-            spec_accuracy_list = globals.spec_accuracy_list_with_other
 
             # Genus paths
             gen_caud_model = globals.gen_caud_model_with_other
@@ -93,7 +92,6 @@ if __name__ == '__main__':
             gen_fron_model = globals.gen_fron_model_with_other
             gen_late_model = globals.gen_late_model_with_other
             gen_class_dictionary = globals.gen_class_dictionary_with_other
-            gen_accuracy_list = globals.gen_accuracy_list_with_other
             break
         # if no, set model paths to the normal paths
         if user_input == 2:
