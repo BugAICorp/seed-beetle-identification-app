@@ -54,6 +54,53 @@ if __name__ == '__main__':
                 sys.exit(0)
 
     while True:
+        print("\nWould you like to train with an \"other\" class?")
+        user_input = int(input("Enter 1 for YES, and 2 for NO: "))
+        # if yes, set model paths to the "other" paths
+        if user_input == 1:
+            # set create other flag to true
+            create_other = True
+
+            # Species paths
+            spec_caud_model = globals.spec_caud_model_with_other
+            spec_dors_model = globals.spec_dors_model_with_other
+            spec_fron_model = globals.spec_fron_model_with_other
+            spec_late_model = globals.spec_late_model_with_other
+            spec_class_dictionary = globals.spec_class_dictionary_with_other
+            spec_accuracy_list = globals.spec_accuracy_list_with_other
+
+            # Genus paths
+            gen_caud_model = globals.gen_caud_model_with_other
+            gen_dors_model = globals.gen_dors_model_with_other
+            gen_fron_model = globals.gen_fron_model_with_other
+            gen_late_model = globals.gen_late_model_with_other
+            gen_class_dictionary = globals.gen_class_dictionary_with_other
+            gen_accuracy_list = globals.gen_accuracy_list_with_other
+            break
+        # if no, set model paths to the normal paths
+        if user_input == 2:
+            # set create other flag to false
+            create_other = False
+
+            # Species paths
+            spec_caud_model = globals.spec_caud_model
+            spec_dors_model = globals.spec_dors_model
+            spec_fron_model = globals.spec_fron_model
+            spec_late_model = globals.spec_late_model
+            spec_class_dictionary = globals.spec_class_dictionary
+            spec_accuracy_list = globals.spec_accuracy_list
+
+            # Genus paths
+            gen_caud_model = globals.gen_caud_model
+            gen_dors_model = globals.gen_dors_model
+            gen_fron_model = globals.gen_fron_model
+            gen_late_model = globals.gen_late_model
+            gen_class_dictionary = globals.gen_class_dictionary
+            gen_accuracy_list = globals.gen_accuracy_list
+            break
+        print("Invalid Input. Please enter 1 or 2.")
+
+    while True:
         print("\nWould you like to augment the dataset?")
         user_input = int(input("Enter 1 for YES, and 2 for NO: "))
         if user_input == 1:
@@ -88,7 +135,8 @@ if __name__ == '__main__':
     beetle_cropper.cleanup(globals.cropped_dataset)
 
     # Read converted data
-    dbr = DatabaseReader(database=globals.training_database, class_file_path=globals.class_list)
+    dbr = DatabaseReader(
+        database=globals.training_database, class_file_path=globals.class_list, create_other=create_other)
     df = dbr.get_dataframe()
 
     # Display how many images we have for each angle
@@ -130,17 +178,17 @@ if __name__ == '__main__':
 
     # Save models
     species_model_filenames = {
-            "caud" : globals.spec_caud_model if train_caud else None, 
-            "dors" : globals.spec_dors_model if train_dors else None,
-            "fron" : globals.spec_fron_model if train_fron else None,
-            "late" : globals.spec_late_model if train_late else None
+            "caud" : spec_caud_model if train_caud else None, 
+            "dors" : spec_dors_model if train_dors else None,
+            "fron" : spec_fron_model if train_fron else None,
+            "late" : spec_late_model if train_late else None
         }
 
     species_tp.save_models(
         species_model_filenames,
         globals.img_height,
-        globals.spec_class_dictionary,
-        globals.spec_accuracy_list,
+        spec_class_dictionary,
+        spec_accuracy_list,
         overwrite)
 
     # Run training with dataframe
@@ -158,25 +206,25 @@ if __name__ == '__main__':
 
     # Save models
     genus_model_filenames = {
-        "caud" : globals.gen_caud_model if train_caud else None, 
-        "dors" : globals.gen_dors_model if train_dors else None,
-        "fron" : globals.gen_fron_model if train_fron else None,
-        "late" : globals.gen_late_model if train_late else None
+        "caud" : gen_caud_model if train_caud else None, 
+        "dors" : gen_dors_model if train_dors else None,
+        "fron" : gen_fron_model if train_fron else None,
+        "late" : gen_late_model if train_late else None
     }
 
     genus_tp.save_models(
         genus_model_filenames,
         globals.img_height,
-        globals.gen_class_dictionary,
-        globals.gen_accuracy_list,
+        gen_class_dictionary,
+        gen_accuracy_list,
         overwrite)
 
     # Load Genus models
     genus_model_paths = {
-            "caud" : globals.gen_caud_model, 
-            "dors" : globals.gen_dors_model,
-            "fron" : globals.gen_fron_model,
-            "late" : globals.gen_late_model
+            "caud" : gen_caud_model, 
+            "dors" : gen_dors_model,
+            "fron" : gen_fron_model,
+            "late" : gen_late_model
         }
 
     genus_ml = ModelLoader(genus_model_paths, GENUS_OUTPUTS)
@@ -187,8 +235,7 @@ if __name__ == '__main__':
 
     # Inititialize the EvaluationMethod object with the heaviest eval method set
     genus_evaluator = GenusEvaluationMethod(globals.img_height, genus_models, 1,
-                                            globals.gen_class_dictionary,
-                                            globals.gen_accuracy_list)
+                                            gen_class_dictionary, gen_accuracy_list)
 
     # Get the images to be evaluated through user input
     LATE_PATH = "dataset/Callosobruchus chinensis GEM_187686348 5XEXT LATE.jpg"
@@ -212,10 +259,10 @@ if __name__ == '__main__':
 
     # Load species models
     species_model_paths = {
-            "caud" : globals.spec_caud_model, 
-            "dors" : globals.spec_dors_model,
-            "fron" : globals.spec_fron_model,
-            "late" : globals.spec_late_model
+            "caud" : spec_caud_model, 
+            "dors" : spec_dors_model,
+            "fron" : spec_fron_model,
+            "late" : spec_late_model
         }
     species_ml = ModelLoader(species_model_paths, SPECIES_OUTPUTS)
     species_models = species_ml.get_models()
@@ -225,8 +272,7 @@ if __name__ == '__main__':
 
     # Inititialize the EvaluationMethod object with the heaviest eval method set
     species_evaluator = EvaluationMethod(globals.img_height, species_models, 1,
-                                         globals.spec_class_dictionary,
-                                         globals.spec_accuracy_list)
+                                         spec_class_dictionary, spec_accuracy_list)
 
     # Run the evaluation method
     top_5_species = species_evaluator.evaluate_image(
