@@ -72,6 +72,53 @@ if __name__ == '__main__':
                     sys.exit(0)
 
         while True:
+            print("\nWould you like to train with an \"other\" class?")
+            user_input = int(input("Enter 1 for YES, and 2 for NO: "))
+            # if yes, set model paths to the "other" paths
+            if user_input == 1:
+                # set create other flag to true
+                create_other = True
+
+                # Species paths
+                spec_caud_model = globals.spec_caud_model_with_other
+                spec_dors_model = globals.spec_dors_model_with_other
+                spec_fron_model = globals.spec_fron_model_with_other
+                spec_late_model = globals.spec_late_model_with_other
+                spec_class_dictionary = globals.spec_class_dictionary_with_other
+                spec_accuracy_list = globals.spec_accuracy_list_with_other
+
+                # Genus paths
+                gen_caud_model = globals.gen_caud_model_with_other
+                gen_dors_model = globals.gen_dors_model_with_other
+                gen_fron_model = globals.gen_fron_model_with_other
+                gen_late_model = globals.gen_late_model_with_other
+                gen_class_dictionary = globals.gen_class_dictionary_with_other
+                gen_accuracy_list = globals.gen_accuracy_list_with_other
+                break
+            # if no, set model paths to the normal paths
+            if user_input == 2:
+                # set create other flag to false
+                create_other = False
+
+                # Species paths
+                spec_caud_model = globals.spec_caud_model
+                spec_dors_model = globals.spec_dors_model
+                spec_fron_model = globals.spec_fron_model
+                spec_late_model = globals.spec_late_model
+                spec_class_dictionary = globals.spec_class_dictionary
+                spec_accuracy_list = globals.spec_accuracy_list
+
+                # Genus paths
+                gen_caud_model = globals.gen_caud_model
+                gen_dors_model = globals.gen_dors_model
+                gen_fron_model = globals.gen_fron_model
+                gen_late_model = globals.gen_late_model
+                gen_class_dictionary = globals.gen_class_dictionary
+                gen_accuracy_list = globals.gen_accuracy_list
+                break
+            print("Invalid Input. Please enter 1 or 2.")
+
+        while True:
             print("\nWould you like to augment the dataset?")
             user_input = int(input("Enter 1 for YES, and 2 for NO: "))
             if user_input == 1:
@@ -94,7 +141,8 @@ if __name__ == '__main__':
         # Final cleanup: remove cropped dataset
         beetle_cropper.cleanup(globals.cropped_dataset)
         # Read converted data
-        dbr = DatabaseReader(database=globals.training_database, class_file_path=globals.class_list)
+        dbr = DatabaseReader(
+            database=globals.training_database, class_file_path=globals.class_list, create_other=create_other)
         df = dbr.get_dataframe()
 
         # Display how many images we have for each angle
