@@ -17,7 +17,7 @@ spec_late_model = "src/models/spec_late.pth"
 spec_class_dictionary = "src/models/spec_dict.json"
 spec_accuracy_list = "src/models/spec_accuracies.json"
 
-# Species Files with Other 
+# Species Files with Other
 spec_caud_model_with_other = "src/models/spec_caud_other.pth"
 spec_dors_model_with_other = "src/models/spec_dors_other.pth"
 spec_fron_model_with_other = "src/models/spec_fron_other.pth"
