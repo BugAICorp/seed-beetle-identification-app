@@ -17,6 +17,14 @@ spec_late_model = "src/models/spec_late.pth"
 spec_class_dictionary = "src/models/spec_dict.json"
 spec_accuracy_list = "src/models/spec_accuracies.json"
 
+# Species Files with Other 
+spec_caud_model_with_other = "src/models/spec_caud_other.pth"
+spec_dors_model_with_other = "src/models/spec_dors_other.pth"
+spec_fron_model_with_other = "src/models/spec_fron_other.pth"
+spec_late_model_with_other = "src/models/spec_late_other.pth"
+spec_class_dictionary_with_other = "src/models/spec_dict_other.json"
+spec_accuracy_list_with_other = "src/models/spec_accuracies_other.json"
+
 # Genus Files
 gen_caud_model = "src/models/gen_caud.pth"
 gen_dors_model = "src/models/gen_dors.pth"
@@ -24,6 +32,14 @@ gen_fron_model = "src/models/gen_fron.pth"
 gen_late_model = "src/models/gen_late.pth"
 gen_class_dictionary = "src/models/gen_dict.json"
 gen_accuracy_list = "src/models/gen_accuracies.json"
+
+# Genus Files with Other
+gen_caud_model_with_other = "src/models/gen_caud_other.pth"
+gen_dors_model_with_other = "src/models/gen_dors_other.pth"
+gen_fron_model_with_other = "src/models/gen_fron_other.pth"
+gen_late_model_with_other = "src/models/gen_late_other.pth"
+gen_class_dictionary_with_other = "src/models/gen_dict_other.json"
+gen_accuracy_list_with_other = "src/models/gen_accuracies_other.json"
 
 # Transformation Files
 caud_transformation = "src/models/caud_transformation.pth"
