@@ -8,6 +8,7 @@ import globals
 from model_loader import load_genus_specific_model
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../')))
 
+
 # pylint: disable=too-many-arguments, too-many-positional-arguments
 class EvalSpeciesByGenus:
     """
@@ -21,7 +22,7 @@ class EvalSpeciesByGenus:
         self.species_idx_dict = None
         self.genus_idx_dict = self.open_class_dictionary(genus_filename)
 
-        #load transformations to a list for use in the program
+        # load transformations to a list for use in the program
         self.transformations = self.get_transformations()
 
         self.device = torch.device(
@@ -51,7 +52,7 @@ class EvalSpeciesByGenus:
 
     def open_class_dictionary(self, filename):
         """
-        Open and save the class dictionary for use in the evaluation method 
+        Open and save the class dictionary for use in the evaluation method
         to convert the model's index to a string species classification
 
         Returns: dictionary defined by file
@@ -73,7 +74,7 @@ class EvalSpeciesByGenus:
         """
         transformations = []
 
-        #open each file and load the transformation then save it to the list
+        # open each file and load the transformation then save it to the list
         with open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "models/caud_transformation.pth"), "rb") as f:
             transformations.append(dill.load(f))
 
@@ -104,10 +105,10 @@ class EvalSpeciesByGenus:
 
         # Define variables outside the if statements so they can be used in other method calls
         predictions = {
-            "late" : {"score" : 0, "genus" : None},
-            "dors" : {"score" : 0, "genus" : None},
-            "fron" : {"score" : 0, "genus" : None},
-            "caud" : {"score" : 0, "genus" : None},
+            "late": {"score": 0, "genus": None},
+            "dors": {"score": 0, "genus": None},
+            "fron": {"score": 0, "genus": None},
+            "caud": {"score": 0, "genus": None},
         }
         view_count = 0
 
@@ -158,7 +159,7 @@ class EvalSpeciesByGenus:
             all_inputs.append(late)
             input_order.append(3)
 
-        #Check if there are less possible classifications than self.k and adjust if necessary
+        # Check if there are less possible classifications than self.k and adjust if necessary
         k = min(self.k, len(self.species_idx_dict))
 
         count = 0
