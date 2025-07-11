@@ -43,10 +43,10 @@ class GradCAM:
 
     def _register_hooks(self):
         """ Registers forward and backward hooks to capture activations and gradients. """
-        def forward_hook(module, input, output):
+        def forward_hook(_module, _input, output):
             self.activations = output.detach()
 
-        def backward_hook(module, grad_in, grad_out):
+        def backward_hook(_module, _grad_in, grad_out):
             self.gradients = grad_out[0].detach()
 
         for name, module in self.model.named_modules():
@@ -88,6 +88,7 @@ class GradCAM:
         for handle in self.hook_handles:
             handle.remove()
 
+# pylint: disable=too-many-instance-attributes
 class CAMGuidedTrainingProgram:
     """
     Custom training pipeline that incorporates CAM-guided supervision
@@ -176,7 +177,7 @@ class CAMGuidedTrainingProgram:
 
         self.mask_dir = mask_dir
         self.lambda_attn = 0.1
-    
+
     def get_subset(self, view_type, dataframe):
         """
         Reads database and pulls subset where View column is equal to parameter, view_type
@@ -186,7 +187,7 @@ class CAMGuidedTrainingProgram:
         Return: pd.DataFrame: Subset of database if column value valid, otherwise empty dataframe
         """
         return dataframe[dataframe["View"] == view_type] if not dataframe.empty else pd.DataFrame()
-    
+
     def create_train_transformations(
             self, rotation_degree=5, brightness=0.1, contrast=0.1, erasing=(0.5, (0.02, 0.15))):
         """
@@ -260,11 +261,11 @@ class CAMGuidedTrainingProgram:
             mask_tensor = transforms.ToTensor()(mask_img)  # [1, H, W], range [0.0, 1.0]
             binary_mask = (mask_tensor > 0.5).float()      # Binarize: 1.0 = beetle, 0.0 = background
             masks.append(binary_mask)
-        
+
         # Shape: [B, 1, H, W] → squeeze channel to [B, H, W]
         masks = torch.stack(masks).squeeze(1)
         return masks.to(self.device)
-    
+
     def get_train_test_split(self, df):
         """
         Gets train and test split for given dataframe
@@ -370,7 +371,7 @@ class CAMGuidedTrainingProgram:
                 correct += (predicted == labels).sum().item()
                 all_predictions.extend(predicted.cpu().numpy())
                 all_labels.extend(labels.cpu().numpy())
-        
+
         if total != 0:
             accuracy = correct / total
             print(f"Accuracy: {100 * accuracy:.2f}%")
@@ -381,8 +382,7 @@ class CAMGuidedTrainingProgram:
             print(f"Weighted F1 Score: {100 * weighted_f1:.2f}%")
             print(f"Macro F1 Score: {100 * macro_f1:.2f}%")
             return macro_f1
-        else:
-            return None
+        return None
 
     def train_model(self, num_epochs, view, batch, rotation=5, brightness=0.1, lrate=0.001):
         """
@@ -423,7 +423,8 @@ class CAMGuidedTrainingProgram:
         """
         cam_heatmap = cam_heatmap / (cam_heatmap.sum(dim=[1, 2], keepdim=True) + 1e-8)
         if mask.shape != cam_heatmap.shape:
-            mask = F.interpolate(mask.unsqueeze(1), size=cam_heatmap.shape[-2:], mode='bilinear', align_corners=False).squeeze(1)
+            mask = F.interpolate(
+                mask.unsqueeze(1), size=cam_heatmap.shape[-2:], mode='bilinear', align_corners=False).squeeze(1)
         loss = F.kl_div(torch.log(cam_heatmap + 1e-8), mask, reduction='batchmean')
         return loss
 
