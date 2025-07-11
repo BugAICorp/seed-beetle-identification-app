@@ -39,6 +39,7 @@ class EvalSpeciesByGenus:
         their classification in their proper formats
         """
         genus_class, genus_score = self.get_genus(caud=caud, dors=dors, fron=fron, late=late)
+        print(f"{genus_class}")
 
         self.load_species_models(genus_class)
         if self.species_model is None or self.species_idx_dict is None:
@@ -120,9 +121,9 @@ class EvalSpeciesByGenus:
 
                 # Get the predicted class and confidence score
                 _, predicted_index = torch.max(model_output, 1)
-                predictions["late"]["score"] = torch.nn.functional.softmax(
+                predictions[view]["score"] = torch.nn.functional.softmax(
                     model_output, dim=1)[0, predicted_index].item()
-                predictions["late"]["genus"] = predicted_index.item()
+                predictions[view]["genus"] = predicted_index.item()
 
         certainties = []
         genera = []
@@ -158,7 +159,7 @@ class EvalSpeciesByGenus:
             input_order.append(3)
 
         #Check if there are less possible classifications than self.k and adjust if necessary
-        self.k = min(self.k, len(self.species_idx_dict))
+        k = min(self.k, len(self.species_idx_dict))
 
         count = 0
         for i in all_inputs:
@@ -169,7 +170,8 @@ class EvalSpeciesByGenus:
 
             # Get the predicted top 5 species(or less if not enough outputs) and their indices
             softmax_scores = torch.nn.functional.softmax(output, dim=1)[0]
-            top5_scores, top5_species = torch.topk(softmax_scores, self.k)
+            top5_scores, top5_species = torch.topk(softmax_scores, k)
+            print(top5_species)
 
             # Store top 5 confidence and species as a list to the correct dictionary entry
             # Index 0 is the highest and 4 is the lowest
@@ -179,7 +181,7 @@ class EvalSpeciesByGenus:
 
         top_five_scores = []
         top_five_names = []
-        for i in range(self.k):
+        for i in range(k):
             top_five_scores.append(0)
             top_five_names.append(None)
 
@@ -205,9 +207,8 @@ class EvalSpeciesByGenus:
             else:
                 list_to_return.append(("Unknown Species", value))
 
-        while self.k < 5:
+        while len(list_to_return) < 5:
             list_to_return.append(("No other species", 0))
-            self.k += 1
 
         return list_to_return
 

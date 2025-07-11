@@ -55,7 +55,7 @@ if "runserver" in sys.argv:
                                             os.path.join(os.path.dirname(os.path.abspath(__file__)), "model_data/gen_dict.json"), 
                                             os.path.join(os.path.dirname(os.path.abspath(__file__)), "model_data/gen_accuracies.json"))
     hierarchy_evaluator = EvalSpeciesByGenus(genus_models,
-                                             os.path.join(os.path.dirname(os.path.abspath(__file__)), "model_data/spec_dict.json"))
+                                             os.path.join(os.path.dirname(os.path.abspath(__file__)), "model_data/gen_dict.json"))
 
     print("!!! ML Models loaded in evaluation mode !!!")
 
@@ -79,7 +79,11 @@ def evaluate_hierarchy(late_path, dors_path, fron_path, caud_path):
 
     top_5_species = []
     for i in range(5):
-        top_5_species.append((top_species[i][0].title(), top_species[i][1]*100.0))
+        if i < len(top_species):
+            top_5_species.append((top_species[i][0], top_species[i][1]*100.0))
+        else:
+            top_5_species.append(("No other species", 0.0))
+
     top_genus = top_genus[0], top_genus[1]*100.0
 
     return top_5_species, top_genus
