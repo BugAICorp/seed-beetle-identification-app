@@ -8,6 +8,7 @@ if "runserver" in sys.argv:
     from .model_loader import ModelLoader
     from .evaluation_method import EvaluationMethod
     from .genus_evaluation_method import GenusEvaluationMethod
+    from .eval_spec_from_gen import EvalSpeciesByGenus
     from .data_converter import DjangoTrainingDatabaseConverter
     from .app_training_program import TrainingProgram
     from django.conf import settings
@@ -53,11 +54,35 @@ if "runserver" in sys.argv:
     genus_evaluator = GenusEvaluationMethod(os.path.join(os.path.dirname(os.path.abspath(__file__)), "model_data/height.txt"), genus_models, 1, 
                                             os.path.join(os.path.dirname(os.path.abspath(__file__)), "model_data/gen_dict.json"), 
                                             os.path.join(os.path.dirname(os.path.abspath(__file__)), "model_data/gen_accuracies.json"))
+    hierarchy_evaluator = EvalSpeciesByGenus(genus_models,
+                                             os.path.join(os.path.dirname(os.path.abspath(__file__)), "model_data/spec_dict.json"))
 
     print("!!! ML Models loaded in evaluation mode !!!")
 
     dbr = DjangoTrainingDatabaseConverter("dataset")
     dbr.conversion()
+
+
+def evaluate_hierarchy(late_path, dors_path, fron_path, caud_path):
+    # Load the provided images
+    LATE_IMG = Image.open(late_path) if late_path else None
+    DORS_IMG = Image.open(dors_path) if dors_path else None
+    FRON_IMG = Image.open(fron_path) if fron_path else None
+    CAUD_IMG = Image.open(caud_path) if caud_path else None
+
+    top_genus, top_species = hierarchy_evaluator.classify_images(
+        dors=DORS_IMG,
+        late=LATE_IMG,
+        fron=FRON_IMG,
+        caud=CAUD_IMG
+    )
+
+    top_5_species = []
+    for i in range(5):
+        top_5_species.append((top_species[i][0].title(), top_species[i][1]*100.0))
+    top_genus = top_genus[0], top_genus[1]*100.0
+
+    return top_5_species, top_genus
 
 
 def evaluate_images(late_path, dors_path, fron_path, caud_path):
