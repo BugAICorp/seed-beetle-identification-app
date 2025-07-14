@@ -29,9 +29,6 @@ class CAMDataGenerator:
         """
         self.dataframe = dataframe
         self.dataset_dir = Path(dataset_dir)
-        self.image_column = "Image"
-        self.class_column = "Genus"
-        self.class_string_dict = globals.gen_class_dictionary
         self.subsets = subsets
         self.output_dir = Path(output_dir)
 
@@ -90,7 +87,7 @@ class CAMDataGenerator:
             print(f"[{view.upper()}] Generating {samples_per_view} balanced transformed images...")
 
             # Map label index to genus string
-            df["Genus"] = df[self.class_column].map(self.class_string_dict)
+            df["Genus"] = df["Genus"].map(globals.gen_class_dictionary)
             genus_groups = df.groupby("Genus")
             num_genera = len(genus_groups)
 
