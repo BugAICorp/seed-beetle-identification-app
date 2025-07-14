@@ -19,7 +19,7 @@ class CAMDataGenerator:
     and matches original images by SpecimenID and View.
     """
 
-    def __init__(self, dataframe, dataset_dir, image_column, class_column, class_string_dict, subsets, output_dir="cam_dataset"):
+    def __init__(self, dataframe, dataset_dir, subsets, output_dir="cam_dataset"):
         """
         Args:
             dataframe (pd.DataFrame): Full dataset with 'SpecimenID' and 'View' columns.
@@ -32,9 +32,9 @@ class CAMDataGenerator:
         """
         self.dataframe = dataframe
         self.dataset_dir = Path(dataset_dir)
-        self.image_column = image_column
-        self.class_column = class_column
-        self.class_string_dict = class_string_dict
+        self.image_column = "Image"
+        self.class_column = "Species"
+        self.class_string_dict = globals.spec_class_dictionary
         self.subsets = subsets
         self.output_dir = Path(output_dir)
 
@@ -100,7 +100,7 @@ class CAMDataGenerator:
             view_dir = self.output_dir / view
             view_dir.mkdir(parents=True, exist_ok=True)
 
-            for i, (specimen_id, label, view_str) in enumerate(zip(specimen_ids, labels, view_names)):
+            for _, (specimen_id, label, view_str) in enumerate(zip(specimen_ids, labels, view_names)):
                 image_path = self.find_image_path(specimen_id, view_str)
                 if image_path is None:
                     print(f"Could not find image for SpecimenID={specimen_id}, View={view_str}")
@@ -108,7 +108,7 @@ class CAMDataGenerator:
 
                 try:
                     image = Image.open(image_path).convert("RGB")
-                except Exception as e:
+                except OSError as e:
                     print(f"Failed to load image {image_path}: {e}")
                     continue
 
@@ -137,22 +137,19 @@ if __name__ == "__main__":
         database=globals.training_database,
         class_file_path=globals.class_list
     )
-    df = dbr.get_dataframe()
+    dataframe = dbr.get_dataframe()
 
-    subsets = {
-        "caud": df[df['View'] == "CAUD"],
-        "dors": df[df['View'] == "DORS"],
-        "fron": df[df['View'] == "FRON"],
-        "late": df[df['View'] == "LATE"]
+    view_subsets = {
+        "caud": dataframe[dataframe['View'] == "CAUD"],
+        "dors": dataframe[dataframe['View'] == "DORS"],
+        "fron": dataframe[dataframe['View'] == "FRON"],
+        "late": dataframe[dataframe['View'] == "LATE"]
     }
 
-    generator = CAMDataGenerator(
-        dataframe=df,
+    generator = CAMDataGenerator( # pylint: disable=possibly-used-before-assignment
+        dataframe=dataframe,
         dataset_dir="dataset",
-        image_column="Image",
-        class_column="Species",
-        class_string_dict=globals.spec_class_dictionary,
-        subsets=subsets,
+        subsets=view_subsets,
         output_dir="cam_dataset"
     )
 
