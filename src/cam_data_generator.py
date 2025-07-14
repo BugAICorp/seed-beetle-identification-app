@@ -24,9 +24,6 @@ class CAMDataGenerator:
         Args:
             dataframe (pd.DataFrame): Full dataset with 'SpecimenID' and 'View' columns.
             dataset_dir (str): Path to the original dataset directory containing .jpg files.
-            image_column (str): Column name for image binaries (unused in this version but kept for compatibility).
-            class_column (str): Column name for class labels.
-            class_string_dict (dict): Mapping from label index to label string.
             subsets (dict): View-specific subsets of the dataframe.
             output_dir (str): Directory to save transformed images.
         """
@@ -133,7 +130,6 @@ class CAMDataGenerator:
 
             for _, row in balanced_df.iterrows():
                 specimen_id = str(row["SpecimenID"])
-                label_idx = row[self.class_column]
                 view_str = row["View"]
 
                 image_path = self.find_image_path(specimen_id, view_str)
@@ -172,17 +168,17 @@ if __name__ == "__main__":
         database=globals.training_database,
         class_file_path=globals.class_list
     )
-    dataframe = dbr.get_dataframe()
+    test_df = dbr.get_dataframe()
 
     view_subsets = {
-        "caud": dataframe[dataframe['View'] == "CAUD"],
-        "dors": dataframe[dataframe['View'] == "DORS"],
-        "fron": dataframe[dataframe['View'] == "FRON"],
-        "late": dataframe[dataframe['View'] == "LATE"]
+        "caud": test_df[test_df['View'] == "CAUD"],
+        "dors": test_df[test_df['View'] == "DORS"],
+        "fron": test_df[test_df['View'] == "FRON"],
+        "late": test_df[test_df['View'] == "LATE"]
     }
 
     generator = CAMDataGenerator( # pylint: disable=possibly-used-before-assignment
-        dataframe=dataframe,
+        dataframe=test_df,
         dataset_dir="dataset",
         subsets=view_subsets,
         output_dir="cam_dataset"
