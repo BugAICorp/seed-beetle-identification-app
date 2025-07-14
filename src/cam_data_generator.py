@@ -33,8 +33,8 @@ class CAMDataGenerator:
         self.dataframe = dataframe
         self.dataset_dir = Path(dataset_dir)
         self.image_column = "Image"
-        self.class_column = "Species"
-        self.class_string_dict = globals.spec_class_dictionary
+        self.class_column = "Genus"
+        self.class_string_dict = globals.gen_class_dictionary
         self.subsets = subsets
         self.output_dir = Path(output_dir)
 
@@ -77,10 +77,11 @@ class CAMDataGenerator:
 
     def save_transformed_images(self, samples_per_view=100):
         """
-        Applies transformations and saves images for each view.
+        Applies transformations and saves images for each view,
+        ensuring all genera are represented, with proportional remainder distribution.
 
         Args:
-            samples_per_view (int): Number of images to save per view.
+            samples_per_view (int): Total number of images to save per view.
         """
         self.output_dir.mkdir(parents=True, exist_ok=True)
 
@@ -89,18 +90,52 @@ class CAMDataGenerator:
                 print(f"Skipping {view.upper()} — no data.")
                 continue
 
-            print(f"[{view.upper()}] Generating {samples_per_view} transformed images...")
+            print(f"[{view.upper()}] Generating {samples_per_view} balanced transformed images...")
 
-            sample_df = df.sample(n=samples_per_view)
-            labels = sample_df[self.class_column].values
-            specimen_ids = sample_df["SpecimenID"].astype(str).values
-            view_names = sample_df["View"].values
+            # Map label index to genus string
+            df["Genus"] = df[self.class_column].map(self.class_string_dict)
+            genus_groups = df.groupby("Genus")
+            num_genera = len(genus_groups)
 
+            if num_genera == 0:
+                print(f"No genera found in {view.upper()} view.")
+                continue
+
+            # Count how many samples each genus has
+            genus_sizes = genus_groups.size().to_dict()
+            total_available = sum(genus_sizes.values())
+
+            # Compute fair allocation: ensure every genus gets at least one, then proportional remainder
+            base_allocation = {genus: 1 for genus in genus_sizes}
+            remaining = samples_per_view - num_genera
+
+            if remaining > 0:
+                total_weights = total_available - num_genera
+                # This gives more samples to larger genera, proportionally
+                for genus, size in genus_sizes.items():
+                    weight = size - 1
+                    if weight <= 0:
+                        continue
+                    addl = round((weight / total_weights) * remaining)
+                    base_allocation[genus] += addl
+
+            # Sample from each genus
+            balanced_samples = []
+            for genus, group in genus_groups:
+                n_samples = min(base_allocation[genus], len(group))
+                sampled = group.sample(n=n_samples, random_state=7)
+                balanced_samples.append(sampled)
+
+            balanced_df = pd.concat(balanced_samples).reset_index(drop=True)
             transform = self.transformations[view]
             view_dir = self.output_dir / view
             view_dir.mkdir(parents=True, exist_ok=True)
 
-            for _, (specimen_id, label, view_str) in enumerate(zip(specimen_ids, labels, view_names)):
+            for _, row in balanced_df.iterrows():
+                specimen_id = str(row["SpecimenID"])
+                label_idx = row[self.class_column]
+                view_str = row["View"]
+
                 image_path = self.find_image_path(specimen_id, view_str)
                 if image_path is None:
                     print(f"Could not find image for SpecimenID={specimen_id}, View={view_str}")
@@ -108,12 +143,12 @@ class CAMDataGenerator:
 
                 try:
                     image = Image.open(image_path).convert("RGB")
-                except OSError as e:
-                    print(f"Failed to load image {image_path}: {e}")
+                except OSError:
+                    print(f"Failed to load image: {image_path}")
                     continue
 
                 transformed = transform(image)
-                filename = image_path.name  # keep original filename with .jpg extension
+                filename = image_path.name  # preserve original filename
                 vutils.save_image(transformed, view_dir / filename)
 
             print(f"[{view.upper()}] Done. Saved to {view_dir}")
