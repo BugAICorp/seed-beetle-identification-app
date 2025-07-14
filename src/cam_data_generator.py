@@ -71,7 +71,7 @@ class CAMDataGenerator:
         Returns:
             Path or None: Path to the matched image file if found.
         """
-        pattern = f"*{specimen_id}*{view}.jpg"
+        pattern = f"*{specimen_id}*{view.upper()}.jpg"
         matches = list(self.dataset_dir.rglob(pattern))
         return matches[0] if matches else None
 
@@ -113,8 +113,7 @@ class CAMDataGenerator:
                     continue
 
                 transformed = transform(image)
-                label_str = self.class_string_dict[label]
-                filename = image_path.stem + f"_{label_str}.png"
+                filename = image_path.name  # keep original filename with .jpg extension
                 vutils.save_image(transformed, view_dir / filename)
 
             print(f"[{view.upper()}] Done. Saved to {view_dir}")
@@ -135,24 +134,26 @@ if __name__ == "__main__":
 
     # Read converted data
     dbr = DatabaseReader(
-        database=globals.training_database, class_file_path=globals.class_list)
+        database=globals.training_database,
+        class_file_path=globals.class_list
+    )
     df = dbr.get_dataframe()
 
     subsets = {
-        "caud" : df['View'] == "CAUD",
-        "dors" : df['View'] == "DORS",
-        "fron" : df['View'] == "FRON",
-        "late" : df['View'] == "LATE"
+        "caud": df[df['View'] == "CAUD"],
+        "dors": df[df['View'] == "DORS"],
+        "fron": df[df['View'] == "FRON"],
+        "late": df[df['View'] == "LATE"]
     }
 
     generator = CAMDataGenerator(
         dataframe=df,
-        dataset_dir="/dataset",
+        dataset_dir="dataset",
         image_column="Image",
         class_column="Species",
         class_string_dict=globals.spec_class_dictionary,
         subsets=subsets,
-        output_dir="saved_augmented_images"
+        output_dir="cam_dataset"
     )
 
-generator.save_transformed_images(samples_per_view=100)
+    generator.save_transformed_images(samples_per_view=100)
