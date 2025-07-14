@@ -257,12 +257,15 @@ class CAMGuidedTrainingProgram:
         for img_path in paths:
             base_name = os.path.basename(img_path).replace('.jpg', '.png')
             mask_path = os.path.join(self.mask_dir, base_name)
+            if not os.path.exists(mask_path):
+                masks.append(torch.zeros((1, self.height, self.height)))  # no attention guidance
+                continue
+
             mask_img = Image.open(mask_path).convert("L")  # Load as grayscale
-            mask_tensor = transforms.ToTensor()(mask_img)  # [1, H, W], range [0.0, 1.0]
-            binary_mask = (mask_tensor > 0.5).float()      # Binarize: 1.0 = beetle, 0.0 = background
+            mask_tensor = transforms.ToTensor()(mask_img) # [1, H, W], range [0.0, 1.0]
+            binary_mask = (mask_tensor > 0.5).float() # Binarize: 1.0 = beetle, 0.0 = background
             masks.append(binary_mask)
 
-        # Shape: [B, 1, H, W] → squeeze channel to [B, H, W]
         masks = torch.stack(masks).squeeze(1)
         return masks.to(self.device)
 
@@ -317,12 +320,18 @@ class CAMGuidedTrainingProgram:
 
                 # Generate Grad-CAM heatmaps for the input batch
                 cam = grad_cam.generate_heatmap(inputs)
+
                 # Load corresponding binary attention masks from disk
                 masks = self.load_attention_masks(paths)
-                # Compute attention alignment loss (e.g., KL divergence between CAM and mask)
-                attn_loss = self.cam_loss(cam, masks)
-                # Combine classification loss and attention loss (weighted by lambda_attn)
-                total_loss = pred_loss + self.lambda_attn * attn_loss
+
+                if masks.sum() == 0:
+                    total_loss = pred_loss
+                else:
+                    # Compute attention alignment loss (e.g., KL divergence between CAM and mask)
+                    attn_loss = self.cam_loss(cam, masks)
+                    # Combine classification loss and attention loss (weighted by lambda_attn)
+                    total_loss = pred_loss + self.lambda_attn * attn_loss
+
                 # Backpropagate combined loss
                 total_loss.backward()
                 # Update model parameters
