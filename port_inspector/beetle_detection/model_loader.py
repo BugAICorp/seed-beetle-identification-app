@@ -4,6 +4,9 @@
 import json
 from torchvision import models
 import torch
+import os
+import sys
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../')))
 
 class ModelLoader:
     """
@@ -123,3 +126,41 @@ class ModelLoader:
         model.eval()
 
         return model
+
+def load_genus_specific_model(genus, device):
+    """
+    Load the species classification model associated with the genus input
+    Returns: torch.nn.Module: genus' species classification model
+             dict: idx dictionary of the classifications of species under the genus
+    """
+    #attempt to open the associated dictionary to get number of outputs
+    genus_dict = None
+    try:
+        with open(f"src/genus_models/{genus}_dict.json", 'r', encoding='utf-8') as dict_file:
+            genus_dict = json.load(dict_file)
+
+    except FileNotFoundError:
+        print(f"{genus} model not found")
+        return None, None
+
+    #initialize the model based on number of outputs found
+    num_classes = len(genus_dict)
+    model = models.resnet50()
+    num_features = model.fc.in_features
+    model.fc = torch.nn.Linear(num_features, num_classes)
+    model = model.to(device)
+
+    #load the model's weights from the weight file or inform if they do not exist
+    try:
+        model.load_state_dict(
+            torch.load(os.path.join(os.path.dirname(os.path.abspath(__file__)), f"genus_models/{genus}_species.pth"),
+                    map_location=device, weights_only=True))
+    except FileNotFoundError:
+        print(f"Weights File for {genus} Model Does Not Exist.")
+        return None, None
+
+    #set model to evaluate and return
+    model.eval()
+
+    genus_dict = {int(key): value for key, value in genus_dict.items()}
+    return model, genus_dict
