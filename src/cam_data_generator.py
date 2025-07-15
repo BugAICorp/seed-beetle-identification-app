@@ -1,0 +1,223 @@
+""" cam_data_generator.py """
+
+import os
+import json
+from pathlib import Path
+from PIL import Image
+import dill
+import torch
+import torchvision.utils as vutils
+import pandas as pd
+import globals
+
+from beetle_cropper import BeetleCropper
+from training_data_converter import TrainingDataConverter
+from training_database_reader import DatabaseReader
+
+class UnNormalize:
+    """
+    Reverses the normalization applied to a tensor image.
+
+    This is typically used to undo the ImageNet normalization:
+    mean = [0.485, 0.456, 0.406]
+    std  = [0.229, 0.224, 0.225]
+    """
+
+    def __init__(self, mean, std):
+        """
+        Args:
+            mean (list or tuple of float): Mean values for each channel (R, G, B).
+            std (list or tuple of float): Standard deviation for each channel (R, G, B).
+        """
+        self.mean = torch.tensor(mean).view(3, 1, 1)
+        self.std = torch.tensor(std).view(3, 1, 1)
+
+    def __call__(self, tensor):
+        """
+        Unnormalizes the input tensor.
+
+        Args:
+            tensor (torch.Tensor): Normalized image tensor of shape (3, H, W).
+
+        Returns:
+            torch.Tensor: Unnormalized tensor.
+        """
+        return tensor * self.std + self.mean
+
+class CAMDataGenerator:
+    """
+    Generates and saves transformed images per view using saved transformation files
+    and matches original images by SpecimenID and View.
+    """
+
+    def __init__(self, dataframe, dataset_dir, subsets, output_dir="cam_dataset"):
+        """
+        Args:
+            dataframe (pd.DataFrame): Full dataset with 'SpecimenID' and 'View' columns.
+            dataset_dir (str): Path to the original dataset directory containing .jpg files.
+            subsets (dict): View-specific subsets of the dataframe.
+            output_dir (str): Directory to save transformed images.
+        """
+        self.dataframe = dataframe
+        self.dataset_dir = Path(dataset_dir)
+        self.subsets = subsets
+        self.output_dir = Path(output_dir)
+
+        with open(globals.gen_class_dictionary, "r") as f:
+            self.class_dict = json.load(f)
+
+        self.transformation_paths = {
+            "caud": globals.caud_transformation,
+            "dors": globals.dors_transformation,
+            "fron": globals.fron_transformation,
+            "late": globals.late_transformation
+        }
+
+        self.transformations = self.load_transformations()
+
+    def load_transformations(self):
+        """
+        Load transformation objects from .pth files using dill.
+
+        Returns:
+            dict: Dictionary mapping view name to transformation.
+        """
+        transformations = {}
+        for view, path in self.transformation_paths.items():
+            with open(path, "rb") as f:
+                transformations[view] = dill.load(f)
+        return transformations
+
+    def find_image_path(self, specimen_id, view):
+        """
+        Searches the dataset directory for the exact image file using specimen ID and view.
+
+        Args:
+            specimen_id (str): Specimen ID string (e.g. '3216679').
+            view (str): View string (e.g. 'DORS').
+
+        Returns:
+            Path or None: Path to the matched image file if found.
+        """
+        pattern = f"*{specimen_id}*{view.upper()}.jpg"
+        matches = list(self.dataset_dir.rglob(pattern))
+        return matches[0] if matches else None
+
+    def save_transformed_images(self, samples_per_view=100):
+        """
+        Applies transformations and saves images for each view,
+        ensuring all genera are represented, with proportional remainder distribution.
+
+        Args:
+            samples_per_view (int): Total number of images to save per view.
+        """
+        self.output_dir.mkdir(parents=True, exist_ok=True)
+
+        # Define unnormalizer (ImageNet mean/std)
+        unnormalize = UnNormalize(mean=[0.485, 0.456, 0.406],
+                                std=[0.229, 0.224, 0.225])
+
+        for view, original_df in self.subsets.items():
+            df = original_df.copy()  # safe to modify
+            if df.empty:
+                print(f"Skipping {view.upper()} — no data.")
+                continue
+
+            print(f"[{view.upper()}] Generating {samples_per_view} balanced transformed images...")
+
+            genus_groups = df.groupby("Genus")
+            num_genera = len(genus_groups)
+
+            if num_genera == 0:
+                print(f"No genera found in {view.upper()} view.")
+                continue
+
+            # Count how many samples each genus has
+            genus_sizes = genus_groups.size().to_dict()
+            total_available = sum(genus_sizes.values())
+
+            # Compute fair allocation: ensure every genus gets at least one, then proportional remainder
+            base_allocation = {genus: 1 for genus in genus_sizes}
+            remaining = samples_per_view - num_genera
+
+            if remaining > 0:
+                total_weights = total_available - num_genera
+                # This gives more samples to larger genera, proportionally
+                for genus, size in genus_sizes.items():
+                    weight = size - 1
+                    if weight <= 0:
+                        continue
+                    addl = round((weight / total_weights) * remaining)
+                    base_allocation[genus] += addl
+
+            # Sample from each genus
+            balanced_samples = []
+            for genus, group in genus_groups:
+                n_samples = min(base_allocation[genus], len(group))
+                sampled = group.sample(n=n_samples, random_state=7)
+                balanced_samples.append(sampled)
+
+            balanced_df = pd.concat(balanced_samples).reset_index(drop=True)
+            transform = self.transformations[view]
+            view_dir = self.output_dir / view
+            view_dir.mkdir(parents=True, exist_ok=True)
+
+            for _, row in balanced_df.iterrows():
+                specimen_id = str(row["SpecimenID"])
+                view_str = row["View"]
+
+                image_path = self.find_image_path(specimen_id, view_str)
+                if image_path is None:
+                    print(f"Could not find image for SpecimenID={specimen_id}, View={view_str}")
+                    continue
+
+                try:
+                    image = Image.open(image_path).convert("RGB")
+                except OSError:
+                    print(f"Failed to load image: {image_path}")
+                    continue
+
+                transformed = transform(image)
+                unnormed = unnormalize(transformed).clamp(0, 1)  # Reverse normalization
+
+                filename = image_path.name  # preserve original filename
+                vutils.save_image(unnormed, view_dir / filename)
+
+            print(f"[{view.upper()}] Done. Saved to {view_dir}")
+
+if __name__ == "__main__":
+
+    # Create the beetle cropper object to be used in dataset creation and image cropping
+    beetle_cropper = BeetleCropper()
+    # Crop the images in the original dataset so that the image is only the beetle
+    beetle_cropper.build(image_dir="dataset", output_dir=globals.cropped_dataset)
+
+    # Set up data converter
+    tdc = TrainingDataConverter(globals.cropped_dataset)
+    tdc.conversion(globals.training_database)
+
+    # Read converted data
+    dbr = DatabaseReader(
+        database=globals.training_database,
+        class_file_path=globals.class_list
+    )
+    test_df = dbr.get_dataframe()
+
+    view_subsets = {
+        "caud": test_df[test_df['View'] == "CAUD"],
+        "dors": test_df[test_df['View'] == "DORS"],
+        "fron": test_df[test_df['View'] == "FRON"],
+        "late": test_df[test_df['View'] == "LATE"]
+    }
+
+    generator = CAMDataGenerator( # pylint: disable=possibly-used-before-assignment
+        dataframe=test_df,
+        dataset_dir=globals.cropped_dataset,
+        subsets=view_subsets,
+        output_dir="cam_dataset"
+    )
+
+    generator.save_transformed_images(samples_per_view=200)
+
+    # Final cleanup: remove cropped dataset
+    beetle_cropper.cleanup(globals.cropped_dataset)
