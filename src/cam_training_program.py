@@ -14,6 +14,8 @@ from torch.utils.data import DataLoader, Dataset
 from torchvision import transforms, models
 import dill
 import numpy as np
+import optuna
+from sklearn.model_selection import StratifiedKFold
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import f1_score
 from transformation_classes import HistogramEqualization
@@ -436,6 +438,168 @@ class CAMGuidedTrainingProgram:
                 mask.unsqueeze(1), size=cam_heatmap.shape[-2:], mode='bilinear', align_corners=False).squeeze(1)
         loss = F.kl_div(torch.log(cam_heatmap + 1e-8), mask, reduction='batchmean')
         return loss
+
+    def hyperparameter_training_evaluation(self, num_epochs, train_loader, test_loader, view,
+                                           lr, optimizer_type, lambda_attn=None, target_layer="layer4"):
+        """
+        Trains and evaluates the model for a given view using CAM-guided loss
+        and specified hyperparameters.
+
+        Args:
+            num_epochs (int): Number of training epochs.
+            train_loader (DataLoader): Training data loader.
+            test_loader (DataLoader): Evaluation data loader.
+            view (str): Image view identifier ('caud', 'dors', etc.)
+            lr (float): Learning rate for optimizer.
+            optimizer_type (str): Either 'adam' or 'sgd'.
+            lambda_attn (float, optional): Weight of CAM-guided attention loss. If None, uses self.lambda_attn.
+            target_layer (str): Target layer for Grad-CAM (default: "layer4").
+
+        Returns:
+            float: Macro F1 score on the test set.
+        """
+        model = self.models[view]
+        criterion = torch.nn.CrossEntropyLoss()
+        lambda_attn = self.lambda_attn if lambda_attn is None else lambda_attn
+
+        # Choose optimizer
+        if optimizer_type.lower() == "adam":
+            optimizer = torch.optim.Adam(model.parameters(), lr=lr)
+        elif optimizer_type.lower() == "sgd":
+            optimizer = torch.optim.SGD(model.parameters(), lr=lr, momentum=0.9)
+        else:
+            raise ValueError(f"Unsupported optimizer: {optimizer_type}")
+
+        grad_cam = GradCAM(model, target_layer=target_layer)
+
+        for _ in range(num_epochs):
+            model.train()
+            for inputs, labels, paths in train_loader:
+                inputs, labels = inputs.to(self.device), labels.to(self.device)
+
+                optimizer.zero_grad()
+
+                outputs = model(inputs)
+                pred_loss = criterion(outputs, labels)
+
+                # Grad-CAM heatmaps
+                cam_heatmaps = grad_cam.generate_heatmap(inputs)
+                masks = self.load_attention_masks(paths)
+
+                if masks.sum() == 0:
+                    total_loss = pred_loss
+                else:
+                    attn_loss = self.cam_loss(cam_heatmaps, masks)
+                    total_loss = pred_loss + lambda_attn * attn_loss
+
+                total_loss.backward()
+                optimizer.step()
+
+        # Evaluate at end of training
+        model.eval()
+        predictions, true_labels = [], []
+        with torch.no_grad():
+            for inputs, labels, _ in test_loader:
+                inputs, labels = inputs.to(self.device), labels.to(self.device)
+                outputs = model(inputs)
+                _, preds = torch.max(outputs, 1)
+                predictions.extend(preds.cpu().numpy())
+                true_labels.extend(labels.cpu().numpy())
+
+        macro_f1 = f1_score(true_labels, predictions, average="macro")
+        return macro_f1
+
+        
+    def cam_optuna_objective(self, trial, view, num_epochs=10, n_splits=3):
+        """
+        Optuna objective function for CAM training with k-fold cross-validation.
+
+        Args:
+            trial: Optuna trial object
+            view (str): Image view key ('caud', 'dors', etc.)
+            num_epochs (int): Epochs per fold
+            n_splits (int): Number of Stratified K-fold splits
+
+        Returns:
+            float: Average macro F1 score across folds
+        """
+        # Sample hyperparameters
+        lrate = trial.suggest_loguniform('lrate', 1e-5, 1e-2)
+        batch_size = trial.suggest_categorical('batch_size', [16, 32, 64])
+        optimizer_type = trial.suggest_categorical('optimizer_type', ['adam', 'sgd'])
+        rotation_degree = trial.suggest_int('rotation_degree', 0, 15)
+        brightness = trial.suggest_float('brightness', 0.0, 0.5)
+        erasing_p = trial.suggest_float('erasing_p', 0.0, 0.8)
+        erasing_scale_min = trial.suggest_float('erasing_scale_min', 0.01, 0.1)
+        erasing_scale_max = trial.suggest_float('erasing_scale_max', 0.1, 0.4)
+
+        if erasing_scale_min >= erasing_scale_max:
+            return 0.0  # Invalid trial
+
+        df_subset = self.subsets[view]
+        X = df_subset[self.image_column].values
+        y = [self.class_string_dictionary[label] for label in df_subset[self.class_column].values]
+
+        skf = StratifiedKFold(n_splits=n_splits, shuffle=True, random_state=42)
+        fold_scores = []
+
+        for train_index, val_index in skf.split(X, y):
+            train_x, val_x = X[train_index], X[val_index]
+            train_y = [y[i] for i in train_index]
+            val_y = [y[i] for i in val_index]
+
+            # Update train transformations with sampled params
+            self.train_transformations = self.create_train_transformations(
+                rotation_degree=rotation_degree,
+                brightness=brightness,
+                contrast=0.1,
+                erasing=(erasing_p, (erasing_scale_min, erasing_scale_max))
+            )
+
+            train_dataset = CAMImageDataset(train_x, train_y, train_x, transform=self.train_transformations[view])
+            val_dataset = CAMImageDataset(val_x, val_y, val_x, transform=self.transformations[view])
+
+            train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
+            val_loader = torch.utils.data.DataLoader(val_dataset, batch_size=batch_size, shuffle=False)
+
+            # Reset model weights before training each fold
+            self.models[view] = self.load_model()
+
+            # Train & evaluate using CAM-aware tuning method
+            macro_f1 = self.hyperparameter_training_evaluation(
+                num_epochs=num_epochs,
+                train_loader=train_loader,
+                test_loader=val_loader,
+                view=view,
+                lr=lrate,
+                optimizer_type=optimizer_type
+            )
+            fold_scores.append(macro_f1)
+
+            # Free memory after fold
+            torch.cuda.empty_cache()
+            gc.collect()
+
+        avg_score = sum(fold_scores) / len(fold_scores)
+        return avg_score
+    
+    def run_cam_optuna_study(self, view, num_trials=20, num_epochs=10):
+        """
+        Runs hyperparameter tuning with Optuna for a specific image view.
+
+        Args:
+            view (str): View key ('caud', 'dors', etc.)
+            num_trials (int): Number of trials
+            num_epochs (int): Epochs per fold training
+        """
+        study = optuna.create_study(direction='maximize')
+        objective = lambda trial: self.cam_optuna_objective(trial, view, num_epochs=num_epochs)
+        study.optimize(objective, n_trials=num_trials)
+
+        print(f"Best hyperparameters for {view}: {study.best_params}")
+        print(f"Best average Macro F1 for {view}: {100 * study.best_value:.4f}")
+        print("Best hyperparameters:", study.best_params)
+        return study.best_params
 
     def load_model(self):
         """
