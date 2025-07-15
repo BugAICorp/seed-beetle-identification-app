@@ -179,9 +179,12 @@ if __name__ == "__main__":
 
     generator = CAMDataGenerator( # pylint: disable=possibly-used-before-assignment
         dataframe=test_df,
-        dataset_dir="dataset",
+        dataset_dir=globals.cropped_dataset,
         subsets=view_subsets,
         output_dir="cam_dataset"
     )
 
     generator.save_transformed_images(samples_per_view=200)
+
+    # Final cleanup: remove cropped dataset
+    beetle_cropper.cleanup(globals.cropped_dataset)
