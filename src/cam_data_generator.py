@@ -1,6 +1,7 @@
 """ cam_data_generator.py """
 
 import os
+import json
 from pathlib import Path
 from PIL import Image
 import dill
@@ -31,6 +32,9 @@ class CAMDataGenerator:
         self.dataset_dir = Path(dataset_dir)
         self.subsets = subsets
         self.output_dir = Path(output_dir)
+
+        with open(globals.gen_class_dictionary, "r") as f:
+            self.class_dict = json.load(f)
 
         self.transformation_paths = {
             "caud": globals.caud_transformation,
@@ -87,7 +91,7 @@ class CAMDataGenerator:
             print(f"[{view.upper()}] Generating {samples_per_view} balanced transformed images...")
 
             # Map label index to genus string
-            df["Genus"] = df["Genus"].map(globals.gen_class_dictionary)
+            df["Genus"] = df["Genus"].map(self.class_dict)
             genus_groups = df.groupby("Genus")
             num_genera = len(genus_groups)
 
