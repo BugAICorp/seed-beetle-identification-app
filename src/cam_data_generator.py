@@ -14,6 +14,36 @@ from beetle_cropper import BeetleCropper
 from training_data_converter import TrainingDataConverter
 from training_database_reader import DatabaseReader
 
+class UnNormalize:
+    """
+    Reverses the normalization applied to a tensor image.
+
+    This is typically used to undo the ImageNet normalization:
+    mean = [0.485, 0.456, 0.406]
+    std  = [0.229, 0.224, 0.225]
+    """
+
+    def __init__(self, mean, std):
+        """
+        Args:
+            mean (list or tuple of float): Mean values for each channel (R, G, B).
+            std (list or tuple of float): Standard deviation for each channel (R, G, B).
+        """
+        self.mean = torch.tensor(mean).view(3, 1, 1)
+        self.std = torch.tensor(std).view(3, 1, 1)
+
+    def __call__(self, tensor):
+        """
+        Unnormalizes the input tensor.
+
+        Args:
+            tensor (torch.Tensor): Normalized image tensor of shape (3, H, W).
+
+        Returns:
+            torch.Tensor: Unnormalized tensor.
+        """
+        return tensor * self.std + self.mean
+
 class CAMDataGenerator:
     """
     Generates and saves transformed images per view using saved transformation files
@@ -83,6 +113,10 @@ class CAMDataGenerator:
         """
         self.output_dir.mkdir(parents=True, exist_ok=True)
 
+        # Define unnormalizer (ImageNet mean/std)
+        unnormalize = UnNormalize(mean=[0.485, 0.456, 0.406],
+                                std=[0.229, 0.224, 0.225])
+
         for view, original_df in self.subsets.items():
             df = original_df.copy()  # safe to modify
             if df.empty:
@@ -144,8 +178,10 @@ class CAMDataGenerator:
                     continue
 
                 transformed = transform(image)
+                unnormed = unnormalize(transformed).clamp(0, 1)  # Reverse normalization
+
                 filename = image_path.name  # preserve original filename
-                vutils.save_image(transformed, view_dir / filename)
+                vutils.save_image(unnormed, view_dir / filename)
 
             print(f"[{view.upper()}] Done. Saved to {view_dir}")
 
