@@ -181,4 +181,4 @@ if __name__ == "__main__":
         output_dir="cam_dataset"
     )
 
-    generator.save_transformed_images(samples_per_view=100)
+    generator.save_transformed_images(samples_per_view=200)
