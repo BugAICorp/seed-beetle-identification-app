@@ -160,9 +160,6 @@ if __name__ == "__main__":
     tdc = TrainingDataConverter(globals.cropped_dataset)
     tdc.conversion(globals.training_database)
 
-    # Final cleanup: remove cropped dataset
-    beetle_cropper.cleanup(globals.cropped_dataset)
-
     # Read converted data
     dbr = DatabaseReader(
         database=globals.training_database,
