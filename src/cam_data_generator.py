@@ -83,15 +83,14 @@ class CAMDataGenerator:
         """
         self.output_dir.mkdir(parents=True, exist_ok=True)
 
-        for view, df in self.subsets.items():
+        for view, original_df in self.subsets.items():
+            df = original_df.copy()  # safe to modify
             if df.empty:
                 print(f"Skipping {view.upper()} — no data.")
                 continue
 
             print(f"[{view.upper()}] Generating {samples_per_view} balanced transformed images...")
 
-            # Map label index to genus string
-            df["Genus"] = df["Genus"].map(self.class_dict)
             genus_groups = df.groupby("Genus")
             num_genera = len(genus_groups)
 
