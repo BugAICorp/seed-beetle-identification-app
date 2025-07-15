@@ -1,7 +1,7 @@
 from django.shortcuts import render, redirect
 from django.conf import settings
 from beetle_detection import species_eval
-from port_inspector_app.models import Image, SpecimenUpload, User, KnownSpecies, Genus
+from port_inspector_app.models import Image, SpecimenUpload, User, KnownSpecies, Genus, ValidClasses
 from .forms import UserRegisterForm, SpecimenUploadForm, ConfirmIdForm, ResetPasswordForm, ResetRequestForm
 from django.core import signing
 from django.core.cache import cache
@@ -377,3 +377,8 @@ def check_retrain_status(request):
 
 def home_view(request):
     return render(request, 'index.html')
+
+
+def about_view(request):
+    valid_classes = ValidClasses.objects.all()
+    return render(request, 'about.html', {'valid_classes': valid_classes})

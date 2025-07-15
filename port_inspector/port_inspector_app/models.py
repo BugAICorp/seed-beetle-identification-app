@@ -194,6 +194,7 @@ class ValidClasses(models.Model):
         unique_together = ('genus', 'species')
         verbose_name_plural = "Classes used for training"
         verbose_name = "allowed genus/species"
+        ordering = ['genus', 'species']
 
     def save(self, *args, **kwargs):
         from beetle_detection import species_eval
