@@ -184,9 +184,11 @@ class CAMGuidedTrainingProgram:
         """
         Reads database and pulls subset where View column is equal to parameter, view_type
         
-        Args: view_type (string): View type column value (e.g., 'CAUD', 'DORS', 'FRON', 'LATE')
+        Args:
+            view_type (string): View type column value (e.g., 'CAUD', 'DORS', 'FRON', 'LATE')
        
-        Return: pd.DataFrame: Subset of database if column value valid, otherwise empty dataframe
+        Return: 
+            pd.DataFrame: Subset of database if column value valid, otherwise empty dataframe
         """
         return dataframe[dataframe["View"] == view_type] if not dataframe.empty else pd.DataFrame()
 
@@ -399,7 +401,17 @@ class CAMGuidedTrainingProgram:
         """
         Trains resnet model with subset of specified image views
         and save model to respective save file.
-        Return: None
+
+        Args:
+            num_epochs (int): Number of epochs to train the model.
+            view (str): Image view identifier (e.g., 'caud', 'dors', etc.).
+            batch (int): Batch size for training and evaluation.
+            rotation (int, optional): Maximum degrees of random rotation applied to training images. Default is 5.
+            brightness (float, optional): Brightness jitter range for data augmentation. Default is 0.1.
+            lrate (float, optional): Learning rate for optimizer. Default is 0.001.
+
+        Returns:
+            None
         """
         # Get training and testing data
         train_x, test_x, train_y, test_y = self.get_train_test_split(self.subsets[view])
@@ -438,6 +450,75 @@ class CAMGuidedTrainingProgram:
                 mask.unsqueeze(1), size=cam_heatmap.shape[-2:], mode='bilinear', align_corners=False).squeeze(1)
         loss = F.kl_div(torch.log(cam_heatmap + 1e-8), mask, reduction='batchmean')
         return loss
+    
+    def k_fold_resnet(self, num_epochs, view, k_folds=5, batch=32, rotation=5, brightness=0.1, lrate=0.001, erasing=(0.5, (0.02, 0.15))):
+        """
+        Trains the model, determined by view, using Stratified K-Fold Cross Validation.
+
+        Args:
+            num_epochs (int): Number of epochs to train the model.
+            view (str): Image view identifier (e.g., 'caud', 'dors', etc.).
+            k_folds (int, optional): Number of cross-validation folds. Default is 5.
+            batch (int, optional): Batch size for training and evaluation. Default is 32.
+            rotation (int, optional): Maximum degrees of random rotation applied to training images. Default is 5.
+            brightness (float, optional): Brightness jitter range for data augmentation. Default is 0.1.
+            lrate (float, optional): Learning rate for optimizer. Default is 0.001.
+            erasing (tuple, optional): Tuple (p, scale) for RandomErasing:
+                - p (float): Probability of applying erasing.
+                - scale (tuple): Range of erased area (min %, max % of image area). Default is (0.5, (0.02, 0.15)).
+
+        Returns:
+            None
+        """
+        # Get view dataset(images and labels)
+        view_df = self.subsets[view]
+
+        images = view_df[self.image_column].values
+        classes = view_df[self.class_column].values
+        labels = [self.class_string_dictionary[label] for label in classes]
+
+        # Define transformation for training
+        train_transformations = self.create_train_transformations(
+            rotation_degree=rotation,
+            brightness=brightness,
+            contrast=0.1,
+            erasing=erasing
+        )
+        skf = StratifiedKFold(n_splits=k_folds, shuffle=True)
+
+        all_fold_f1s = []
+
+        for fold, (train_idx, val_idx) in enumerate(skf.split(images, labels)):
+            print(f"\nFold {fold+1}/{k_folds}:")
+
+            train_x = [images[i] for i in train_idx]
+            train_y = [labels[i] for i in train_idx]
+            test_x = [images[i] for i in val_idx]
+            test_y = [labels[i] for i in val_idx]
+
+            # Create DataLoaders
+            train_dataset = CAMImageDataset(train_x, train_y, train_x, transform=train_transformations[view])
+            test_dataset = CAMImageDataset(test_x, test_y, test_x, transform=self.transformations[view])
+            train_loader = DataLoader(train_dataset, batch_size=batch, shuffle=True)
+            test_loader = DataLoader(test_dataset, batch_size=batch, shuffle=False)
+
+            # Reinitialize model before each fold
+            self.model_accuracies[view] = 0.0
+            model = self.load_model()
+            self.models[view] = model
+
+            self.train(num_epochs, train_loader, test_loader, view, lrate=lrate)
+
+            fold_f1 = self.model_accuracies.get(view, 0.0)
+            all_fold_f1s.append(fold_f1)
+            print(f"Fold {fold+1} Macro F1: {100 * fold_f1:.2f}%")
+
+            # garbage collection and CUDA cache clearing
+            torch.cuda.empty_cache()
+            gc.collect()
+
+        average_macro_f1 = 100 * sum(all_fold_f1s)/k_folds
+        print(f"\nAverage Macro F1 over {k_folds} folds: {average_macro_f1:.2f}%")
 
     def hyperparameter_training_evaluation(self, num_epochs, train_loader, test_loader, view,
                                            lr, optimizer_type, lambda_attn=None, target_layer="layer4"):
