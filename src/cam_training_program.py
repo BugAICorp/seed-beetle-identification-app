@@ -592,7 +592,7 @@ class CAMGuidedTrainingProgram:
             num_epochs (int): Epochs per fold training
         """
         study = optuna.create_study(direction="maximize")
-        study.optimize(lambda trial: self.cam_optuna_objective(trial, view), n_trials=num_trials)
+        study.optimize(lambda trial: self.cam_optuna_objective(trial, view, num_epochs=num_epochs), n_trials=num_trials)
 
         print(f"Best hyperparameters for {view}: {study.best_params}")
         print(f"Best average Macro F1 for {view}: {100 * study.best_value:.4f}")
