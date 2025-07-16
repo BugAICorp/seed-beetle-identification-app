@@ -509,7 +509,6 @@ class CAMGuidedTrainingProgram:
         macro_f1 = f1_score(true_labels, predictions, average="macro")
         return macro_f1
 
-        
     def cam_optuna_objective(self, trial, view, num_epochs=10, n_splits=3):
         """
         Optuna objective function for CAM training with k-fold cross-validation.
@@ -582,7 +581,7 @@ class CAMGuidedTrainingProgram:
 
         avg_score = sum(fold_scores) / len(fold_scores)
         return avg_score
-    
+
     def run_cam_optuna_study(self, view, num_trials=20, num_epochs=10):
         """
         Runs hyperparameter tuning with Optuna for a specific image view.
@@ -592,9 +591,8 @@ class CAMGuidedTrainingProgram:
             num_trials (int): Number of trials
             num_epochs (int): Epochs per fold training
         """
-        study = optuna.create_study(direction='maximize')
-        objective = lambda trial: self.cam_optuna_objective(trial, view, num_epochs=num_epochs)
-        study.optimize(objective, n_trials=num_trials)
+        study = optuna.create_study(direction="maximize")
+        study.optimize(lambda trial: self.cam_optuna_objective(trial, view), n_trials=num_trials)
 
         print(f"Best hyperparameters for {view}: {study.best_params}")
         print(f"Best average Macro F1 for {view}: {100 * study.best_value:.4f}")
