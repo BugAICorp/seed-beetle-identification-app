@@ -284,7 +284,7 @@ class TrainingProgram:
 
     def k_fold_resnet(self, num_epochs, view, k_folds=5, batch=32, rotation=5, brightness=0.1, lrate=0.001):
         """
-        Trains the caudal model using Stratified K-Fold Cross Validation.
+        Trains the model(determined by view) using Stratified K-Fold Cross Validation.
         """
         # Get view dataset(images and labels)
         view_df = self.subsets[view]
