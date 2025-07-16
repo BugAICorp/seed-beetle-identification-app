@@ -149,6 +149,33 @@ class TestDatabaseReader(unittest.TestCase):
 
         os.remove("test_classes.txt")
 
+    def test_class_file_create_other(self):
+        """Test that unlisted species are mapped to 'Other' when create_other is True."""
+        # Create a temp file with only SpeciesA
+        with open("test_classes.txt", "w") as f:
+            f.write("GenusA SpeciesA\n")
+
+        reader = DatabaseReader(
+            self.test_db,
+            connection=self.connection,
+            class_file_path="test_classes.txt",
+            create_other=True
+        )
+        df = reader.get_dataframe()
+
+        # Should include all rows (3 total)
+        self.assertEqual(len(df), 3)
+
+        # Check that SpeciesB and SpeciesC are labeled as 'Other'
+        self.assertIn("other", df["Species"].values)
+        self.assertIn("Other", df["Genus"].values)
+
+        # Check that SpeciesA and GenusA remain unchanged
+        row = df[df["Species"] == "SpeciesA"].iloc[0]
+        self.assertEqual(row["Genus"], "GenusA")
+
+        os.remove("test_classes.txt")
+
 
 if __name__ == "__main__":
     unittest.main()

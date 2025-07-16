@@ -72,6 +72,21 @@ if __name__ == '__main__':
                     sys.exit(0)
 
         while True:
+            print("\nWould you like to train with an \"other\" class?")
+            user_input = int(input("Enter 1 for YES, and 2 for NO: "))
+            # if yes, set model paths to the "other" paths
+            if user_input == 1:
+                # set create other flag to true
+                create_other = True
+                break
+            # if no, set model paths to the normal paths
+            if user_input == 2:
+                # set create other flag to false
+                create_other = False
+                break
+            print("Invalid Input. Please enter 1 or 2.")
+
+        while True:
             print("\nWould you like to augment the dataset?")
             user_input = int(input("Enter 1 for YES, and 2 for NO: "))
             if user_input == 1:
@@ -94,7 +109,8 @@ if __name__ == '__main__':
         # Final cleanup: remove cropped dataset
         beetle_cropper.cleanup(globals.cropped_dataset)
         # Read converted data
-        dbr = DatabaseReader(database=globals.training_database, class_file_path=globals.class_list)
+        dbr = DatabaseReader(
+            database=globals.training_database, class_file_path=globals.class_list, create_other=create_other)
         df = dbr.get_dataframe()
 
         # Display how many images we have for each angle

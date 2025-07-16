@@ -41,24 +41,71 @@ def evaluate_images(species_eval,
     return (top_spec, top_gen, genus_confidence)
 
 if __name__ == '__main__':
+    while True:
+        print("\nWould you like to use the models trained with an \"other\" class?")
+        user_input = int(input("Enter 1 for YES, and 2 for NO: "))
+        # if yes, set model paths to the "other" paths
+        if user_input == 1:
+            # set create other flag to true
+            create_other = True
+
+            # Species paths
+            spec_caud_model = globals.spec_caud_model_with_other
+            spec_dors_model = globals.spec_dors_model_with_other
+            spec_fron_model = globals.spec_fron_model_with_other
+            spec_late_model = globals.spec_late_model_with_other
+            spec_class_dictionary = globals.spec_class_dictionary_with_other
+            spec_accuracy_list = globals.spec_accuracy_list_with_other
+
+            # Genus paths
+            gen_caud_model = globals.gen_caud_model_with_other
+            gen_dors_model = globals.gen_dors_model_with_other
+            gen_fron_model = globals.gen_fron_model_with_other
+            gen_late_model = globals.gen_late_model_with_other
+            gen_class_dictionary = globals.gen_class_dictionary_with_other
+            gen_accuracy_list = globals.gen_accuracy_list_with_other
+            break
+        # if no, set model paths to the normal paths
+        if user_input == 2:
+            # set create other flag to false
+            create_other = False
+
+            # Species paths
+            spec_caud_model = globals.spec_caud_model
+            spec_dors_model = globals.spec_dors_model
+            spec_fron_model = globals.spec_fron_model
+            spec_late_model = globals.spec_late_model
+            spec_class_dictionary = globals.spec_class_dictionary
+            spec_accuracy_list = globals.spec_accuracy_list
+
+            # Genus paths
+            gen_caud_model = globals.gen_caud_model
+            gen_dors_model = globals.gen_dors_model
+            gen_fron_model = globals.gen_fron_model
+            gen_late_model = globals.gen_late_model
+            gen_class_dictionary = globals.gen_class_dictionary
+            gen_accuracy_list = globals.gen_accuracy_list
+            break
+        print("Invalid Input. Please enter 1 or 2.")
     # Get Species and Genus Class Number
-    dbr = DatabaseReader(globals.training_database, class_file_path=globals.class_list)
+    dbr = DatabaseReader(
+        globals.training_database, class_file_path=globals.class_list, create_other=create_other)
     SPECIES_OUTPUTS = dbr.get_num_species()
     GENUS_OUTPUTS = dbr.get_num_genus()
 
     # Get Model Files
     species_model_paths = {
-            "caud" : globals.spec_caud_model,
-            "dors" : globals.spec_dors_model,
-            "fron" : globals.spec_fron_model,
-            "late" : globals.spec_late_model
+            "caud" : spec_caud_model,
+            "dors" : spec_dors_model,
+            "fron" : spec_fron_model,
+            "late" : spec_late_model
         }
 
     genus_model_paths = {
-            "caud" : globals.gen_caud_model,
-            "dors" : globals.gen_dors_model,
-            "fron" : globals.gen_fron_model,
-            "late" : globals.gen_late_model
+            "caud" : gen_caud_model,
+            "dors" : gen_dors_model,
+            "fron" : gen_fron_model,
+            "late" : gen_late_model
         }
 
     # Load Genus Evaluator
@@ -66,14 +113,14 @@ if __name__ == '__main__':
     genus_models = genus_ml.get_models()
 
     genus_evaluator = GenusEvaluationMethod(globals.img_height, genus_models, 1,
-                                            globals.gen_class_dictionary, globals.gen_accuracy_list)
+                                            gen_class_dictionary, gen_accuracy_list)
 
     # Load Species Evaluator
     species_ml = ModelLoader(species_model_paths, SPECIES_OUTPUTS)
     species_models = species_ml.get_models()
 
     species_evaluator = EvaluationMethod(globals.img_height, species_models, 1,
-                                         globals.spec_class_dictionary, globals.spec_accuracy_list)
+                                         spec_class_dictionary, spec_accuracy_list)
 
     ###### TO BE CHANGED FOR MULTIPLE TESTS
     #LATE_PATH = "dataset/Callosobruchus chinensis GEM_187686348 5XEXT LATE.jpg"

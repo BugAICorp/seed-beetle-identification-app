@@ -39,6 +39,7 @@
     margin: auto;
     height: auto;
     background-color: whitesmoke;
+    padding-bottom: 10px;
 }
 body {
     font-family: 'Roboto mono', monospace;

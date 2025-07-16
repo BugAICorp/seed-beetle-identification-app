@@ -1,0 +1,125 @@
+footer {
+    margin-top: 20px;
+    font-size: 12px;
+    color: #aaa;
+    margin-bottom: 10px;
+}
+body {
+    font-family: 'Roboto mono', monospace;
+    background-color: whitesmoke;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    min-height: 100vh;
+}
+h1 {
+    font-family: 'Roboto mono', monospace;
+    font-size: 40px;
+    color: black;
+    margin: 4%;
+    align-items: center;
+    text-align: center;
+}
+p {
+    font-family: 'Roboto mono', monospace;
+    font-size: 16px;
+    margin: 5%
+}
+.div-custom {
+    display: flex;
+    flex-wrap: wrap;
+    width: 100%;
+    box-sizing: border-box;
+    height: auto;
+    justify-content: center;
+}
+.div-listing {
+    display: flex;
+    flex-wrap: wrap;
+    width: 50%;
+    box-sizing: border-box;
+    height: auto;
+}
+.div-head-text {
+    display: flex;
+    flex-direction: column;
+    width: 50%;
+    box-sizing: border-box;
+    height: auto;
+    justify-content: center;
+}
+.img-custom {
+    width: 50%;
+    max-width: 100%;
+    box-sizing: border-box;
+    height: auto;
+    object-fit: cover;
+}
+.text-custom {
+    font-size: 1.25rem;
+    font-family: 'Roboto mono', monospace;
+    background-color: whitesmoke;
+    color: black;
+    margin: 0;
+    padding: 0% 5% 2.5% 7.5%;
+    width: 100%;
+    box-sizing: border-box;
+    align-items: center;
+}
+.text-list-classes {
+    display: flex;
+    font-size: 0.95rem;
+    font-family: 'Roboto mono', monospace;
+    background-color: whitesmoke;
+    color: black;
+    margin: 0;
+    padding: 1.5% 2.0% 1% 4.5%;
+    width: 50%;
+    box-sizing: border-box;
+    align-items: center;
+}
+.paragraph-header {
+    font-family: 'Roboto mono', monospace;
+    font-size: 24px;
+    margin: 0 0 2rem 0;
+    text-align: center;
+    padding: 0;
+}
+#genus-list {
+    border: 10px solid black;
+}
+#bottom-text {
+    width: 80% !important;
+    max-width: 80%;
+}
+
+@media (max-width: 600px), (max-height: 500px) {
+    h1 {
+        font-size: 16px;
+    }
+    p {
+        font-size: 12px;
+    }
+    .img-custom {
+        width: 50%;
+    }
+    .text-custom {
+        padding: 1% 2% 1% 4%;
+        font-size: 0.50rem;
+        text-align: center;
+    }
+    .text-list-classes {
+        font-size: 0.50rem;
+        padding: 0.75% 1.0% 0.5% 2.25%;
+    }
+    .paragraph-header {
+        font-size: 14px;
+        padding-top: 1%;
+    }
+    #genus-list {
+        border: 5px solid black;
+    }
+}

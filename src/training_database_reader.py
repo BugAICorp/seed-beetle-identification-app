@@ -11,7 +11,8 @@ class DatabaseReader:
     """
     def __init__(self, database, connection=None,
                  table="TrainingData", query=None,
-                 class_file_path=None, exclude_classes=False):
+                 class_file_path=None, exclude_classes=False,
+                 create_other=False):
         """
         Initialize DatabaseReader and loads data into a Pandas DataFrame. 
         
@@ -22,25 +23,33 @@ class DatabaseReader:
             query (str): SQL query to execute(this is optional).
             class_file_path (str): File path of specified class to be in the models
             exclude_classes (bool): This flag lets you control if the class file is inclusion or exclusion
+            create_other (bool): If True, includes all data but maps unknown species/genus to 'Other'
         """
         self.database = database
         self.connection = connection
         self.table = table
+        self.create_other = create_other
 
         if class_file_path:
             self.allowed_species = self.load_valid_classes(class_file_path)
             placeholders = ','.join(['?'] * len(self.allowed_species))
-            if exclude_classes:
-                self.query = f"""
-                    SELECT Genus, Species, UniqueID, View, SpecimenID, Image
-                    FROM {self.table}
-                    WHERE Species NOT IN ({placeholders})
-                """
+            if not create_other:
+                if exclude_classes:
+                    self.query = f"""
+                        SELECT Genus, Species, UniqueID, View, SpecimenID, Image
+                        FROM {self.table}
+                        WHERE Species NOT IN ({placeholders})
+                    """
+                else:
+                    self.query = f"""
+                        SELECT Genus, Species, UniqueID, View, SpecimenID, Image
+                        FROM {self.table}
+                        WHERE Species IN ({placeholders})
+                    """
             else:
+                # For create_other we fetch all data and later replace non-allowed species/genus
                 self.query = f"""
-                    SELECT Genus, Species, UniqueID, View, SpecimenID, Image
-                    FROM {self.table}
-                    WHERE Species IN ({placeholders})
+                    SELECT Genus, Species, UniqueID, View, SpecimenID, Image FROM {self.table}
                 """
         else:
             self.allowed_species = None
@@ -50,6 +59,9 @@ class DatabaseReader:
             self.query = query or default_query
 
         self.dataframe = self.load_data()
+
+        if self.create_other and self.allowed_species:
+            self.dataframe = self.map_unallowed_to_other(self.dataframe, self.allowed_species)
 
     def load_valid_classes(self, class_file_path):
         """
@@ -75,7 +87,7 @@ class DatabaseReader:
             pd.DataFrame: the queried data from the SQLite database as a Pandas DataFrame.
         """
         try:
-            parameters = list(self.allowed_species) if self.allowed_species else []
+            parameters = list(self.allowed_species) if self.allowed_species and not self.create_other else []
             if self.connection:
                 # use the provided connection
                 return pd.read_sql_query(self.query, self.connection, params=parameters)
@@ -86,6 +98,22 @@ class DatabaseReader:
             # if error is raised, then print error and return empty DataFrame
             print(f"Error reading database: {e}")
             return pd.DataFrame()
+
+    def map_unallowed_to_other(self, df, allowed_species):
+        """
+        Replaces species/genus not in allowed list with 'Other'.
+
+        Args:
+            df (pd.DataFrame): Data loaded from DB
+            allowed_species (Set[str]): Set of species to retain
+
+        Returns:
+            pd.DataFrame: Updated DataFrame with other species/genus mapped to 'Other'
+        """
+        df = df.copy()
+        df.loc[~df['Species'].isin(allowed_species), 'Species'] = 'other'
+        df.loc[~df['Species'].isin(allowed_species), 'Genus'] = 'Other'
+        return df
 
     def get_dataframe(self):
         """

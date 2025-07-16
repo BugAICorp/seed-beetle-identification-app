@@ -71,12 +71,55 @@ if __name__ == '__main__':
         print("Invalid choice. Exiting.")
         sys.exit(1)
 
+    while True:
+        print("\nWould you like to use the models trained with an \"other\" class?")
+        user_input = int(input("Enter 1 for YES, and 2 for NO: "))
+        # if yes, set model paths to the "other" paths
+        if user_input == 1:
+            # set create other flag to true
+            create_other = True
+
+            # Species paths
+            spec_caud_model = globals.spec_caud_model_with_other
+            spec_dors_model = globals.spec_dors_model_with_other
+            spec_fron_model = globals.spec_fron_model_with_other
+            spec_late_model = globals.spec_late_model_with_other
+            spec_class_dictionary = globals.spec_class_dictionary_with_other
+
+            # Genus paths
+            gen_caud_model = globals.gen_caud_model_with_other
+            gen_dors_model = globals.gen_dors_model_with_other
+            gen_fron_model = globals.gen_fron_model_with_other
+            gen_late_model = globals.gen_late_model_with_other
+            gen_class_dictionary = globals.gen_class_dictionary_with_other
+            break
+        # if no, set model paths to the normal paths
+        if user_input == 2:
+            # set create other flag to false
+            create_other = False
+
+            # Species paths
+            spec_caud_model = globals.spec_caud_model
+            spec_dors_model = globals.spec_dors_model
+            spec_fron_model = globals.spec_fron_model
+            spec_late_model = globals.spec_late_model
+            spec_class_dictionary = globals.spec_class_dictionary
+
+            # Genus paths
+            gen_caud_model = globals.gen_caud_model
+            gen_dors_model = globals.gen_dors_model
+            gen_fron_model = globals.gen_fron_model
+            gen_late_model = globals.gen_late_model
+            gen_class_dictionary = globals.gen_class_dictionary
+            break
+        print("Invalid Input. Please enter 1 or 2.")
+
     # Load dictionaries to count output classes
-    with open(globals.spec_class_dictionary, "r") as f:
+    with open(spec_class_dictionary, "r") as f:
         spec_dict = json.load(f)
     SPECIES_OUTPUTS = len(spec_dict)
 
-    with open(globals.gen_class_dictionary, "r") as f:
+    with open(gen_class_dictionary, "r") as f:
         gen_dict = json.load(f)
     GENUS_OUTPUTS = len(gen_dict)
 
@@ -105,10 +148,10 @@ if __name__ == '__main__':
     # Load and run species models
     if run_species:
         species_model_filenames = {
-            "caud": globals.spec_caud_model,
-            "dors": globals.spec_dors_model,
-            "fron": globals.spec_fron_model,
-            "late": globals.spec_late_model
+            "caud": spec_caud_model,
+            "dors": spec_dors_model,
+            "fron": spec_fron_model,
+            "late": spec_late_model
         }
         species_ml = ModelLoader(species_model_filenames, SPECIES_OUTPUTS)
         species_models = species_ml.get_models()
@@ -117,10 +160,10 @@ if __name__ == '__main__':
     # Load and run genus models
     if run_genus:
         genus_model_filenames = {
-            "caud": globals.gen_caud_model,
-            "dors": globals.gen_dors_model,
-            "fron": globals.gen_fron_model,
-            "late": globals.gen_late_model
+            "caud": gen_caud_model,
+            "dors": gen_dors_model,
+            "fron": gen_fron_model,
+            "late": gen_late_model
         }
         genus_ml = ModelLoader(genus_model_filenames, GENUS_OUTPUTS)
         genus_models = genus_ml.get_models()
