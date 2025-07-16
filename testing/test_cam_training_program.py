@@ -105,5 +105,41 @@ class TestCAMGuidedTrainingProgram(unittest.TestCase):
         calls = [call.args[1] for call in mock_save.call_args_list]
         self.assertNotIn("late.pth", calls)
 
+    @patch("cam_training_program.CAMImageDataset")
+    @patch("cam_training_program.StratifiedKFold")
+    @patch.object(CAMGuidedTrainingProgram, "load_model")
+    @patch.object(CAMGuidedTrainingProgram, "create_train_transformations")
+    @patch.object(CAMGuidedTrainingProgram, "cam_loss", return_value=torch.tensor(0.1))
+    def test_cam_optuna_objective_runs(self, mock_cam_loss, mock_create_trans, mock_load_model, mock_skf, mock_dataset):
+        """ Test cam_optuna_objective runs and returns a float score. """
+        df = pd.DataFrame({"Genus": ["GenusA"] * 6, "View": ["CAUD"] * 6, "Image": [f"img_{i}.jpg" for i in range(6)]})
+        self.program.subsets = {"caud": df}
+        self.program.class_string_dictionary = {"GenusA": 0}
+        self.program.image_column = "Image"
+        self.program.transformations = {"caud": lambda x: x}
+        mock_skf.return_value.split.return_value = [(range(3), range(3))]
+        mock_dataset.side_effect = lambda *args, **kwargs: [(torch.rand(3, 3, 64, 64), torch.tensor([0, 0, 0]), ["p1", "p2", "p3"])]
+
+        dummy_model = MagicMock()
+        dummy_model.parameters.return_value = []
+        dummy_model.eval = lambda: None
+        dummy_model.train = lambda: None
+        dummy_model.return_value = torch.randn(3, 1)
+        mock_load_model.return_value = dummy_model
+        self.program.models["caud"] = dummy_model
+
+        self.program.hyperparameter_training_evaluation = lambda *args, **kwargs: 0.88
+
+        class DummyTrial:
+            """ Dummy Trial class for testing. """
+            def suggest_loguniform(self, name, low, high): return 1e-3
+            def suggest_categorical(self, name, choices): return choices[0]
+            def suggest_int(self, name, low, high): return low
+            def suggest_float(self, name, low, high): return low
+
+        score = self.program.cam_optuna_objective(DummyTrial(), view="caud", num_epochs=1, n_splits=2)
+        self.assertIsInstance(score, float)
+        self.assertGreaterEqual(score, 0.0)
+
 if __name__ == "__main__":
     unittest.main()
