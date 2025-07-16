@@ -11,6 +11,7 @@ import pandas as pd
 import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader
+from torchvision import transforms
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../src')))
 from cam_training_program import CAMGuidedTrainingProgram
@@ -104,6 +105,53 @@ class TestCAMGuidedTrainingProgram(unittest.TestCase):
         mock_save.assert_any_call(self.program.models["fron"].state_dict(), "fron.pth")
         calls = [call.args[1] for call in mock_save.call_args_list]
         self.assertNotIn("late.pth", calls)
+
+    @patch("cam_training_program.CAMImageDataset")
+    @patch("cam_training_program.StratifiedKFold")
+    @patch.object(CAMGuidedTrainingProgram, "load_model")
+    @patch.object(CAMGuidedTrainingProgram, "train")
+    def test_k_fold_resnet_runs(self, mock_train, mock_load_model, mock_skf, mock_dataset):
+        """ Test that k_fold_resnet runs end-to-end without error. """
+        df = pd.DataFrame({
+            "Genus": ["GenusA"] * 6,
+            "View": ["CAUD"] * 6,
+            "Image": [f"img_{i}.jpg" for i in range(6)]
+        })
+
+        self.program.subsets["caud"] = df
+        self.program.class_string_dictionary = {"GenusA": 0}
+        self.program.image_column = "Image"
+
+        # Provide a real Compose object with .transforms attribute
+        dummy_transform = transforms.Compose([
+            transforms.Resize((300, 300)),
+            transforms.ToTensor()
+        ])
+        self.program.transformations = {
+            "caud": dummy_transform,
+            "dors": dummy_transform,
+            "fron": dummy_transform,
+            "late": dummy_transform
+        }
+
+        # Return consistent train/test splits
+        mock_skf.return_value.split.return_value = [
+            (range(0, 3), range(3, 6)),
+            (range(3, 6), range(0, 3))
+        ]
+
+        # Return dummy model
+        mock_model = MagicMock()
+        mock_model.parameters.return_value = []
+        mock_load_model.return_value = mock_model
+        self.program.models["caud"] = mock_model
+
+        # Dummy dataset return
+        mock_dataset.side_effect = lambda *args, **kwargs: [(torch.rand(3, 3, 64, 64), torch.tensor([0, 0, 0]), ["p1", "p2", "p3"])]
+
+        # Run
+        self.program.k_fold_resnet(num_epochs=1, view="caud", k_folds=2)
+        self.assertEqual(mock_train.call_count, 2)  # Ensure training ran for each fold
 
     @patch("cam_training_program.CAMImageDataset")
     @patch("cam_training_program.StratifiedKFold")
