@@ -47,6 +47,44 @@ dors_transformation = "src/models/dors_transformation.pth"
 fron_transformation = "src/models/fron_transformation.pth"
 late_transformation = "src/models/late_transformation.pth"
 
+# CAM Species Files
+cam_spec_caud_model = "src/models/cam_spec_caud.pth"
+cam_spec_dors_model = "src/models/cam_spec_dors.pth"
+cam_spec_fron_model = "src/models/cam_spec_fron.pth"
+cam_spec_late_model = "src/models/cam_spec_late.pth"
+cam_spec_class_dictionary = "src/models/cam_spec_dict.json"
+cam_spec_accuracy_list = "src/models/cam_spec_accuracies.json"
+
+# CAM Species Files with Other
+cam_spec_caud_model_with_other = "src/models/cam_spec_caud_other.pth"
+cam_spec_dors_model_with_other = "src/models/cam_spec_dors_other.pth"
+cam_spec_fron_model_with_other = "src/models/cam_spec_fron_other.pth"
+cam_spec_late_model_with_other = "src/models/cam_spec_late_other.pth"
+cam_spec_class_dictionary_with_other = "src/models/cam_spec_dict_other.json"
+cam_spec_accuracy_list_with_other = "src/models/cam_spec_accuracies_other.json"
+
+# CAM Genus Files
+cam_gen_caud_model = "src/models/cam_gen_caud.pth"
+cam_gen_dors_model = "src/models/cam_gen_dors.pth"
+cam_gen_fron_model = "src/models/cam_gen_fron.pth"
+cam_gen_late_model = "src/models/cam_gen_late.pth"
+cam_gen_class_dictionary = "src/models/cam_gen_dict.json"
+cam_gen_accuracy_list = "src/models/cam_gen_accuracies.json"
+
+# CAM Genus Files with Other
+cam_gen_caud_model_with_other = "src/models/cam_gen_caud_other.pth"
+cam_gen_dors_model_with_other = "src/models/cam_gen_dors_other.pth"
+cam_gen_fron_model_with_other = "src/models/cam_gen_fron_other.pth"
+cam_gen_late_model_with_other = "src/models/cam_gen_late_other.pth"
+cam_gen_class_dictionary_with_other = "src/models/cam_gen_dict_other.json"
+cam_gen_accuracy_list_with_other = "src/models/cam_gen_accuracies_other.json"
+
+# CAM Transformation Files
+cam_caud_transformation = "src/models/cam_caud_transformation.pth"
+cam_dors_transformation = "src/models/cam_dors_transformation.pth"
+cam_fron_transformation = "src/models/cam_fron_transformation.pth"
+cam_late_transformation = "src/models/cam_late_transformation.pth"
+
 # Alternate Species Files
 alt_img_height = "src/models/alt_height.txt"
 spec_dors_caud_model = "src/models/alt_spec_dors_caud.pth"
