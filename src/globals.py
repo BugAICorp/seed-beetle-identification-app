@@ -85,6 +85,9 @@ cam_dors_transformation = "src/models/cam_dors_transformation.pth"
 cam_fron_transformation = "src/models/cam_fron_transformation.pth"
 cam_late_transformation = "src/models/cam_late_transformation.pth"
 
+# Mask Directory
+mask_directory = "mask_dataset"
+
 # Alternate Species Files
 alt_img_height = "src/models/alt_height.txt"
 spec_dors_caud_model = "src/models/alt_spec_dors_caud.pth"
