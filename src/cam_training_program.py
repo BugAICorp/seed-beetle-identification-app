@@ -37,6 +37,7 @@ class GradCAM:
                 which Grad-CAM will compute the activations.
         """
         self.model = model
+        self.model.to(next(model.parameters()).device)
         self.target_layer = target_layer
         self.gradients = None
         self.activations = None
@@ -54,7 +55,7 @@ class GradCAM:
         for name, module in self.model.named_modules():
             if name == self.target_layer:
                 self.hook_handles.append(module.register_forward_hook(forward_hook))
-                self.hook_handles.append(module.register_backward_hook(backward_hook))
+                self.hook_handles.append(module.register_full_backward_hook(backward_hook))
 
     def generate_heatmap(self, input_tensor, class_idx=None):
         """
@@ -69,12 +70,20 @@ class GradCAM:
         """
         self.model.zero_grad()
         output = self.model(input_tensor)
+
+        # Ensure gradients can be computed
+        if not output.requires_grad:
+            output.requires_grad_(True)
+
+        # Scalar backward: avoids issues with hooks not firing
         if class_idx is None:
             class_idx = output.argmax(dim=1)
-        one_hot = torch.zeros_like(output)
-        for i, idx in enumerate(class_idx):
-            one_hot[i, idx] = 1
-        output.backward(gradient=one_hot, retain_graph=True)
+
+        target = output[range(output.size(0)), class_idx]
+        target.sum().backward(retain_graph=True)
+
+        if self.gradients is None:
+            raise RuntimeError("Gradients not captured. Check if backward hook is registered and .backward() was called.")
 
         weights = self.gradients.mean(dim=(2, 3), keepdim=True)
         cam = (weights * self.activations).sum(dim=1)
