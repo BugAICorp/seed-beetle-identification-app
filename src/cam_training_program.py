@@ -450,8 +450,9 @@ class CAMGuidedTrainingProgram:
                 mask.unsqueeze(1), size=cam_heatmap.shape[-2:], mode='bilinear', align_corners=False).squeeze(1)
         loss = F.kl_div(torch.log(cam_heatmap + 1e-8), mask, reduction='batchmean')
         return loss
-    
-    def k_fold_resnet(self, num_epochs, view, k_folds=5, batch=32, rotation=5, brightness=0.1, lrate=0.001, erasing=(0.5, (0.02, 0.15))):
+
+    def k_fold_resnet(self, num_epochs, view, k_folds=5, batch=32, rotation=5,
+                      brightness=0.1, lrate=0.001, erasing=(0.5, (0.02, 0.15))):
         """
         Trains the model, determined by view, using Stratified K-Fold Cross Validation.
 
