@@ -773,7 +773,7 @@ class CAMGuidedTrainingProgram:
 
         Returns: None
         """
-        with open(f"src/models/{angle}_transformation.pth", "wb") as f:
+        with open(f"src/models/cam_{angle}_transformation.pth", "wb") as f:
             dill.dump(transformation, f)
 
 class CAMImageDataset(Dataset):
