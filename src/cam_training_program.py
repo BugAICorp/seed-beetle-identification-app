@@ -27,7 +27,7 @@ class GradCAM:
     Implements Grad-CAM for a given model and target layer.
     Used to generate class activation heatmaps for model interpretation.
     """
-    def __init__(self, model, target_layer):
+    def __init__(self, model, target_layer_module):
         """ 
         Initialize Grad-CAM with model and target layer. 
         
@@ -38,7 +38,7 @@ class GradCAM:
         """
         self.model = model
         self.model.to(next(model.parameters()).device)
-        self.target_layer = target_layer
+        self.target_layer = target_layer_module
         self.gradients = None
         self.activations = None
         self.hook_handles = []
@@ -52,10 +52,8 @@ class GradCAM:
         def backward_hook(_module, _grad_in, grad_out):
             self.gradients = grad_out[0].detach()
 
-        for name, module in self.model.named_modules():
-            if name == self.target_layer:
-                self.hook_handles.append(module.register_forward_hook(forward_hook))
-                self.hook_handles.append(module.register_full_backward_hook(backward_hook))
+        self.hook_handles.append(self.target_layer.register_forward_hook(forward_hook))
+        self.hook_handles.append(self.target_layer.register_full_backward_hook(backward_hook))
 
     def generate_heatmap(self, input_tensor, class_idx=None):
         """
@@ -561,7 +559,7 @@ class CAMGuidedTrainingProgram:
         else:
             raise ValueError(f"Unsupported optimizer: {optimizer_type}")
 
-        grad_cam = GradCAM(model, target_layer=target_layer)
+        grad_cam = GradCAM(model, target_layer=getattr(model, target_layer))
 
         for _ in range(num_epochs):
             model.train()
