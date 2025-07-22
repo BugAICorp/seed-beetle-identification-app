@@ -81,7 +81,8 @@ class GradCAM:
         target.sum().backward(retain_graph=True)
 
         if self.gradients is None:
-            raise RuntimeError("Gradients not captured. Check if backward hook is registered and .backward() was called.")
+            raise RuntimeError(
+                "Gradients not captured. Check if backward hook is registered and .backward() was called.")
 
         weights = self.gradients.mean(dim=(2, 3), keepdim=True)
         cam = (weights * self.activations).sum(dim=1)
@@ -634,7 +635,7 @@ class CAMGuidedTrainingProgram:
 
         df_subset = self.subsets[view]
         X = df_subset[self.image_column].values
-        F = df_subset["Filename"].values
+        filenames = df_subset["Filename"].values
         y = [self.class_string_dictionary[label] for label in df_subset[self.class_column].values]
 
         skf = StratifiedKFold(n_splits=n_splits, shuffle=True, random_state=42)
@@ -642,7 +643,7 @@ class CAMGuidedTrainingProgram:
 
         for train_index, val_index in skf.split(X, y):
             train_x, val_x = X[train_index], X[val_index]
-            train_f, val_f = F[train_index], F[val_index]
+            train_f, val_f = filenames[train_index], filenames[val_index]
             train_y = [y[i] for i in train_index]
             val_y = [y[i] for i in val_index]
 
