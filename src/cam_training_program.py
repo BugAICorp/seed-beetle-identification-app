@@ -308,7 +308,7 @@ class CAMGuidedTrainingProgram:
         criterion = torch.nn.CrossEntropyLoss()
         optimizer = torch.optim.Adam(self.models[view].parameters(), lr=lrate)
         model = self.models[view]
-        grad_cam = GradCAM(model, target_layer=model.layer4)
+        grad_cam = GradCAM(model, target_layer_module=model.layer4)
 
         best_epoch = 0
         best_macro_f1 = 0
@@ -559,7 +559,7 @@ class CAMGuidedTrainingProgram:
         else:
             raise ValueError(f"Unsupported optimizer: {optimizer_type}")
 
-        grad_cam = GradCAM(model, target_layer=getattr(model, target_layer))
+        grad_cam = GradCAM(model, target_layer_module=getattr(model, target_layer))
 
         for _ in range(num_epochs):
             model.train()
