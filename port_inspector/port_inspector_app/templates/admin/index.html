@@ -104,6 +104,14 @@
         <button type="submit" class="button">Retrain Models</button>
         <span id="status-label" style="margin-left: 10px">Idle</span><span id="blinkingText"></span>
     </form>
+    <br>
+    <br>
+    <form action="{% url 'mass_upload_images' %}" method="post" enctype="multipart/form-data" style="display: inline;" id="imageUploadForm">
+        {% csrf_token %}
+        <input type="file" name="images" multiple accept="image/*" style="display: none;" id="imageUploadInput">
+        <button type="button" class="button" onclick="document.getElementById('imageUploadInput').click();">Upload Images</button>
+        <input type="submit" style="display: none;" id="submitImages">
+    </form>
 </div>
 <script>
     function checkStatus() {
@@ -127,5 +135,10 @@
 
     setInterval(checkStatus, 3000);  // Poll every 3 seconds
     document.addEventListener("DOMContentLoaded", checkStatus);
+    document.getElementById('imageUploadInput').addEventListener('change', function () {
+        if (this.files.length > 0) {
+            document.getElementById('imageUploadForm').submit();
+        }
+    });
 </script>
 {% endblock %}

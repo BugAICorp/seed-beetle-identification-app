@@ -17,6 +17,7 @@ from django.utils.encoding import force_bytes, force_str
 from django.utils.http import urlsafe_base64_decode, urlsafe_base64_encode
 from django.http import HttpResponse, JsonResponse
 from .tokens import account_activation_token, reset_account_token
+import os
 import threading
 import time
 
@@ -348,6 +349,24 @@ def profile_view(request):
         "usda_user": user.is_usda
     }
     return render(request, 'profile.html', context)
+
+
+@staff_member_required
+def mass_upload_images(request):
+    # Handles uploads of images from admin for the training database
+    if request.method == "POST":
+        images = request.FILES.getlist('images')
+        base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '../../'))
+        upload_dir = os.path.join(base_dir, "dataset")
+
+        for image in images:
+            with open(os.path.join(upload_dir, image.name), 'wb+') as destination:
+                for chunk in image.chunks():
+                    destination.write(chunk)
+
+        species_eval.refresh_database()
+
+        return redirect("/admin/")
 
 
 @staff_member_required

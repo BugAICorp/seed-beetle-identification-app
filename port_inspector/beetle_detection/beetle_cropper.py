@@ -113,7 +113,7 @@ class BeetleCropper:
             PIL.Image or None: Cropped beetle image or None if no box found.
         """
         img_array = np.array(image.convert("RGB"))
-        results = self.yolo_model(img_array, imgsz=512)
+        results = self.yolo_model(img_array, imgsz=512, verbose=False)
         boxes = results[0].boxes
 
         if len(boxes) == 0:
