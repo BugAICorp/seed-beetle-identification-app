@@ -363,6 +363,8 @@ def mass_upload_images(request):
             with open(os.path.join(upload_dir, image.name), 'wb+') as destination:
                 for chunk in image.chunks():
                     destination.write(chunk)
+        
+        species_eval.refresh_database()
 
         return redirect("/admin/")
 
