@@ -39,6 +39,7 @@ class TestCAMGuidedTrainingProgram(unittest.TestCase):
             "View": ["CAUD", "DORS", "FRON", "LATE"] * 2 + ["CAUD", "DORS"],
             "Image": [create_mock_image_blob() for _ in range(10)]
         })
+        self.mock_dataframe['Filename'] = [f"img_{i}.jpg" for i in range(len(self.mock_dataframe))]
 
         self.program = CAMGuidedTrainingProgram(self.mock_dataframe, "Genus", 2, mask_dir="./masks")
 
@@ -51,7 +52,7 @@ class TestCAMGuidedTrainingProgram(unittest.TestCase):
         """ Test get_train_test_split returns correct splits. """
         caud_df = self.program.get_subset("CAUD", self.mock_dataframe)
         split = self.program.get_train_test_split(caud_df)
-        self.assertEqual(len(split), 4)
+        self.assertEqual(len(split), 6)
 
     def test_create_train_transformations(self):
         """ Test creation of training transformations with augmentation. """
@@ -117,6 +118,7 @@ class TestCAMGuidedTrainingProgram(unittest.TestCase):
             "View": ["CAUD"] * 6,
             "Image": [f"img_{i}.jpg" for i in range(6)]
         })
+        df['Filename'] = df['Image']
 
         self.program.subsets["caud"] = df
         self.program.class_string_dictionary = {"GenusA": 0}
@@ -161,6 +163,7 @@ class TestCAMGuidedTrainingProgram(unittest.TestCase):
     def test_cam_optuna_objective_runs(self, mock_cam_loss, mock_create_trans, mock_load_model, mock_skf, mock_dataset):
         """ Test cam_optuna_objective runs and returns a float score. """
         df = pd.DataFrame({"Genus": ["GenusA"] * 6, "View": ["CAUD"] * 6, "Image": [f"img_{i}.jpg" for i in range(6)]})
+        df['Filename'] = df['Image']
         self.program.subsets = {"caud": df}
         self.program.class_string_dictionary = {"GenusA": 0}
         self.program.image_column = "Image"

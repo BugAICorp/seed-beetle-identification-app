@@ -283,16 +283,20 @@ class CAMGuidedTrainingProgram:
     def get_train_test_split(self, df):
         """
         Gets train and test split for given dataframe
-        Returns: List of train and test data
+
+        Returns:
+            list: [train_x, test_x, train_y, test_y, train_paths, test_paths]
         """
         image_binaries = df[self.image_column].values
         classes = df[self.class_column].values
+        filenames = df["Filename"].values
         labels = [self.class_string_dictionary[label] for label in classes]
         # Split subset into training and testing sets
         # x: images, y: species
-        train_x, test_x, train_y, test_y = train_test_split(
-        image_binaries, labels, test_size=0.2, random_state=42)
-        return [train_x, test_x, train_y, test_y]
+        train_x, test_x, train_y, test_y, train_paths, test_paths = train_test_split(
+        image_binaries, labels, filenames, test_size=0.2)
+
+        return [train_x, test_x, train_y, test_y, train_paths, test_paths]
 
 
     def train(self, num_epochs, train_loader, test_loader, view, lrate=0.001):
@@ -421,7 +425,7 @@ class CAMGuidedTrainingProgram:
             None
         """
         # Get training and testing data
-        train_x, test_x, train_y, test_y = self.get_train_test_split(self.subsets[view])
+        train_x, test_x, train_y, test_y, train_paths, test_paths = self.get_train_test_split(self.subsets[view])
         # Define image training transformations, placeholder for preprocessing
         self.train_transformations = self.create_train_transformations(
             rotation_degree=rotation,
@@ -431,8 +435,8 @@ class CAMGuidedTrainingProgram:
         )
 
         # Create DataLoaders
-        train_dataset = CAMImageDataset(train_x, train_y, train_x, transform=self.train_transformations[view])
-        test_dataset = CAMImageDataset(test_x, test_y, test_x, transform=self.transformations[view])
+        train_dataset = CAMImageDataset(train_x, train_y, train_paths, transform=self.train_transformations[view])
+        test_dataset = CAMImageDataset(test_x, test_y, test_paths, transform=self.transformations[view])
 
         training_loader = DataLoader(train_dataset, batch_size=batch, shuffle=True)
         testing_loader = DataLoader(test_dataset, batch_size=batch, shuffle=False)
@@ -483,6 +487,7 @@ class CAMGuidedTrainingProgram:
 
         images = view_df[self.image_column].values
         classes = view_df[self.class_column].values
+        filenames = view_df["Filename"].values
         labels = [self.class_string_dictionary[label] for label in classes]
 
         # Define transformation for training
@@ -501,12 +506,15 @@ class CAMGuidedTrainingProgram:
 
             train_x = [images[i] for i in train_idx]
             train_y = [labels[i] for i in train_idx]
+            train_paths = [filenames[i] for i in train_idx]
+
             test_x = [images[i] for i in val_idx]
             test_y = [labels[i] for i in val_idx]
+            test_paths = [filenames[i] for i in val_idx]
 
             # Create DataLoaders
-            train_dataset = CAMImageDataset(train_x, train_y, train_x, transform=train_transformations[view])
-            test_dataset = CAMImageDataset(test_x, test_y, test_x, transform=self.transformations[view])
+            train_dataset = CAMImageDataset(train_x, train_y, train_paths, transform=train_transformations[view])
+            test_dataset = CAMImageDataset(test_x, test_y, test_paths, transform=self.transformations[view])
             train_loader = DataLoader(train_dataset, batch_size=batch, shuffle=True)
             test_loader = DataLoader(test_dataset, batch_size=batch, shuffle=False)
 
@@ -626,6 +634,7 @@ class CAMGuidedTrainingProgram:
 
         df_subset = self.subsets[view]
         X = df_subset[self.image_column].values
+        F = df_subset["Filename"].values
         y = [self.class_string_dictionary[label] for label in df_subset[self.class_column].values]
 
         skf = StratifiedKFold(n_splits=n_splits, shuffle=True, random_state=42)
@@ -633,6 +642,7 @@ class CAMGuidedTrainingProgram:
 
         for train_index, val_index in skf.split(X, y):
             train_x, val_x = X[train_index], X[val_index]
+            train_f, val_f = F[train_index], F[val_index]
             train_y = [y[i] for i in train_index]
             val_y = [y[i] for i in val_index]
 
@@ -644,8 +654,8 @@ class CAMGuidedTrainingProgram:
                 erasing=(erasing_p, (erasing_scale_min, erasing_scale_max))
             )
 
-            train_dataset = CAMImageDataset(train_x, train_y, train_x, transform=self.train_transformations[view])
-            val_dataset = CAMImageDataset(val_x, val_y, val_x, transform=self.transformations[view])
+            train_dataset = CAMImageDataset(train_x, train_y, train_f, transform=self.train_transformations[view])
+            val_dataset = CAMImageDataset(val_x, val_y, val_f, transform=self.transformations[view])
 
             train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
             val_loader = torch.utils.data.DataLoader(val_dataset, batch_size=batch_size, shuffle=False)
