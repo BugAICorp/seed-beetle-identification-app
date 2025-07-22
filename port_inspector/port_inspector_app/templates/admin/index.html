@@ -104,6 +104,8 @@
         <button type="submit" class="button">Retrain Models</button>
         <span id="status-label" style="margin-left: 10px">Idle</span><span id="blinkingText"></span>
     </form>
+    <br>
+    <br>
     <form action="{% url 'mass_upload_images' %}" method="post" enctype="multipart/form-data" style="display: inline;" id="imageUploadForm">
         {% csrf_token %}
         <input type="file" name="images" multiple accept="image/*" style="display: none;" id="imageUploadInput">
