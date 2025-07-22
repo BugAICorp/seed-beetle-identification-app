@@ -36,25 +36,25 @@ class DatabaseReader:
             if not create_other:
                 if exclude_classes:
                     self.query = f"""
-                        SELECT Genus, Species, UniqueID, View, SpecimenID, Image
+                        SELECT Genus, Species, UniqueID, View, SpecimenID, Image, Filename
                         FROM {self.table}
                         WHERE Species NOT IN ({placeholders})
                     """
                 else:
                     self.query = f"""
-                        SELECT Genus, Species, UniqueID, View, SpecimenID, Image
+                        SELECT Genus, Species, UniqueID, View, SpecimenID, Image, Filename
                         FROM {self.table}
                         WHERE Species IN ({placeholders})
                     """
             else:
                 # For create_other we fetch all data and later replace non-allowed species/genus
                 self.query = f"""
-                    SELECT Genus, Species, UniqueID, View, SpecimenID, Image FROM {self.table}
+                    SELECT Genus, Species, UniqueID, View, SpecimenID, Image, Filename FROM {self.table}
                 """
         else:
             self.allowed_species = None
             default_query = f"""
-                SELECT Genus, Species, UniqueID, View, SpecimenID, Image FROM {self.table}
+                SELECT Genus, Species, UniqueID, View, SpecimenID, Image, Filename FROM {self.table}
             """
             self.query = query or default_query
 
