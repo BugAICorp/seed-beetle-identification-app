@@ -191,10 +191,12 @@ if __name__ == '__main__':
     SPECIES_OUTPUTS = dbr.get_num_species()
     GENUS_OUTPUTS = dbr.get_num_genus()
 
-    if train:
-        # Run training with dataframe
-        species_tp = CAMGuidedTrainingProgram(df, "Species", SPECIES_OUTPUTS, mask_dir=mask_dir)
+    # Setup training classes for species and genus
+    species_tp = CAMGuidedTrainingProgram(df, "Species", SPECIES_OUTPUTS, mask_dir=mask_dir)
 
+    genus_tp = CAMGuidedTrainingProgram(df, "Genus", GENUS_OUTPUTS, mask_dir=mask_dir)
+
+    if train:
         # Training
         if train_caud:
             species_tp.train_model(20, "caud", batch=64, rotation=9, brightness=0.18230462, lrate=0.0003845612)
@@ -219,9 +221,6 @@ if __name__ == '__main__':
             spec_class_dictionary,
             spec_accuracy_list,
             overwrite)
-
-        # Run training with dataframe
-        genus_tp = CAMGuidedTrainingProgram(df, "Genus", GENUS_OUTPUTS, mask_dir=mask_dir)
 
         # Training
         if train_caud:
@@ -315,8 +314,43 @@ if __name__ == '__main__':
         print(f"4. Predicted Species: {top_5_species[3][0]}, Confidence: {top_5_species[3][1]:.2f}\n")
         print(f"5. Predicted Species: {top_5_species[4][0]}, Confidence: {top_5_species[4][1]:.2f}\n")
     elif hyper_tune:
-        # TODO add hyperparameter sim
-        print("DO NOTHING...")
+        # Create dictionary to store best params for species models
+        best_params_species = {}
+
+        # Species hyperparameter tuning
+        if train_caud:
+            best_params_species["caud"] = species_tp.run_cam_optuna_study(view="caud")
+        if train_dors:
+            best_params_species["dors"] = species_tp.run_cam_optuna_study(view="dors")
+        if train_fron:
+            best_params_species["fron"] = species_tp.run_cam_optuna_study(view="fron")
+        if train_late:
+            best_params_species["late"] = species_tp.run_cam_optuna_study(view="late")
+
+        # Create dictionary to store best params for genus models
+        best_params_genus = {}
+
+        # Genus hyperparameter tuning
+        if train_caud:
+            best_params_genus["caud"] = genus_tp.run_cam_optuna_study(view="caud")
+        if train_dors:
+            best_params_genus["dors"] = genus_tp.run_cam_optuna_study(view="dors")
+        if train_fron:
+            best_params_genus["fron"] = genus_tp.run_cam_optuna_study(view="fron")
+        if train_late:
+            best_params_genus["late"] = genus_tp.run_cam_optuna_study(view="late")
+
+        # Print summary at the end
+        print("\nSummary of Best Hyperparameters:\n")
+
+        print("Species Model(s):")
+        for view, params in best_params_species.items():
+            print(f"  {view}: {params}")
+
+        print("\nGenus Model(s):")
+        for view, params in best_params_genus.items():
+            print(f"  {view}: {params}")
+
     else:
         # TODO add k-fold validation sim
         print("DO NOTHING...")
