@@ -15,13 +15,29 @@ import globals
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../')))
 
-# simple simulation of end-to-end functionality of files
+class Tee:
+    """
+    Class to enable stdout to output to both a log file and stdout in terminal
+    """
+    def __init__(self, *streams):
+        """ Stores streams """
+        self.streams = streams
+
+    def write(self, message):
+        """ Write to all output streams """
+        for s in self.streams:
+            s.write(message)
+            s.flush()  # Ensure it gets written immediately
+
+    def flush(self):
+        """ Flush after write to avoid buffering """
+        for s in self.streams:
+            s.flush()
 
 if __name__ == '__main__':
 
     train = False
     hyper_tune = False
-    k_fold = False
     can_continue = False
     while not can_continue:
         print("Normal Train: 1\nHyperparameter Tuning: 2\nK-Fold Validation: 3")
@@ -33,7 +49,6 @@ if __name__ == '__main__':
             hyper_tune = True
             can_continue = True
         elif input == 3:
-            k_fold = True
             can_continue = True
         else:
             print("Invalid Input")
@@ -313,7 +328,8 @@ if __name__ == '__main__':
         print(f"3. Predicted Species: {top_5_species[2][0]}, Confidence: {top_5_species[2][1]:.2f}\n")
         print(f"4. Predicted Species: {top_5_species[3][0]}, Confidence: {top_5_species[3][1]:.2f}\n")
         print(f"5. Predicted Species: {top_5_species[4][0]}, Confidence: {top_5_species[4][1]:.2f}\n")
-    elif hyper_tune:
+
+    elif hyper_tune: # Hyperparameter Tuning
         # Create dictionary to store best params for species models
         best_params_species = {}
 
@@ -351,6 +367,37 @@ if __name__ == '__main__':
         for view, params in best_params_genus.items():
             print(f"  {view}: {params}")
 
-    else:
-        # TODO add k-fold validation sim
-        print("DO NOTHING...")
+    else: # k-fold training
+        log_file = open("cam_stratified_k_fold_output.log", "w")
+        sys.stdout = Tee(sys.__stdout__, log_file)
+        try:
+            # Training
+            if train_caud:
+                species_tp.k_fold_resnet(20, "caud", k_folds=5, batch=16, rotation=16,
+                                        brightness=0.04160844, lrate=0.0002188637)
+            if train_dors:
+                species_tp.k_fold_resnet(20, "dors", k_folds=5, batch=64, rotation=4,
+                                        brightness=0.2320837289, lrate=0.00042698)
+            if train_fron:
+                species_tp.k_fold_resnet(20, "fron", k_folds=5, batch=32, rotation=3,
+                                        brightness=0.124352955, lrate=0.0002323599)
+            if train_late:
+                species_tp.k_fold_resnet(20, "late", k_folds=5, batch=32, rotation=16,
+                                        brightness=0.05717608, lrate=0.00036962807)
+
+            # Training
+            if train_caud:
+                genus_tp.k_fold_resnet(20, "caud", k_folds=5, batch=16, rotation=2,
+                                    brightness=0.121347939, lrate=0.000414240154)
+            if train_dors:
+                genus_tp.k_fold_resnet(20, "dors", k_folds=5, batch=16, rotation=13,
+                                    brightness=0.169855976, lrate=0.000179720464)
+            if train_fron:
+                genus_tp.k_fold_resnet(20, "fron", k_folds=5, batch=16, rotation=6,
+                                    brightness=0.05464547869, lrate=0.0002265474186)
+            if train_late:
+                genus_tp.k_fold_resnet(20, "late", k_folds=5, batch=32, rotation=10,
+                                    brightness=0.29610847517, lrate=0.0001860446889)
+
+        finally:
+            log_file.close()
