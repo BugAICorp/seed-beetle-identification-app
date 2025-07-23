@@ -116,6 +116,8 @@ class CAMGuidedTrainingProgram:
             image_column (str, optional): Column name for image binary data. Defaults to 'Image'.
         """
         self.dataframe = dataframe
+        if "Filename" not in self.dataframe.columns:
+            raise ValueError("Missing 'Filename' column in dataframe — required for mask loading.")
         self.height = 300
         self.num_classes = num_classes
         # Dataframe variables
@@ -454,10 +456,21 @@ class CAMGuidedTrainingProgram:
         Returns:
             torch.Tensor: KL divergence loss.
         """
+        # Normalize CAM to make it a probability distribution
         cam_heatmap = cam_heatmap / (cam_heatmap.sum(dim=[1, 2], keepdim=True) + 1e-8)
+
+        # Resize mask if shape mismatch
         if mask.shape != cam_heatmap.shape:
             mask = F.interpolate(
                 mask.unsqueeze(1), size=cam_heatmap.shape[-2:], mode='bilinear', align_corners=False).squeeze(1)
+            
+        # Normalize the binary mask to make it a distribution
+        mask = mask / (mask.sum(dim=[1, 2], keepdim=True) + 1e-8)
+
+        # Clamp CAM for numerical safety
+        cam_heatmap = torch.clamp(cam_heatmap, min=1e-8)
+
+        # Compute KL divergence
         loss = F.kl_div(torch.log(cam_heatmap + 1e-8), mask, reduction='batchmean')
         return loss
 
