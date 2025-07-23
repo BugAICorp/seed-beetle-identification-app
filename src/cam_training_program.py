@@ -81,7 +81,8 @@ class GradCAM:
         target.sum().backward(retain_graph=True)
 
         if self.gradients is None:
-            raise RuntimeError("Gradients not captured. Check if backward hook is registered and .backward() was called.")
+            raise RuntimeError(
+                "Gradients not captured. Check if backward hook is registered and .backward() was called.")
 
         weights = self.gradients.mean(dim=(2, 3), keepdim=True)
         cam = (weights * self.activations).sum(dim=1)
@@ -115,6 +116,8 @@ class CAMGuidedTrainingProgram:
             image_column (str, optional): Column name for image binary data. Defaults to 'Image'.
         """
         self.dataframe = dataframe
+        if "Filename" not in self.dataframe.columns:
+            raise ValueError("Missing 'Filename' column in dataframe — required for mask loading.")
         self.height = 300
         self.num_classes = num_classes
         # Dataframe variables
@@ -151,12 +154,10 @@ class CAMGuidedTrainingProgram:
         }
 
         classes = dataframe[self.class_column].values
-        class_to_idx = {label: idx for idx, label in enumerate(sorted(set(classes)))}
-        for class_values in classes:
-            if class_to_idx[class_values] not in self.class_set:
-                self.class_index_dictionary[class_to_idx[class_values]] = class_values
-                self.class_string_dictionary[class_values] = class_to_idx[class_values]
-                self.class_set.add(class_to_idx[class_values])
+        unique_classes = sorted(set(classes))
+        self.class_string_dictionary = {cls: idx for idx, cls in enumerate(unique_classes)}
+        self.class_index_dictionary = {idx: cls for cls, idx in self.class_string_dictionary.items()}
+        self.class_set = set(self.class_string_dictionary.values())
 
         # Create transformation method dictionary
         self.transformations = {
@@ -444,23 +445,37 @@ class CAMGuidedTrainingProgram:
         self.train(num_epochs, training_loader, testing_loader, view, lrate=lrate)
 
     def cam_loss(self, cam_heatmap, mask):
-
         """
-        Calculates KL divergence loss between CAM heatmaps and binary attention masks.
+        Calculates attention alignment loss between CAM heatmaps and binary attention masks
+        using a combination of Binary Cross Entropy and Dice Loss.
 
         Args:
-            cam_heatmap (torch.Tensor): Normalized CAM heatmaps of shape [B, H, W].
-            mask (torch.Tensor): Binary attention masks of shape [B, H, W].
+            cam_heatmap (torch.Tensor): Grad-CAM heatmaps of shape [B, H, W], values in [0, 1].
+            mask (torch.Tensor): Binary attention masks of shape [B, H, W], values in {0, 1}.
 
         Returns:
-            torch.Tensor: KL divergence loss.
+            torch.Tensor: Combined BCE + Dice loss.
         """
-        cam_heatmap = cam_heatmap / (cam_heatmap.sum(dim=[1, 2], keepdim=True) + 1e-8)
+        # Resize mask to match CAM shape
         if mask.shape != cam_heatmap.shape:
             mask = F.interpolate(
-                mask.unsqueeze(1), size=cam_heatmap.shape[-2:], mode='bilinear', align_corners=False).squeeze(1)
-        loss = F.kl_div(torch.log(cam_heatmap + 1e-8), mask, reduction='batchmean')
-        return loss
+                mask.unsqueeze(1), size=cam_heatmap.shape[-2:], mode='bilinear', align_corners=False
+            ).squeeze(1)
+
+        # Ensure CAM values are in [0, 1]
+        cam = torch.clamp(cam_heatmap, min=1e-8, max=1.0)
+
+        # Binary Cross Entropy
+        bce = F.binary_cross_entropy(cam, mask)
+
+        # Dice Loss
+        smooth = 1e-6
+        intersection = (cam * mask).sum(dim=(1, 2))
+        dice = 1 - (2. * intersection + smooth) / (cam.sum(dim=(1, 2)) + mask.sum(dim=(1, 2)) + smooth)
+        dice = dice.mean()
+
+        return (bce + dice) / 2
+
 
     def k_fold_resnet(self, num_epochs, view, k_folds=5, batch=32, rotation=5,
                       brightness=0.1, lrate=0.001, erasing=(0.5, (0.02, 0.15))):
@@ -634,7 +649,7 @@ class CAMGuidedTrainingProgram:
 
         df_subset = self.subsets[view]
         X = df_subset[self.image_column].values
-        F = df_subset["Filename"].values
+        filenames = df_subset["Filename"].values
         y = [self.class_string_dictionary[label] for label in df_subset[self.class_column].values]
 
         skf = StratifiedKFold(n_splits=n_splits, shuffle=True, random_state=42)
@@ -642,7 +657,7 @@ class CAMGuidedTrainingProgram:
 
         for train_index, val_index in skf.split(X, y):
             train_x, val_x = X[train_index], X[val_index]
-            train_f, val_f = F[train_index], F[val_index]
+            train_f, val_f = filenames[train_index], filenames[val_index]
             train_y = [y[i] for i in train_index]
             val_y = [y[i] for i in val_index]
 
