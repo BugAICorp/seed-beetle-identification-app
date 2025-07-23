@@ -152,12 +152,10 @@ class CAMGuidedTrainingProgram:
         }
 
         classes = dataframe[self.class_column].values
-        class_to_idx = {label: idx for idx, label in enumerate(sorted(set(classes)))}
-        for class_values in classes:
-            if class_to_idx[class_values] not in self.class_set:
-                self.class_index_dictionary[class_to_idx[class_values]] = class_values
-                self.class_string_dictionary[class_values] = class_to_idx[class_values]
-                self.class_set.add(class_to_idx[class_values])
+        unique_classes = sorted(set(classes))
+        self.class_string_dictionary = {cls: idx for idx, cls in enumerate(unique_classes)}
+        self.class_index_dictionary = {idx: cls for cls, idx in self.class_string_dictionary.items()}
+        self.class_set = set(self.class_string_dictionary.values())
 
         # Create transformation method dictionary
         self.transformations = {
