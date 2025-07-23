@@ -445,34 +445,37 @@ class CAMGuidedTrainingProgram:
         self.train(num_epochs, training_loader, testing_loader, view, lrate=lrate)
 
     def cam_loss(self, cam_heatmap, mask):
-
         """
-        Calculates KL divergence loss between CAM heatmaps and binary attention masks.
+        Calculates attention alignment loss between CAM heatmaps and binary attention masks
+        using a combination of Binary Cross Entropy and Dice Loss.
 
         Args:
-            cam_heatmap (torch.Tensor): Normalized CAM heatmaps of shape [B, H, W].
-            mask (torch.Tensor): Binary attention masks of shape [B, H, W].
+            cam_heatmap (torch.Tensor): Grad-CAM heatmaps of shape [B, H, W], values in [0, 1].
+            mask (torch.Tensor): Binary attention masks of shape [B, H, W], values in {0, 1}.
 
         Returns:
-            torch.Tensor: KL divergence loss.
+            torch.Tensor: Combined BCE + Dice loss.
         """
-        # Normalize CAM to make it a probability distribution
-        cam_heatmap = cam_heatmap / (cam_heatmap.sum(dim=[1, 2], keepdim=True) + 1e-8)
-
-        # Resize mask if shape mismatch
+        # Resize mask to match CAM shape
         if mask.shape != cam_heatmap.shape:
             mask = F.interpolate(
-                mask.unsqueeze(1), size=cam_heatmap.shape[-2:], mode='bilinear', align_corners=False).squeeze(1)
-            
-        # Normalize the binary mask to make it a distribution
-        mask = mask / (mask.sum(dim=[1, 2], keepdim=True) + 1e-8)
+                mask.unsqueeze(1), size=cam_heatmap.shape[-2:], mode='bilinear', align_corners=False
+            ).squeeze(1)
 
-        # Clamp CAM for numerical safety
-        cam_heatmap = torch.clamp(cam_heatmap, min=1e-8)
+        # Ensure CAM values are in [0, 1]
+        cam = torch.clamp(cam_heatmap, min=1e-8, max=1.0)
 
-        # Compute KL divergence
-        loss = F.kl_div(torch.log(cam_heatmap + 1e-8), mask, reduction='batchmean')
-        return loss
+        # Binary Cross Entropy
+        bce = F.binary_cross_entropy(cam, mask)
+
+        # Dice Loss
+        smooth = 1e-6
+        intersection = (cam * mask).sum(dim=(1, 2))
+        dice = 1 - (2. * intersection + smooth) / (cam.sum(dim=(1, 2)) + mask.sum(dim=(1, 2)) + smooth)
+        dice = dice.mean()
+
+        return (bce + dice) / 2
+
 
     def k_fold_resnet(self, num_epochs, view, k_folds=5, batch=32, rotation=5,
                       brightness=0.1, lrate=0.001, erasing=(0.5, (0.02, 0.15))):
