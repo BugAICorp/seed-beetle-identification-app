@@ -122,6 +122,16 @@ if __name__ == '__main__':
             break
         print("Invalid input. Please try again.")
 
+    while True:
+        choice = input("\nWould you like to see per-class F1 score bar plots for the models? (y/n): ").lower()
+        if choice == 'y':
+            show_plots = True
+            break
+        elif choice == 'n':
+            show_plots = False
+            break
+        print("Invalid input. Please try again.")
+
     # Create the beetle cropper object to be used in dataset creation and image cropping
     beetle_cropper = BeetleCropper()
     # Crop the images in the original dataset so that the image is only the beetle
@@ -191,6 +201,15 @@ if __name__ == '__main__':
         spec_accuracy_list,
         overwrite)
 
+    if show_plots:
+        for view in ["caud", "dors", "fron", "late"]:
+            if ((view == "caud" and train_caud) or
+                (view == "dors" and train_dors) or
+                (view == "fron" and train_fron) or
+                (view == "late" and train_late)):
+                print(f"\nSpecies model F1 scores for view '{view}':")
+                species_tp.analyze_f1_scores_single_split(view, plot=True)
+
     # Run training with dataframe
     genus_tp = TrainingProgram(df, "Genus", GENUS_OUTPUTS)
 
@@ -218,6 +237,15 @@ if __name__ == '__main__':
         gen_class_dictionary,
         gen_accuracy_list,
         overwrite)
+
+    if show_plots:
+        for view in ["caud", "dors", "fron", "late"]:
+            if ((view == "caud" and train_caud) or
+                (view == "dors" and train_dors) or
+                (view == "fron" and train_fron) or
+                (view == "late" and train_late)):
+                print(f"\nGenus model F1 scores for view '{view}':")
+                genus_tp.analyze_f1_scores_single_split(view, plot=True)
 
     # Load Genus models
     genus_model_paths = {
