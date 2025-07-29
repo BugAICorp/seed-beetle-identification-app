@@ -36,13 +36,14 @@ class TrainingDataConverter:
                 UniqueID TEXT PRIMARY KEY,
                 View TEXT,
                 SpecimenID TEXT,
-                Image BLOB
+                Image BLOB,
+                Filename TEXT
             )
         ''')
         table.commit()
         table.close()
 
-    def add_img(self, image_data, image_binary):
+    def add_img(self, image_data, image_binary, filename):
         """
         Inserts individual image as record in database.
         Returns: None
@@ -57,12 +58,12 @@ class TrainingDataConverter:
                     )
 
             cursor.execute('''
-            INSERT INTO TrainingData (Genus, Species, UniqueID, View, SpecimenID, Image) 
-            VALUES (?, ?, ?, ?, ?, ?)
-            ''', image_data + (image_binary,))
+            INSERT INTO TrainingData (Genus, Species, UniqueID, View, SpecimenID, Image, Filename) 
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+            ''', image_data + (image_binary, filename))
 
             table.commit()
-            print(f"Inserted Image UniqueID: {image_data[2]}")
+            print(f"Inserted Image UniqueID: {image_data[2]} with Filename: {filename}")
         except sqlite3.IntegrityError:
             pass
         finally:
@@ -109,7 +110,7 @@ class TrainingDataConverter:
                 if name_parts:
                     image_data = name_parts[:5]
                     image_binary = self.img_to_binary(file_path)
-                    self.add_img(image_data, image_binary)
+                    self.add_img(image_data, image_binary, filename)
                 else:
                     print(f"File, {filename}, has invalid naming format.")
 

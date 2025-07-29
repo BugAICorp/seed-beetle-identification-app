@@ -273,11 +273,10 @@ class TrainingProgram:
             contrast=0.1,
             erasing=(0.5, (0.02, 0.15))
         )
-        transformation = self.train_transformations[view]
 
         # Create DataLoaders
-        train_dataset = ImageDataset(train_x, train_y, transform=transformation)
-        test_dataset = ImageDataset(test_x, test_y, transform=transformation)
+        train_dataset = ImageDataset(train_x, train_y, transform=self.train_transformations[view])
+        test_dataset = ImageDataset(test_x, test_y, transform=self.transformations[view])
         training_loader = DataLoader(train_dataset, batch_size=batch, shuffle=True)
         testing_loader = DataLoader(test_dataset, batch_size=batch, shuffle=False)
 
@@ -285,7 +284,7 @@ class TrainingProgram:
 
     def k_fold_resnet(self, num_epochs, view, k_folds=5, batch=32, rotation=5, brightness=0.1, lrate=0.001):
         """
-        Trains the caudal model using Stratified K-Fold Cross Validation.
+        Trains the model(determined by view) using Stratified K-Fold Cross Validation.
         """
         # Get view dataset(images and labels)
         view_df = self.subsets[view]
@@ -301,7 +300,6 @@ class TrainingProgram:
             contrast=0.1,
             erasing=(0.5, (0.02, 0.15))
         )
-        transformation = self.train_transformations[view]
         skf = StratifiedKFold(n_splits=k_folds, shuffle=True)
 
         all_fold_f1s = []
@@ -314,8 +312,8 @@ class TrainingProgram:
             val_x = [images[i] for i in val_idx]
             val_y = [labels[i] for i in val_idx]
 
-            train_dataset = ImageDataset(train_x, train_y, transform=transformation)
-            val_dataset = ImageDataset(val_x, val_y, transform=transformation)
+            train_dataset = ImageDataset(train_x, train_y, transform=self.train_transformations[view])
+            val_dataset = ImageDataset(val_x, val_y, transform=self.transformations[view])
             train_loader = DataLoader(train_dataset, batch_size=batch, shuffle=True)
             val_loader = DataLoader(val_dataset, batch_size=batch, shuffle=False)
 
@@ -423,9 +421,6 @@ class TrainingProgram:
         classes = view_df[self.class_column].values
         labels = [self.class_string_dictionary[label] for label in classes]
 
-        # Define transformation for training
-        transformation = self.train_transformations[view]
-
         skf = StratifiedKFold(n_splits=k_folds, shuffle=True, random_state=21)
 
         all_f1_scores = []
@@ -436,8 +431,8 @@ class TrainingProgram:
             val_x = [images[i] for i in val_idx]
             val_y = [labels[i] for i in val_idx]
 
-            train_dataset = ImageDataset(train_x, train_y, transform=transformation)
-            val_dataset = ImageDataset(val_x, val_y, transform=transformation)
+            train_dataset = ImageDataset(train_x, train_y, transform=self.train_transformations[view])
+            val_dataset = ImageDataset(val_x, val_y, transform=self.transformations[view])
             train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
             val_loader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False)
 

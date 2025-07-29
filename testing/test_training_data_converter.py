@@ -52,15 +52,16 @@ class TestTrainingDataConverter(unittest.TestCase):
         # mock parameters
         data = ('TestGenus', 'TestSpecies', '12345', 'test_view', '123')
         image_binary = b'test_binary_data'
+        filename = 'TestGenus TestSpecies 12345 test_view 123.jpg'
 
-        tdc.add_img(data, image_binary)
+        tdc.add_img(data, image_binary, filename)
 
         # check that img is added to database
         cursor.execute.assert_called_once_with(
             '''
-            INSERT INTO TrainingData (Genus, Species, UniqueID, View, SpecimenID, Image) 
-            VALUES (?, ?, ?, ?, ?, ?)
-            ''', data + (image_binary,)
+            INSERT INTO TrainingData (Genus, Species, UniqueID, View, SpecimenID, Image, Filename) 
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+            ''', data + (image_binary, filename)
         )
 
         # check for committing and closing db
@@ -98,8 +99,8 @@ class TestTrainingDataConverter(unittest.TestCase):
             )
 
         mock_add_img.assert_has_calls([
-            call(('genus', 'species', '123view1', 'view1', '123'), b'binary_data'),
-            call(('genus', 'species', '124view2', 'view2', '124'), b'binary_data')
+            call(('genus', 'species', '123view1', 'view1', '123'), b'binary_data', 'genus species 123 5XEXT view1.png'),
+            call(('genus', 'species', '124view2', 'view2', '124'), b'binary_data', 'genus species 124 5XEXT view2.jpg')
         ])
 
     @patch('os.path.exists')

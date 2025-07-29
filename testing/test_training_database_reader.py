@@ -30,21 +30,25 @@ class TestDatabaseReader(unittest.TestCase):
                 UniqueID TEXT PRIMARY KEY,
                 View TEXT,
                 Image BLOB,
-                SpecimenID
+                SpecimenID TEXT,
+                Filename TEXT
             )
         """)
 
         # insert sample data
         sample_data = [
-            ("GenusA", "SpeciesA", "ID1", "View1", sqlite3.Binary(b'\xff\xd8\xff\xe0...'), "ID4"),
-            ("GenusB", "SpeciesB", "ID2", "View2", sqlite3.Binary(b'\xff\xd8\xff\xe0...'), "ID5"),
-            ("GenusC", "SpeciesC", "ID3", "View3", sqlite3.Binary(b'\xff\xd8\xff\xe0...'), "ID6"),
+            ("GenusA", "SpeciesA", "ID1", "View1", sqlite3.Binary(b'\xff\xd8\xff\xe0...'),
+             "ID4", "GenusA SpeciesA GEM_ID4 5XEXT View1.jpg"),
+            ("GenusB", "SpeciesB", "ID2", "View2", sqlite3.Binary(b'\xff\xd8\xff\xe0...'),
+             "ID5", "GenusB SpeciesB GEM_ID5 5XEXT View2.jpg"),
+            ("GenusC", "SpeciesC", "ID3", "View3", sqlite3.Binary(b'\xff\xd8\xff\xe0...'),
+             "ID6", "GenusC SpeciesC GEM_ID6 5XEXT View3.jpg"),
         ]
         # ensure table is empty before inserting rows
         cursor.execute("DELETE FROM TrainingData")
         cursor.executemany("""
-            INSERT OR IGNORE INTO TrainingData (Genus, Species, UniqueID, View, Image, SpecimenID)
-            VALUES (?, ?, ?, ?, ?, ?)
+            INSERT OR IGNORE INTO TrainingData (Genus, Species, UniqueID, View, Image, SpecimenID, Filename)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
         """, sample_data)
 
         cls.connection.commit()
@@ -67,7 +71,7 @@ class TestDatabaseReader(unittest.TestCase):
 
         # assert the DataFrame contents(number of rows, columns exist, and data is expected)
         self.assertEqual(len(df), 3)
-        self.assertIn("Genus", df.columns)
+        self.assertIn("Filename", df.columns)
         self.assertEqual(df.iloc[0]["Genus"], "GenusA")
 
     def test_custom_query(self):
