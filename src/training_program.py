@@ -488,7 +488,7 @@ class TrainingProgram:
         print("Best hyperparameters:", study.best_params)
         return study.best_params
     
-    def analyze_f1_scores_single_split(self, view, model=None, batch_size=32, save_path=None, plot=True):
+    def analyze_f1_scores_single_split(self, view, model=None, batch_size=32, save_path=None, plot=True, plot_save_path=None):
         """
         Analyzes and optionally visualizes per-class F1 scores using the same test split used during training.
 
@@ -498,6 +498,7 @@ class TrainingProgram:
             batch_size (int): Batch size for evaluation
             save_path (str): Optional path to save F1 scores as a CSV
             plot (bool): Whether to plot a bar chart of F1 scores
+            plot_save_path (str): Optional path to save the plot image (e.g., "f1_scores.png")
 
         Returns:
             pd.DataFrame: Per-class F1 scores in a DataFrame
@@ -550,7 +551,12 @@ class TrainingProgram:
             plt.title(f"Per-Class F1 Scores — {view.upper()} View")
             plt.xlim(0, 1.0)
             plt.tight_layout()
-            plt.show()
+            if plot_save_path:
+                plt.savefig(plot_save_path)
+                print(f"Saved plot for {view} view to {plot_save_path}")
+            else:
+                plt.show()
+            plt.close()
 
         return df
 
