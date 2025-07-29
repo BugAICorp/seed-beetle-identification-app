@@ -105,6 +105,8 @@ class TrainingProgram:
 
         self.train_transformations = self.create_train_transformations(
             rotation_degree=5,brightness=0.1, contrast=0.1, erasing=(0.5, (0.02, 0.15)))
+        
+        self.train_test_indices = {}
 
     def get_subset(self, view_type, dataframe):
         """
@@ -266,6 +268,13 @@ class TrainingProgram:
         """
         # Get training and testing data
         train_x, test_x, train_y, test_y = self.get_train_test_split(self.subsets[view])
+
+        # Store test split for correlation analysis
+        self.train_test_indices[view] = {
+            "test_x": test_x,
+            "test_y": test_y
+        }
+
         # Define image training transformations, placeholder for preprocessing
         self.train_transformations = self.create_train_transformations(
             rotation_degree=rotation,
@@ -478,6 +487,72 @@ class TrainingProgram:
         print(f"F1 Score: {100 * study.best_value:.2f}%")
         print("Best hyperparameters:", study.best_params)
         return study.best_params
+    
+    def analyze_f1_scores_single_split(self, view, model=None, batch_size=32, save_path=None, plot=True):
+        """
+        Analyzes and optionally visualizes per-class F1 scores using the same test split used during training.
+
+        Args:
+            view (str): The view ("caud", "dors", etc.)
+            model (torch.nn.Module, optional): If None, uses self.models[view]
+            batch_size (int): Batch size for evaluation
+            save_path (str): Optional path to save F1 scores as a CSV
+            plot (bool): Whether to plot a bar chart of F1 scores
+
+        Returns:
+            pd.DataFrame: Per-class F1 scores in a DataFrame
+        """
+        import matplotlib.pyplot as plt
+
+        if model is None:
+            model = self.models[view]
+
+        if not hasattr(self, "train_test_indices") or view not in self.train_test_indices:
+            raise ValueError(f"No stored train/test split found for view '{view}'. Make sure to call train_resnet_model() first.")
+
+        test_x = self.train_test_indices[view]["test_x"]
+        test_y = self.train_test_indices[view]["test_y"]
+
+        test_dataset = ImageDataset(test_x, test_y, transform=self.transformations[view])
+        test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False)
+
+        # Evaluate model
+        model.eval()
+        all_preds = []
+        all_true = []
+        with torch.no_grad():
+            for inputs, targets in test_loader:
+                inputs = inputs.to(self.device)
+                targets = targets.to(self.device)
+                outputs = model(inputs)
+                _, preds = torch.max(outputs, 1)
+                all_preds.extend(preds.cpu().numpy())
+                all_true.extend(targets.cpu().numpy())
+
+        # Get per-class F1
+        f1_per_class = f1_score(
+            all_true, all_preds,
+            average=None,
+            labels=list(range(self.num_classes))
+        )
+
+        class_names = [self.class_index_dictionary[i] for i in range(self.num_classes)]
+        df = pd.DataFrame([f1_per_class], columns=class_names)
+
+        if save_path:
+            df.to_csv(save_path, index=False)
+            print(f"Saved per-class F1 scores for {view} to {save_path}")
+
+        if plot:
+            plt.figure(figsize=(10, 6))
+            plt.barh(class_names, f1_per_class, color="skyblue")
+            plt.xlabel("F1 Score")
+            plt.title(f"Per-Class F1 Scores — {view.upper()} View")
+            plt.xlim(0, 1.0)
+            plt.tight_layout()
+            plt.show()
+
+        return df
 
     def load_model(self):
         """
