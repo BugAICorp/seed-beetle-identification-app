@@ -22,12 +22,13 @@ class GenusSpecificModelTrainer:
     Creates a model trained on the species of each genus individually resulting in
     more models, but with less outputs per model
     """
-    def __init__(self, dataframe):
+    def __init__(self, dataframe, image_column='Image'):
         """
         Initialize variables for assisting training
         """
         self.dataframe = dataframe
         self.height = 300
+        self.image_column = image_column
 
         self.model_accuracies = {}
 
@@ -71,7 +72,7 @@ class GenusSpecificModelTrainer:
         Gets train and test split for given dataframe
         Returns: list of train and test data
         """
-        image_binaries = dataframe.iloc[:, -1].values
+        image_binaries = dataframe[self.image_column].values
         classes = dataframe.iloc[:, 1].values
         labels = [class_string_dictionary[label] for label in classes]
         train_x, test_x, train_y, test_y = train_test_split(
