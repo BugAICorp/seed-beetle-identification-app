@@ -8,6 +8,7 @@ from io import BytesIO
 import pandas as pd
 from PIL import Image
 import numpy as np
+import matplotlib.pyplot as plt
 from torch.utils.data import DataLoader, Dataset
 from torchvision import transforms, models
 import torch
@@ -105,7 +106,7 @@ class TrainingProgram:
 
         self.train_transformations = self.create_train_transformations(
             rotation_degree=5,brightness=0.1, contrast=0.1, erasing=(0.5, (0.02, 0.15)))
-        
+
         self.train_test_indices = {}
 
     def get_subset(self, view_type, dataframe):
@@ -487,8 +488,9 @@ class TrainingProgram:
         print(f"F1 Score: {100 * study.best_value:.2f}%")
         print("Best hyperparameters:", study.best_params)
         return study.best_params
-    
-    def analyze_f1_scores_single_split(self, view, model=None, batch_size=32, save_path=None, plot=True, plot_save_path=None):
+
+    def analyze_f1_scores_single_split(
+            self, view, model=None, batch_size=32, save_path=None, plot=True, plot_save_path=None):
         """
         Analyzes and optionally visualizes per-class F1 scores using the same test split used during training.
 
@@ -503,13 +505,13 @@ class TrainingProgram:
         Returns:
             pd.DataFrame: Per-class F1 scores in a DataFrame
         """
-        import matplotlib.pyplot as plt
 
         if model is None:
             model = self.models[view]
 
         if not hasattr(self, "train_test_indices") or view not in self.train_test_indices:
-            raise ValueError(f"No stored train/test split found for view '{view}'. Make sure to call train_resnet_model() first.")
+            raise ValueError(
+                f"No stored train/test split found for view '{view}'. Make sure to call train_resnet_model() first.")
 
         test_x = self.train_test_indices[view]["test_x"]
         test_y = self.train_test_indices[view]["test_y"]
