@@ -596,7 +596,8 @@ class CAMGuidedTrainingProgram:
 
                 # Grad-CAM heatmaps
                 cam = grad_cam.generate_heatmap(inputs)
-                cam_upsampled = F.interpolate(cam.unsqueeze(1), size=(self.height, self.height), mode='bilinear', align_corners=False).squeeze(1)
+                cam_upsampled = F.interpolate(
+                    cam.unsqueeze(1), size=(self.height, self.height), mode='bilinear', align_corners=False).squeeze(1)
 
                 masks = self.load_attention_masks(paths)
 
