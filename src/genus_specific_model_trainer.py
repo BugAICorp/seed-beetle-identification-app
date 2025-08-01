@@ -195,6 +195,8 @@ class GenusSpecificModelTrainer:
             json.dump(class_dict, file, indent=4)
         print(f"Dictionary saved to {genus}_dict.json")
 
+        self.save_transformation()
+
     def update_accuracies(self, genus, accuracy_dict):
         """
         Checks previous saved accuracies and updates and saves an accuracy dictionary
@@ -228,6 +230,10 @@ class GenusSpecificModelTrainer:
         print(f"Accuracy saved to {accuracy_dict}")
 
         return update
+    
+    def save_transformation(self):
+        with open(globals.gs_transformation, "wb") as f:
+            dill.dump(self.transformation, f)
 
 
 # Custom Dataset class for loading images from binary data

@@ -85,6 +85,9 @@ class EvalSpeciesByGenus:
         with open(globals.late_transformation, "rb") as f:
             transformations.append(dill.load(f))
 
+        with open(globals.gs_transformation, "rb") as f:
+            transformations.append(dill.load(f))
+
         return transformations
 
     def get_genus(self, caud=None, dors=None, fron=None, late=None):
@@ -193,7 +196,7 @@ class EvalSpeciesByGenus:
 
         count = 0
         for i in all_inputs:
-            image = self.transform_input(i, self.transformations[input_order[count]]).to(device)
+            image = self.transform_input(i, self.transformations[4]).to(device)
 
             with torch.no_grad():
                 output = self.species_model.to(device)(image)
