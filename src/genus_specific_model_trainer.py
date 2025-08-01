@@ -230,8 +230,9 @@ class GenusSpecificModelTrainer:
         print(f"Accuracy saved to {accuracy_dict}")
 
         return update
-    
+
     def save_transformation(self):
+        """Saves the transformation used for all species models"""
         with open(globals.gs_transformation, "wb") as f:
             dill.dump(self.transformation, f)
 

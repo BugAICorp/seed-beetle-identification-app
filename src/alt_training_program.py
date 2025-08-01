@@ -535,7 +535,7 @@ class AltTrainingProgram:
                 dill.dump(transformation, f)
 
         elif angle == 1:
-            with open(globals.all_transformations, "wb") as f:
+            with open(globals.all_transformation, "wb") as f:
                 dill.dump(transformation, f)
 
         elif angle == 2:
