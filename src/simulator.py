@@ -146,25 +146,13 @@ if __name__ == '__main__':
     print(f"FRON: {(df['View'] == 'FRON').sum()}")
     print(f"LATE: {(df['View'] == 'LATE').sum()}")
 
-    if augment:
-        # Data Augmentation - Add images for rare classes
-        augmenter = DataAugmenter(df, class_column="Species", threshold=100)
-
-        df = augmenter.augment_rare_classes(num_augments_per_image=5)
-
-        # Display how many images we have for each angle after augmenting the data
-        print("\nNumber of Images for Each Angle After Augmentation:")
-        print(f"CAUD: {(df['View'] == 'CAUD').sum()}")
-        print(f"DORS: {(df['View'] == 'DORS').sum()}")
-        print(f"FRON: {(df['View'] == 'FRON').sum()}")
-        print(f"LATE: {(df['View'] == 'LATE').sum()}")
 
     # initialize number of outputs
     SPECIES_OUTPUTS = dbr.get_num_species()
     GENUS_OUTPUTS = dbr.get_num_genus()
 
     # Run training with dataframe
-    species_tp = TrainingProgram(df, "Species", SPECIES_OUTPUTS)
+    species_tp = TrainingProgram(df, "Species", SPECIES_OUTPUTS, augment = augment)
 
     # Training
     if train_caud:
@@ -192,7 +180,7 @@ if __name__ == '__main__':
         overwrite)
 
     # Run training with dataframe
-    genus_tp = TrainingProgram(df, "Genus", GENUS_OUTPUTS)
+    genus_tp = TrainingProgram(df, "Genus", GENUS_OUTPUTS, augment = augment)
 
     # Training
     if train_caud:
