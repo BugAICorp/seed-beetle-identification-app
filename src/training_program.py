@@ -17,6 +17,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.metrics import f1_score
 from sklearn.model_selection import StratifiedKFold
 from transformation_classes import HistogramEqualization
+from data_augmenter import DataAugmenter
 import globals
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../')))
@@ -27,7 +28,7 @@ class TrainingProgram:
     Reads 4 subsets of pandas database from DatabaseReader, and trains and saves 4 models
     according to their respective image angles.
     """
-    def __init__(self, dataframe, class_column, num_classes, image_column='Image'):
+    def __init__(self, dataframe, class_column, num_classes, image_column='Image', augment=False):
         """
         Initialize dataset, image height, and individual model training
         Args:
@@ -35,6 +36,7 @@ class TrainingProgram:
             class_column (str): Column header used to determine class
             num_classes (int): Number of classes/outputs for the models
             image_column (str): Column header used to determine the image column
+            augment (bool): Determines if data is augmented or not
         """
         self.dataframe = dataframe
         self.height = 300
@@ -42,6 +44,7 @@ class TrainingProgram:
         # Dataframe variables
         self.image_column = image_column
         self.class_column = class_column
+        self.augment = augment
         # subsets to save database reading to
         self.subsets = {
             "caud" : self.get_subset("CAUD", self.dataframe),
@@ -182,7 +185,29 @@ class TrainingProgram:
         # Split subset into training and testing sets
         # x: images, y: species
         train_x, test_x, train_y, test_y = train_test_split(
-        image_binaries, labels, test_size=0.2, random_state=42)
+            image_binaries, labels, test_size=0.2, random_state=42)
+
+        if self.augment:
+            # Reconstruct training dataframe to use DataAugmenter
+            train_df = pd.DataFrame({
+                self.image_column: train_x,
+                self.class_column: [self.class_index_dictionary[idx] for idx in train_y],
+                "UniqueID": [f"{i}" for i in range(len(train_x))]
+            })
+
+            # Apply DataAugmenter
+            augmenter = DataAugmenter(
+                dataframe=train_df,
+                class_column="Species",
+                threshold=100
+            )
+            augmented_df = augmenter.augment_rare_classes(num_augments_per_image=5)
+
+            # Re-extract data from augmented dataframe
+            train_x = augmented_df[self.image_column].values
+            train_labels = augmented_df[self.class_column].values
+            train_y = [self.class_string_dictionary[label] for label in train_labels]
+
         return [train_x, test_x, train_y, test_y]
 
     def training_evaluation_resnet(self, num_epochs, train_loader, test_loader, view, lrate=0.001):
