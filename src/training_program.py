@@ -179,34 +179,32 @@ class TrainingProgram:
         Gets train and test split for given dataframe
         Returns: List of train and test data
         """
-        image_binaries = df[self.image_column].values
+        # image_binaries = df[self.image_column].values
         classes = df[self.class_column].values
         labels = [self.class_string_dictionary[label] for label in classes]
-        # Split subset into training and testing sets
-        # x: images, y: species
-        train_x, test_x, train_y, test_y = train_test_split(
-            image_binaries, labels, test_size=0.2, random_state=42)
+        # Split by index for safe DataFrame reconstruction
+        indices = np.arange(len(df))
+        train_idx, test_idx = train_test_split(
+            indices, test_size=0.2, stratify=labels, random_state=42
+        )
+        # Create train/test DataFrames
+        train_df = df.iloc[train_idx].copy()
+        test_df = df.iloc[test_idx].copy()
 
         if self.augment:
-            # Reconstruct training dataframe to use DataAugmenter
-            train_df = pd.DataFrame({
-                self.image_column: train_x,
-                self.class_column: [self.class_index_dictionary[idx] for idx in train_y],
-                "UniqueID": [f"{i}" for i in range(len(train_x))]
-            })
-
-            # Apply DataAugmenter
             augmenter = DataAugmenter(
                 dataframe=train_df,
                 class_column="Species",
                 threshold=100
             )
-            augmented_df = augmenter.augment_rare_classes(num_augments_per_image=5)
+            train_df = augmenter.augment_rare_classes(num_augments_per_image=5)
 
-            # Re-extract data from augmented dataframe
-            train_x = augmented_df[self.image_column].values
-            train_labels = augmented_df[self.class_column].values
-            train_y = [self.class_string_dictionary[label] for label in train_labels]
+        # Extract final train/test values (x: images, y: labels)
+        train_x = train_df[self.image_column].values
+        train_y = [self.class_string_dictionary[label] for label in train_df[self.class_column].values]
+
+        test_x = test_df[self.image_column].values
+        test_y = [self.class_string_dictionary[label] for label in test_df[self.class_column].values]
 
         return [train_x, test_x, train_y, test_y]
 
@@ -337,6 +335,22 @@ class TrainingProgram:
             val_x = [images[i] for i in val_idx]
             val_y = [labels[i] for i in val_idx]
 
+            if self.augment:
+                # Build train dataframe for augmenter
+                train_df = view_df.iloc[train_idx].copy()
+
+                # Use DataAugmenter to augment rare classes
+                augmenter = DataAugmenter(
+                    dataframe=train_df,
+                    class_column="Species",
+                    threshold=100  # or some threshold appropriate for rarity
+                )
+                augmented_df = augmenter.augment_rare_classes(num_augments_per_image=5)
+
+                # Extract augmented train data
+                train_x = augmented_df[self.image_column].values
+                train_y = [self.class_string_dictionary[label] for label in augmented_df[self.class_column].values]
+
             train_dataset = ImageDataset(train_x, train_y, transform=self.train_transformations[view])
             val_dataset = ImageDataset(val_x, val_y, transform=self.transformations[view])
             train_loader = DataLoader(train_dataset, batch_size=batch, shuffle=True)
@@ -460,6 +474,22 @@ class TrainingProgram:
             train_y = [labels[i] for i in train_idx]
             val_x = [images[i] for i in val_idx]
             val_y = [labels[i] for i in val_idx]
+
+            if self.augment:
+                # Build train dataframe for augmenter
+                train_df = view_df.iloc[train_idx].copy()
+
+                # Use DataAugmenter to augment rare classes
+                augmenter = DataAugmenter(
+                    dataframe=train_df,
+                    class_column="Species",
+                    threshold=100  # or some threshold appropriate for rarity
+                )
+                augmented_df = augmenter.augment_rare_classes(num_augments_per_image=5)
+
+                # Extract augmented train data
+                train_x = augmented_df[self.image_column].values
+                train_y = [self.class_string_dictionary[label] for label in augmented_df[self.class_column].values]
 
             train_dataset = ImageDataset(train_x, train_y, transform=self.train_transformations[view])
             val_dataset = ImageDataset(val_x, val_y, transform=self.transformations[view])
