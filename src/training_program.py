@@ -642,16 +642,16 @@ class ImageDataset(Dataset):
     and species label
     Arguments:
         image_binaries (0'b): image file in binary values
-        label (str): species label of image
+        labels (str): species label of image
         transform (transforms.Compose): transform of image to be able 
         to input into model
     """
-    def __init__(self, image_binaries, label, transform=None):
+    def __init__(self, image_binaries, labels, transform=None):
         """
         Initialize values
         """
         self.image_binaries = image_binaries
-        self.label = torch.tensor(label, dtype=torch.long)
+        self.labels = labels
         self.transform = transform
 
     def __len__(self):
@@ -670,4 +670,6 @@ class ImageDataset(Dataset):
         if self.transform:
             image = self.transform(image)
 
-        return image, self.label[idx]
+        label = torch.tensor(self.labels[idx], dtype=torch.long)
+
+        return image, label
