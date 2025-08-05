@@ -15,8 +15,8 @@ import dill
 from sklearn.model_selection import train_test_split
 from sklearn.model_selection import StratifiedKFold
 from sklearn.metrics import f1_score
-from transformation_classes import HistogramEqualization
 import optuna
+from transformation_classes import HistogramEqualization
 import globals
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../')))
@@ -70,7 +70,7 @@ class GenusSpecificModelTrainer:
         model = model.to(self.device)
 
         return model
-    
+
     def create_train_transformations(
             self, rotation_degree=5, brightness=0.1, contrast=0.1, erasing=(0.5, (0.02, 0.15))):
         """
@@ -92,8 +92,8 @@ class GenusSpecificModelTrainer:
         # Variables used for random erasing
         p = erasing[0]
         scale = erasing[1]
-        
-        base_transform = self.transformations.transforms
+
+        base_transform = self.transformation.transforms
 
             # Manually reorder to insert augmentations in the correct locations
         new_transforms = []
