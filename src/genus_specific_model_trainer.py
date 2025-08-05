@@ -326,7 +326,7 @@ class GenusSpecificModelTrainer:
 
         images = genus_df[self.image_column].values
         # TODO: make this beauty work right here
-        classes = genus_df[self.class_column].values
+        classes = genus_df.iloc[:, 1].values
         labels = [self.class_string_dictionary[label] for label in classes]
 
         # Define transformation for training
