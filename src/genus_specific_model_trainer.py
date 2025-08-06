@@ -325,9 +325,19 @@ class GenusSpecificModelTrainer:
         genus_df = self.get_subset(genus, self.dataframe)
 
         images = genus_df[self.image_column].values
-        # TODO: make this beauty work right here
+
+        #Set up index tracking for classifications
+        class_index_dictionary = {}
+        class_string_dictionary = {}
+        class_set = set()
         classes = genus_df.iloc[:, 1].values
-        labels = [self.class_string_dictionary[label] for label in classes]
+        class_to_idx = {label: idx for idx, label in enumerate(sorted(set(classes)))}
+        for class_values in classes:
+            if class_to_idx[class_values] not in class_set:
+                class_index_dictionary[class_to_idx[class_values]] = class_values
+                class_string_dictionary[class_values] = class_to_idx[class_values]
+                class_set.add(class_to_idx[class_values])
+        labels = [class_string_dictionary[label] for label in classes]
 
         # Define transformation for training
         transformation = train_transformation
