@@ -90,7 +90,7 @@ class TestGenusSpecificModelTrainer(unittest.TestCase):
             call(f"src/genus_models/{genus}_dict.json", "w"),
             call(f"src/models/all_transformation.pth", "wb")
         ]
-        mock_open_file.assert_called_with(expected_calls, any_order=True)
+        mock_open_file.assert_has_calls(expected_calls, any_order=True)
 
     @patch("builtins.open", new_callable=mock_open)
     def test_update_accuracies_creates_file_if_missing(self, mock_open_file):
