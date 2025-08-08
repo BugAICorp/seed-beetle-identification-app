@@ -14,6 +14,7 @@ from torchvision import transforms, models
 import torch
 import dill
 import optuna
+from sklearn.metrics import confusion_matrix
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import f1_score
 from sklearn.model_selection import StratifiedKFold
@@ -494,7 +495,7 @@ class TrainingProgram:
         print("Best hyperparameters:", study.best_params)
         return study.best_params
 
-    def analyze_f1_scores_single_split(
+    def create_f1_scores_bar_plot(
             self, view, model=None, batch_size=32, save_path=None, plot=True, plot_save_path=None):
         """
         Analyzes and optionally visualizes per-class F1 scores using the same test split used during training.

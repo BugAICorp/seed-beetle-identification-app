@@ -181,25 +181,25 @@ if __name__ == '__main__':
         species_tp.train_resnet_model(
             20, "caud", batch=64, rotation=9, brightness=0.18230462, lrate=0.0003845612)
         if show_plots:
-            species_tp.analyze_f1_scores_single_split(
+            species_tp.create_f1_scores_bar_plot(
                 "caud", batch_size=32, plot_save_path="species_caud_plot.png", plot=True)
     if train_dors:
         species_tp.train_resnet_model(
             20, "dors", batch=16, rotation=2, brightness=0.2288617393, lrate=0.00017452)
         if show_plots:
-            species_tp.analyze_f1_scores_single_split(
+            species_tp.create_f1_scores_bar_plot(
                 "dors", batch_size=32, plot_save_path="species_dors_plot.png", plot=True)
     if train_fron:
         species_tp.train_resnet_model(
             20, "fron", batch=32, rotation=0, brightness=0.110488612, lrate=0.0002088527)
         if show_plots:
-            species_tp.analyze_f1_scores_single_split(
+            species_tp.create_f1_scores_bar_plot(
                 "fron", batch_size=32, plot_save_path="species_fron_plot.png", plot=True)
     if train_late:
         species_tp.train_resnet_model(
             20, "late", batch=16, rotation=4, brightness=0.17189646, lrate=0.00007408262)
         if show_plots:
-            species_tp.analyze_f1_scores_single_split(
+            species_tp.create_f1_scores_bar_plot(
                 "late", batch_size=32, plot_save_path="species_late_plot.png", plot=True)
 
     # Save models
@@ -225,28 +225,28 @@ if __name__ == '__main__':
         genus_tp.train_resnet_model(
             20, "caud", batch=32, rotation=12, brightness=0.153764767, lrate=0.000197477148)
         if show_plots:
-            genus_tp.analyze_f1_scores_single_split(
+            genus_tp.create_f1_scores_bar_plot(
                 "caud", batch_size=32, plot_save_path="genus_caud_plot.png", plot=True)
 
     if train_dors:
         genus_tp.train_resnet_model(
             20, "dors", batch=16, rotation=8, brightness=0.150820822, lrate=0.000216600199)
         if show_plots:
-            genus_tp.analyze_f1_scores_single_split(
+            genus_tp.create_f1_scores_bar_plot(
                 "dors", batch_size=16, plot_save_path="genus_dors_plot.png", plot=True)
 
     if train_fron:
         genus_tp.train_resnet_model(
             20, "fron", batch=16, rotation=2, brightness=0.20239523572, lrate=0.0001681036183)
         if show_plots:
-            genus_tp.analyze_f1_scores_single_split(
+            genus_tp.create_f1_scores_bar_plot(
                 "fron", batch_size=16, plot_save_path="genus_fron_plot.png", plot=True)
 
     if train_late:
         genus_tp.train_resnet_model(
             20, "late", batch=32, rotation=13, brightness=0.24352227695, lrate=0.0001241454983)
         if show_plots:
-            genus_tp.analyze_f1_scores_single_split(
+            genus_tp.create_f1_scores_bar_plot(
                 "late", batch_size=32, plot_save_path="genus_late_plot.png", plot=True)
 
 
