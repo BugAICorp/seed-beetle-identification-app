@@ -568,6 +568,98 @@ class TrainingProgram:
 
         return df
 
+    def create_confusion_matrix(
+            self, view, model=None, batch_size=32, save_path=None, plot=True, plot_save_path=None, normalize=True):
+        """
+        Generates and optionally visualizes a confusion matrix for a given view using the same test split used during training.
+        This can be used to analyze recall and per-class performance.
+
+        Args:
+            view (str): The view ("caud", "dors", etc.)
+            model (torch.nn.Module, optional): If None, uses self.models[view]
+            batch_size (int): Batch size for evaluation
+            save_path (str): Optional path to save confusion matrix as CSV
+            plot (bool): Whether to plot a heatmap of the confusion matrix
+            plot_save_path (str): Optional path to save the plot image
+            normalize (bool): Whether to normalize rows to show recall values (0-1)
+        Returns:
+            pd.DataFrame: Confusion matrix as a DataFrame
+        """
+
+        if model is None:
+            model = self.models[view]
+
+        if not hasattr(self, "train_test_indices") or view not in self.train_test_indices:
+            raise ValueError(
+                f"No stored train/test split found for view '{view}'. Make sure to call train_resnet_model() first."
+            )
+
+        test_x = self.train_test_indices[view]["test_x"]
+        test_y = self.train_test_indices[view]["test_y"]
+
+        test_dataset = ImageDataset(test_x, test_y, transform=self.transformations[view])
+        test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False)
+
+        # Evaluate model
+        model.eval()
+        all_preds = []
+        all_true = []
+        with torch.no_grad():
+            for inputs, targets in test_loader:
+                inputs = inputs.to(self.device)
+                targets = targets.to(self.device)
+                outputs = model(inputs)
+                _, preds = torch.max(outputs, 1)
+                all_preds.extend(preds.cpu().numpy())
+                all_true.extend(targets.cpu().numpy())
+
+        # Compute confusion matrix
+        cm = confusion_matrix(all_true, all_preds, labels=list(range(self.num_classes)))
+        class_names = [self.class_index_dictionary[i] for i in range(self.num_classes)]
+
+        if normalize:
+            cm = cm.astype('float') / cm.sum(axis=1)[:, np.newaxis]
+            cm = np.nan_to_num(cm)  # Replace NaN for classes with no samples
+
+        # Convert to DataFrame for easier saving/viewing
+        df_cm = pd.DataFrame(cm, index=class_names, columns=class_names)
+
+        if save_path:
+            df_cm.to_csv(save_path)
+            print(f"Saved confusion matrix for {view} to {save_path}")
+
+        # Plot heatmap
+        if plot:
+            plt.figure(figsize=(10, 8))
+            im = plt.imshow(df_cm, interpolation='nearest', cmap=plt.cm.Blues)
+            plt.colorbar(im, fraction=0.046, pad=0.04)
+            plt.xticks(range(len(class_names)), class_names, rotation=90)
+            plt.yticks(range(len(class_names)), class_names)
+            plt.xlabel("Predicted Label")
+            plt.ylabel("Actual Label")
+            title_str = f"Confusion Matrix — {view.upper()} View"
+            if normalize:
+                title_str += " (Recall per class)"
+            plt.title(title_str)
+
+            # Add numbers to each cell
+            thresh = cm.max() / 2.
+            for i in range(cm.shape[0]):
+                for j in range(cm.shape[1]):
+                    plt.text(j, i, f"{cm[i, j]:.2f}" if normalize else f"{int(cm[i, j])}",
+                            ha="center", va="center",
+                            color="white" if cm[i, j] > thresh else "black")
+
+            plt.tight_layout()
+            if plot_save_path:
+                plt.savefig(plot_save_path)
+                print(f"Saved confusion matrix plot for {view} to {plot_save_path}")
+            else:
+                plt.show()
+            plt.close()
+
+        return df_cm
+
     def load_model(self):
         """
         Loads resnet50 model to be trained and saved
