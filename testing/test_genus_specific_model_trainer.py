@@ -88,7 +88,7 @@ class TestGenusSpecificModelTrainer(unittest.TestCase):
         mock_torch_save.assert_called_once()
         expected_calls = [
             call(f"src/genus_models/{genus}_dict.json", "w"),
-            call(f"src/models/all_transformation.pth")
+            call(f"src/models/all_transformation.pth", "wb")
         ]
         mock_open_file.assert_called_with(expected_calls, any_order=True)
 
