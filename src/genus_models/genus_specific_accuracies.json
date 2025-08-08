@@ -1,8 +1,8 @@
 {
     "Acanthoscelides": 0.7798465423465424,
     "Algarobius": 0.9399771341463414,
-    "Bruchidius": 0.9750881525311956,
-    "Bruchus": 0.8110048926958395,
+    "Bruchidius": 0.9857644484624557,
+    "Bruchus": 0.8370808326474085,
     "Callosobruchus": 0.8590921755377392,
     "Caryedon": 1.0,
     "Caryobruchus": 1.0,
@@ -12,5 +12,7 @@
     "Pseudopachymerina": 1.0,
     "Rhipibruchus": 1.0,
     "Specularius": 1.0,
-    "Stator": 0.9805897723030981
+    "Stator": 0.9805897723030981,
+    "Pachymerus": 1.0,
+    "Zabrotes": 1.0
 }

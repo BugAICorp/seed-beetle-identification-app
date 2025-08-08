@@ -413,15 +413,20 @@ class TrainingProgram:
         """
         lr = trial.suggest_float("lr", 1e-5, 1e-2, log=True)
         batch_size = trial.suggest_categorical("batch_size", [16, 32, 64])
-        optimizer_type = trial.suggest_categorical("optimizer_type", ["adam", "sgd"])
         rotation = trial.suggest_int("rotation", 0, 20)
         brightness = trial.suggest_float("brightness", 0.0, 0.3)
+        erasing_p = trial.suggest_float('erasing_p', 0.0, 0.8)
+        erasing_scale_min = trial.suggest_float('erasing_scale_min', 0.01, 0.1)
+        erasing_scale_max = trial.suggest_float('erasing_scale_max', 0.1, 0.4)
+
+        if erasing_scale_min >= erasing_scale_max:
+            return 0.0  # Invalid trial
 
         self.train_transformations = self.create_train_transformations(
             rotation_degree=rotation,
             brightness=brightness,
             contrast=0.1,
-            erasing=(0.5, (0.02, 0.15))
+            erasing=(erasing_p, (erasing_scale_min, erasing_scale_max))
         )
 
         # Get view dataset(images and labels)
@@ -453,7 +458,7 @@ class TrainingProgram:
                 test_loader=val_loader,
                 view=view,
                 lr=lr,
-                optimizer_type=optimizer_type
+                optimizer_type="adam"
             )
             all_f1_scores.append(f1)
             # Clear model and loaders

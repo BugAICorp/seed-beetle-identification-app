@@ -179,8 +179,8 @@ class TestTrainingProgram(unittest.TestCase):
 
         # Setup mock Optuna trial
         trial = MagicMock()
-        trial.suggest_float.side_effect = [0.001, 0.2, 0.1]  # lr, brightness, contrast
-        trial.suggest_categorical.side_effect = [32, "adam"]  # batch_size, optimizer_type
+        trial.suggest_float.side_effect = [0.001, 0.2, 0.1, 0.02, 0.2]  # lr, brightness, contrast, erasing
+        trial.suggest_categorical.side_effect = [32]  # batch_size
         trial.suggest_int.return_value = 15  # rotation
 
         # Set up mock dataset for "caud" with at least 2 samples per class - 2 fold
