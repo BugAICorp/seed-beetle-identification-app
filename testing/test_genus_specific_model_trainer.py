@@ -2,7 +2,7 @@
 import unittest
 import sys
 import os
-from unittest.mock import patch, MagicMock, mock_open
+from unittest.mock import patch, MagicMock, mock_open, call
 import pandas as pd
 import torch
 from PIL import Image
@@ -86,7 +86,11 @@ class TestGenusSpecificModelTrainer(unittest.TestCase):
         genus = "GenusX"
         self.training_program.save_model(dummy_model, genus, class_dict)
         mock_torch_save.assert_called_once()
-        mock_open_file.assert_called_with(f"src/genus_models/{genus}_dict.json", "w")
+        expected_calls = [
+            call(f"src/genus_models/{genus}_dict.json", "w"),
+            call(f"src/models/all_transformation.pth")
+        ]
+        mock_open_file.assert_called_with(expected_calls, any_order=True)
 
     @patch("builtins.open", new_callable=mock_open)
     def test_update_accuracies_creates_file_if_missing(self, mock_open_file):
