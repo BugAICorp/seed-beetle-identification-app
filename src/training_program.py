@@ -571,8 +571,8 @@ class TrainingProgram:
     def create_confusion_matrix(
             self, view, model=None, batch_size=32, save_path=None, plot=True, plot_save_path=None, normalize=True):
         """
-        Generates and optionally visualizes a confusion matrix for a given view using the same test split used during training.
-        This can be used to analyze recall and per-class performance.
+        Generates and optionally visualizes a confusion matrix for a given view using the same test split
+        used during training. This can be used to analyze recall and per-class performance.
 
         Args:
             view (str): The view ("caud", "dors", etc.)
@@ -631,7 +631,7 @@ class TrainingProgram:
         # Plot heatmap
         if plot:
             plt.figure(figsize=(10, 8))
-            im = plt.imshow(df_cm, interpolation='nearest', cmap=plt.cm.Blues)
+            im = plt.imshow(df_cm, interpolation='nearest', cmap='Blues')
             plt.colorbar(im, fraction=0.046, pad=0.04)
             plt.xticks(range(len(class_names)), class_names, rotation=90)
             plt.yticks(range(len(class_names)), class_names)
