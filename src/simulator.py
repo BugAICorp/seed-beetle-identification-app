@@ -123,8 +123,8 @@ if __name__ == '__main__':
         print("Invalid input. Please try again.")
 
     while True:
-        choice = input(
-            "\nWould you like to create a per-class F1 score bar plot and a confusion matrix for the model(s)? (y/n): ").lower()
+        # Ask user if they want to create per-class F1 score bar plot and a confusion matrix
+        choice = input("\nWould you like to create Model performance visualizations? (y/n): ").lower()
         if choice == 'y':
             show_plots = True
             break
