@@ -633,46 +633,47 @@ class TrainingProgram:
 
         # Plot heatmap
         if plot:
-            # Dynamically adjust size for many classes
-            fig_size = max(8, 0.5 * len(class_names))  # 0.5 inch per class, min size = 8
-            plt.figure(figsize=(fig_size, fig_size))
-
-            im = plt.imshow(df_cm, interpolation='nearest', cmap='Blues')
-            plt.colorbar(im, fraction=0.046, pad=0.04)
-
-            # Axis ticks
-            plt.xticks(range(len(class_names)), class_names, rotation=90)
-            plt.yticks(range(len(class_names)), class_names)
-            plt.tick_params(axis='x', which='major', pad=8)
-            plt.tick_params(axis='y', which='major', pad=4)
-
-            plt.xlabel("Predicted Label")
-            plt.ylabel("Actual Label")
-
-            title_str = f"Confusion Matrix — {view.upper()} View"
-            if normalize:
-                title_str += " (Recall per class)"
-            plt.title(title_str)
-
-            # Add numbers to each cell
-            thresh = cm.max() / 2.
-            for i in range(cm.shape[0]):
-                for j in range(cm.shape[1]):
-                    plt.text(j, i, f"{cm[i, j]:.2f}" if normalize else f"{int(cm[i, j])}",
-                            ha="center", va="center",
-                            color="white" if cm[i, j] > thresh else "black")
-
-            plt.tight_layout()
-            plt.subplots_adjust(bottom=0.25, left=0.25)  # More margin for labels
-
-            if plot_save_path:
-                plt.savefig(plot_save_path, bbox_inches="tight")
-                print(f"Saved confusion matrix plot for {view} to {plot_save_path}")
-            else:
-                plt.show()
-            plt.close()
+            self._plot_confusion_matrix(cm, class_names, view, plot_save_path, normalize)
 
         return df_cm
+
+    def _plot_confusion_matrix(self, cm, class_names, view, plot_save_path, normalize):
+        """ Plot and save confusion matrix heatmap. """
+        fig_size = max(8, 0.5 * len(class_names))
+        plt.figure(figsize=(fig_size, fig_size))
+
+        im = plt.imshow(cm, interpolation='nearest', cmap='Blues')
+        plt.colorbar(im, fraction=0.046, pad=0.04)
+        plt.xticks(range(len(class_names)), class_names, rotation=90)
+        plt.yticks(range(len(class_names)), class_names)
+        plt.tick_params(axis='x', which='major', pad=8)
+        plt.tick_params(axis='y', which='major', pad=4)
+
+        plt.xlabel("Predicted Label")
+        plt.ylabel("Actual Label")
+
+        title_str = f"Confusion Matrix — {view.upper()} View"
+        if normalize:
+            title_str += " (Recall per class)"
+        plt.title(title_str)
+
+        # Add numbers to each cell
+        thresh = cm.max() / 2.
+        for i in range(cm.shape[0]):
+            for j in range(cm.shape[1]):
+                value = f"{cm[i, j]:.2f}" if normalize else f"{int(cm[i, j])}"
+                plt.text(j, i, value, ha="center", va="center",
+                        color="white" if cm[i, j] > thresh else "black")
+
+        plt.tight_layout()
+        plt.subplots_adjust(bottom=0.25, left=0.25)
+
+        if plot_save_path:
+            plt.savefig(plot_save_path, bbox_inches="tight")
+            print(f"Saved confusion matrix plot for {view} to {plot_save_path}")
+        else:
+            plt.show()
+        plt.close()
 
     def load_model(self):
         """
