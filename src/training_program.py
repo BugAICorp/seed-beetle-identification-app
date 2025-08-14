@@ -633,13 +633,22 @@ class TrainingProgram:
 
         # Plot heatmap
         if plot:
-            plt.figure(figsize=(10, 8))
+            # Dynamically adjust size for many classes
+            fig_size = max(8, 0.5 * len(class_names))  # 0.5 inch per class, min size = 8
+            plt.figure(figsize=(fig_size, fig_size))
+
             im = plt.imshow(df_cm, interpolation='nearest', cmap='Blues')
             plt.colorbar(im, fraction=0.046, pad=0.04)
+
+            # Axis ticks
             plt.xticks(range(len(class_names)), class_names, rotation=90)
             plt.yticks(range(len(class_names)), class_names)
+            plt.tick_params(axis='x', which='major', pad=8)
+            plt.tick_params(axis='y', which='major', pad=4)
+
             plt.xlabel("Predicted Label")
             plt.ylabel("Actual Label")
+
             title_str = f"Confusion Matrix — {view.upper()} View"
             if normalize:
                 title_str += " (Recall per class)"
@@ -654,8 +663,10 @@ class TrainingProgram:
                             color="white" if cm[i, j] > thresh else "black")
 
             plt.tight_layout()
+            plt.subplots_adjust(bottom=0.25, left=0.25)  # More margin for labels
+
             if plot_save_path:
-                plt.savefig(plot_save_path)
+                plt.savefig(plot_save_path, bbox_inches="tight")
                 print(f"Saved confusion matrix plot for {view} to {plot_save_path}")
             else:
                 plt.show()
