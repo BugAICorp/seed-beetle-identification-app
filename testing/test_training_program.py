@@ -11,7 +11,7 @@ import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../src')))
-from training_program import TrainingProgram
+from training_program import TrainingProgram, ImageDataset
 
 class DummyModel(nn.Module):
     """
@@ -64,7 +64,14 @@ class TestTrainingProgram(unittest.TestCase):
 
     def test_get_train_test_split(self):
         """Test get_train_test_split returns correctly split data"""
-        df = self.mock_dataframe[self.mock_dataframe["View"] == "CAUD"]
+
+        df = pd.DataFrame({
+            "Species": ["SpeciesA", "SpeciesA", "SpeciesA", "SpeciesB", "SpeciesB", "SpeciesB"],
+            "Image": ["img1.jpg", "img2.jpg", "img3.jpg", "img4.jpg", "img5.jpg", "img6.jpg"],
+            "View": ["CAUD"] * 6
+        })
+        self.training_program.class_column = "Species"
+        self.training_program.class_string_dictionary = {"SpeciesA": 0, "SpeciesB": 1}
 
         result = self.training_program.get_train_test_split(df)
         train_x, test_x, train_y, test_y = result
@@ -74,6 +81,10 @@ class TestTrainingProgram(unittest.TestCase):
         self.assertIsInstance(test_x, object)
         self.assertIsInstance(train_y, object)
         self.assertIsInstance(test_y, object)
+
+        # Validate stratified split shape
+        self.assertEqual(len(train_x) + len(test_x), 6)
+        self.assertEqual(len(train_y) + len(test_y), 6)
 
     @patch('training_program.DataLoader')
     def test_training_evaluation_resnet(self, mock_loader):
@@ -271,6 +282,23 @@ class TestTrainingProgram(unittest.TestCase):
             ((unittest.mock.ANY, "fron.pth"),),
         ]
         mock_torch_save.assert_has_calls(expected_calls, any_order=True)
+    
+    def test_image_dataset_behavior(self):
+        """Test ImageDataset returns individual image and label correctly."""
+
+        img = Image.new("RGB", (64, 64), color=(123, 234, 132))
+        with BytesIO() as buffer:
+            img.save(buffer, format="PNG")
+            img_data = buffer.getvalue()
+
+        labels = [0, 1]
+        images = [img_data, img_data]
+
+        dataset = ImageDataset(images, labels)
+        image, label = dataset[0]
+
+        self.assertIsInstance(image, Image.Image)  # or Tensor after transform
+        self.assertEqual(label.item(), 0)
 
 if __name__ == "__main__":
     unittest.main()

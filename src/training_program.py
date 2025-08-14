@@ -17,6 +17,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.metrics import f1_score
 from sklearn.model_selection import StratifiedKFold
 from transformation_classes import HistogramEqualization
+from data_augmenter import DataAugmenter
 import globals
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../')))
@@ -27,7 +28,7 @@ class TrainingProgram:
     Reads 4 subsets of pandas database from DatabaseReader, and trains and saves 4 models
     according to their respective image angles.
     """
-    def __init__(self, dataframe, class_column, num_classes, image_column='Image'):
+    def __init__(self, dataframe, class_column, num_classes, image_column='Image', augment=False):
         """
         Initialize dataset, image height, and individual model training
         Args:
@@ -35,6 +36,7 @@ class TrainingProgram:
             class_column (str): Column header used to determine class
             num_classes (int): Number of classes/outputs for the models
             image_column (str): Column header used to determine the image column
+            augment (bool): Determines if data is augmented or not
         """
         self.dataframe = dataframe
         self.height = 300
@@ -42,6 +44,7 @@ class TrainingProgram:
         # Dataframe variables
         self.image_column = image_column
         self.class_column = class_column
+        self.augment = augment
         # subsets to save database reading to
         self.subsets = {
             "caud" : self.get_subset("CAUD", self.dataframe),
@@ -176,13 +179,33 @@ class TrainingProgram:
         Gets train and test split for given dataframe
         Returns: List of train and test data
         """
-        image_binaries = df[self.image_column].values
+        # image_binaries = df[self.image_column].values
         classes = df[self.class_column].values
         labels = [self.class_string_dictionary[label] for label in classes]
-        # Split subset into training and testing sets
-        # x: images, y: species
-        train_x, test_x, train_y, test_y = train_test_split(
-        image_binaries, labels, test_size=0.2, random_state=42)
+        # Split by index for safe DataFrame reconstruction
+        indices = np.arange(len(df))
+        train_idx, test_idx = train_test_split(
+            indices, test_size=0.2, stratify=labels, random_state=42
+        )
+        # Create train/test DataFrames
+        train_df = df.iloc[train_idx].copy()
+        test_df = df.iloc[test_idx].copy()
+
+        if self.augment:
+            augmenter = DataAugmenter(
+                dataframe=train_df,
+                class_column="Species",
+                threshold=100
+            )
+            train_df = augmenter.augment_rare_classes(num_augments_per_image=5)
+
+        # Extract final train/test values (x: images, y: labels)
+        train_x = train_df[self.image_column].values
+        train_y = [self.class_string_dictionary[label] for label in train_df[self.class_column].values]
+
+        test_x = test_df[self.image_column].values
+        test_y = [self.class_string_dictionary[label] for label in test_df[self.class_column].values]
+
         return [train_x, test_x, train_y, test_y]
 
     def training_evaluation_resnet(self, num_epochs, train_loader, test_loader, view, lrate=0.001):
@@ -312,6 +335,22 @@ class TrainingProgram:
             val_x = [images[i] for i in val_idx]
             val_y = [labels[i] for i in val_idx]
 
+            if self.augment:
+                # Build train dataframe for augmenter
+                train_df = view_df.iloc[train_idx].copy()
+
+                # Use DataAugmenter to augment rare classes
+                augmenter = DataAugmenter(
+                    dataframe=train_df,
+                    class_column="Species",
+                    threshold=100  # or some threshold appropriate for rarity
+                )
+                augmented_df = augmenter.augment_rare_classes(num_augments_per_image=5)
+
+                # Extract augmented train data
+                train_x = augmented_df[self.image_column].values
+                train_y = [self.class_string_dictionary[label] for label in augmented_df[self.class_column].values]
+
             train_dataset = ImageDataset(train_x, train_y, transform=self.train_transformations[view])
             val_dataset = ImageDataset(val_x, val_y, transform=self.transformations[view])
             train_loader = DataLoader(train_dataset, batch_size=batch, shuffle=True)
@@ -435,6 +474,22 @@ class TrainingProgram:
             train_y = [labels[i] for i in train_idx]
             val_x = [images[i] for i in val_idx]
             val_y = [labels[i] for i in val_idx]
+
+            if self.augment:
+                # Build train dataframe for augmenter
+                train_df = view_df.iloc[train_idx].copy()
+
+                # Use DataAugmenter to augment rare classes
+                augmenter = DataAugmenter(
+                    dataframe=train_df,
+                    class_column="Species",
+                    threshold=100  # or some threshold appropriate for rarity
+                )
+                augmented_df = augmenter.augment_rare_classes(num_augments_per_image=5)
+
+                # Extract augmented train data
+                train_x = augmented_df[self.image_column].values
+                train_y = [self.class_string_dictionary[label] for label in augmented_df[self.class_column].values]
 
             train_dataset = ImageDataset(train_x, train_y, transform=self.train_transformations[view])
             val_dataset = ImageDataset(val_x, val_y, transform=self.transformations[view])
@@ -587,16 +642,16 @@ class ImageDataset(Dataset):
     and species label
     Arguments:
         image_binaries (0'b): image file in binary values
-        label (str): species label of image
+        labels (str): species label of image
         transform (transforms.Compose): transform of image to be able 
         to input into model
     """
-    def __init__(self, image_binaries, label, transform=None):
+    def __init__(self, image_binaries, labels, transform=None):
         """
         Initialize values
         """
         self.image_binaries = image_binaries
-        self.label = torch.tensor(label, dtype=torch.long)
+        self.labels = labels
         self.transform = transform
 
     def __len__(self):
@@ -615,4 +670,6 @@ class ImageDataset(Dataset):
         if self.transform:
             image = self.transform(image)
 
-        return image, self.label[idx]
+        label = torch.tensor(self.labels[idx], dtype=torch.long)
+
+        return image, label

@@ -6,7 +6,6 @@ from beetle_cropper import BeetleCropper
 from training_data_converter import TrainingDataConverter
 from training_database_reader import DatabaseReader
 from training_program import TrainingProgram
-from data_augmenter import DataAugmenter
 import globals
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../')))
@@ -97,25 +96,12 @@ if __name__ == '__main__':
     print(f"FRON: {(df['View'] == 'FRON').sum()}")
     print(f"LATE: {(df['View'] == 'LATE').sum()}")
 
-    if augment:
-        # Data Augmentation - Add images for rare classes
-        augmenter = DataAugmenter(df, class_column="Species", threshold=100)
-
-        df = augmenter.augment_rare_classes(num_augments_per_image=5)
-
-        # Display how many images we have for each angle after augmenting the data
-        print("\nNumber of Images for Each Angle After Augmentation:")
-        print(f"CAUD: {(df['View'] == 'CAUD').sum()}")
-        print(f"DORS: {(df['View'] == 'DORS').sum()}")
-        print(f"FRON: {(df['View'] == 'FRON').sum()}")
-        print(f"LATE: {(df['View'] == 'LATE').sum()}")
-
     # initialize number of outputs
     SPECIES_OUTPUTS = dbr.get_num_species()
     GENUS_OUTPUTS = dbr.get_num_genus()
 
     # Run training with dataframe
-    species_tp = TrainingProgram(df, "Species", SPECIES_OUTPUTS)
+    species_tp = TrainingProgram(df, "Species", SPECIES_OUTPUTS, augment=augment)
 
     # Create dictionary to store best params for species models
     best_params_species = {}
@@ -131,7 +117,7 @@ if __name__ == '__main__':
         best_params_species["late"] = species_tp.run_optuna_study(view="late")
 
     # Run training with dataframe
-    genus_tp = TrainingProgram(df, "Genus", GENUS_OUTPUTS)
+    genus_tp = TrainingProgram(df, "Genus", GENUS_OUTPUTS, augment=augment)
 
     # Create dictionary to store best params for genus models
     best_params_genus = {}

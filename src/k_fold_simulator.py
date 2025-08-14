@@ -4,7 +4,6 @@ import os
 from training_data_converter import TrainingDataConverter
 from training_database_reader import DatabaseReader
 from training_program import TrainingProgram
-from data_augmenter import DataAugmenter
 from beetle_cropper import BeetleCropper
 import globals
 
@@ -29,7 +28,7 @@ class Tee:
         for s in self.streams:
             s.flush()
 
-# simple simulation of stratified k-fold validation for model testing
+# Simple simulation of stratified k-fold validation for model testing
 if __name__ == '__main__':
     log_file = open("stratified_k_fold_output.log", "w")
     sys.stdout = Tee(sys.__stdout__, log_file)
@@ -74,12 +73,12 @@ if __name__ == '__main__':
         while True:
             print("\nWould you like to train with an \"other\" class?")
             user_input = int(input("Enter 1 for YES, and 2 for NO: "))
-            # if yes, set model paths to the "other" paths
+            # If yes, set model paths to the "other" paths
             if user_input == 1:
                 # set create other flag to true
                 create_other = True
                 break
-            # if no, set model paths to the normal paths
+            # If no, set model paths to the normal paths
             if user_input == 2:
                 # set create other flag to false
                 create_other = False
@@ -120,25 +119,12 @@ if __name__ == '__main__':
         print(f"FRON: {(df['View'] == 'FRON').sum()}")
         print(f"LATE: {(df['View'] == 'LATE').sum()}")
 
-        if augment:
-            # Data Augmentation - Add images for rare classes
-            augmenter = DataAugmenter(df, class_column="Species", threshold=50)
-
-            df = augmenter.augment_rare_classes(num_augments_per_image=5)
-
-            # Display how many images we have for each angle after augmenting the data
-            print("\nNumber of Images for Each Angle After Augmentation:")
-            print(f"CAUD: {(df['View'] == 'CAUD').sum()}")
-            print(f"DORS: {(df['View'] == 'DORS').sum()}")
-            print(f"FRON: {(df['View'] == 'FRON').sum()}")
-            print(f"LATE: {(df['View'] == 'LATE').sum()}")
-
-        # initialize number of outputs
+        # Initialize number of outputs
         SPECIES_OUTPUTS = dbr.get_num_species()
         GENUS_OUTPUTS = dbr.get_num_genus()
 
         # Run training with dataframe
-        species_tp = TrainingProgram(df, "Species", SPECIES_OUTPUTS)
+        species_tp = TrainingProgram(df, "Species", SPECIES_OUTPUTS, augment=augment)
 
         # Training
         if k_fold_caud:
@@ -155,7 +141,7 @@ if __name__ == '__main__':
                                      brightness=0.05717608, lrate=0.00036962807)
 
         # Run training with dataframe
-        genus_tp = TrainingProgram(df, "Genus", GENUS_OUTPUTS)
+        genus_tp = TrainingProgram(df, "Genus", GENUS_OUTPUTS, augment=augment)
 
         # Training
         if k_fold_caud:
