@@ -8,11 +8,13 @@ from io import BytesIO
 import pandas as pd
 from PIL import Image
 import numpy as np
+import matplotlib.pyplot as plt
 from torch.utils.data import DataLoader, Dataset
 from torchvision import transforms, models
 import torch
 import dill
 import optuna
+from sklearn.metrics import confusion_matrix
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import f1_score
 from sklearn.model_selection import StratifiedKFold
@@ -108,6 +110,8 @@ class TrainingProgram:
 
         self.train_transformations = self.create_train_transformations(
             rotation_degree=5,brightness=0.1, contrast=0.1, erasing=(0.5, (0.02, 0.15)))
+
+        self.train_test_indices = {}
 
     def get_subset(self, view_type, dataframe):
         """
@@ -289,6 +293,13 @@ class TrainingProgram:
         """
         # Get training and testing data
         train_x, test_x, train_y, test_y = self.get_train_test_split(self.subsets[view])
+
+        # Store test split for correlation analysis
+        self.train_test_indices[view] = {
+            "test_x": test_x,
+            "test_y": test_y
+        }
+
         # Define image training transformations, placeholder for preprocessing
         self.train_transformations = self.create_train_transformations(
             rotation_degree=rotation,
@@ -538,6 +549,186 @@ class TrainingProgram:
         print(f"F1 Score: {100 * study.best_value:.2f}%")
         print("Best hyperparameters:", study.best_params)
         return study.best_params
+
+    def create_f1_scores_bar_plot(
+            self, view, model=None, batch_size=32, save_path=None, plot=True, plot_save_path=None):
+        """
+        Analyzes and optionally visualizes per-class F1 scores using the same test split used during training.
+
+        Args:
+            view (str): The view ("caud", "dors", etc.)
+            model (torch.nn.Module, optional): If None, uses self.models[view]
+            batch_size (int): Batch size for evaluation
+            save_path (str): Optional path to save F1 scores as a CSV
+            plot (bool): Whether to plot a bar chart of F1 scores
+            plot_save_path (str): Optional path to save the plot image (e.g., "f1_scores.png")
+
+        Returns:
+            pd.DataFrame: Per-class F1 scores in a DataFrame
+        """
+
+        if model is None:
+            model = self.models[view]
+
+        if not hasattr(self, "train_test_indices") or view not in self.train_test_indices:
+            raise ValueError(
+                f"No stored train/test split found for view '{view}'. Make sure to call train_resnet_model() first.")
+
+        test_x = self.train_test_indices[view]["test_x"]
+        test_y = self.train_test_indices[view]["test_y"]
+
+        test_dataset = ImageDataset(test_x, test_y, transform=self.transformations[view])
+        test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False)
+
+        # Evaluate model
+        model.eval()
+        all_preds = []
+        all_true = []
+        with torch.no_grad():
+            for inputs, targets in test_loader:
+                inputs = inputs.to(self.device)
+                targets = targets.to(self.device)
+                outputs = model(inputs)
+                _, preds = torch.max(outputs, 1)
+                all_preds.extend(preds.cpu().numpy())
+                all_true.extend(targets.cpu().numpy())
+
+        # Get per-class F1
+        f1_per_class = f1_score(
+            all_true, all_preds,
+            average=None,
+            labels=list(range(self.num_classes))
+        )
+
+        class_names = [self.class_index_dictionary[i] for i in range(self.num_classes)]
+        df = pd.DataFrame([f1_per_class], columns=class_names)
+
+        if save_path:
+            df.to_csv(save_path, index=False)
+            print(f"Saved per-class F1 scores for {view} to {save_path}")
+
+        if plot:
+            # Dynamically adjust figure height based on number of species
+            fig_height = max(6, 0.4 * len(class_names))  # 0.4 inch per class, minimum height = 6
+            plt.figure(figsize=(10, fig_height))
+            plt.barh(class_names, f1_per_class, color="skyblue")
+            plt.xlabel("F1 Score")
+            plt.title(f"Per-Class F1 Scores — {view.upper()} View")
+            plt.xlim(0, 1.0)
+            plt.tight_layout()
+
+            if plot_save_path:
+                plt.savefig(plot_save_path, bbox_inches="tight")
+                print(f"Saved plot for {view} view to {plot_save_path}")
+            else:
+                plt.show()
+            plt.close()
+
+        return df
+
+    def create_confusion_matrix(
+            self, view, model=None, batch_size=32, save_path=None, plot=True, plot_save_path=None, normalize=True):
+        """
+        Generates and optionally visualizes a confusion matrix for a given view using the same test split
+        used during training. This can be used to analyze recall and per-class performance.
+
+        Args:
+            view (str): The view ("caud", "dors", etc.)
+            model (torch.nn.Module, optional): If None, uses self.models[view]
+            batch_size (int): Batch size for evaluation
+            save_path (str): Optional path to save confusion matrix as CSV
+            plot (bool): Whether to plot a heatmap of the confusion matrix
+            plot_save_path (str): Optional path to save the plot image
+            normalize (bool): Whether to normalize rows to show recall values (0-1)
+        Returns:
+            pd.DataFrame: Confusion matrix as a DataFrame
+        """
+
+        if model is None:
+            model = self.models[view]
+
+        if not hasattr(self, "train_test_indices") or view not in self.train_test_indices:
+            raise ValueError(
+                f"No stored train/test split found for view '{view}'. Make sure to call train_resnet_model() first."
+            )
+
+        test_x = self.train_test_indices[view]["test_x"]
+        test_y = self.train_test_indices[view]["test_y"]
+
+        test_dataset = ImageDataset(test_x, test_y, transform=self.transformations[view])
+        test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False)
+
+        # Evaluate model
+        model.eval()
+        all_preds = []
+        all_true = []
+        with torch.no_grad():
+            for inputs, targets in test_loader:
+                inputs = inputs.to(self.device)
+                targets = targets.to(self.device)
+                outputs = model(inputs)
+                _, preds = torch.max(outputs, 1)
+                all_preds.extend(preds.cpu().numpy())
+                all_true.extend(targets.cpu().numpy())
+
+        # Compute confusion matrix
+        cm = confusion_matrix(all_true, all_preds, labels=list(range(self.num_classes)))
+        class_names = [self.class_index_dictionary[i] for i in range(self.num_classes)]
+
+        if normalize:
+            cm = cm.astype('float') / cm.sum(axis=1)[:, np.newaxis]
+            cm = np.nan_to_num(cm)  # Replace NaN for classes with no samples
+
+        # Convert to DataFrame for easier saving/viewing
+        df_cm = pd.DataFrame(cm, index=class_names, columns=class_names)
+
+        if save_path:
+            df_cm.to_csv(save_path)
+            print(f"Saved confusion matrix for {view} to {save_path}")
+
+        # Plot heatmap
+        if plot:
+            self._plot_confusion_matrix(cm, class_names, view, plot_save_path, normalize)
+
+        return df_cm
+
+    def _plot_confusion_matrix(self, cm, class_names, view, plot_save_path, normalize):
+        """ Plot and save confusion matrix heatmap. """
+        fig_size = max(8, 0.5 * len(class_names))
+        plt.figure(figsize=(fig_size, fig_size))
+
+        im = plt.imshow(cm, interpolation='nearest', cmap='Blues')
+        plt.colorbar(im, fraction=0.046, pad=0.04)
+        plt.xticks(range(len(class_names)), class_names, rotation=90)
+        plt.yticks(range(len(class_names)), class_names)
+        plt.tick_params(axis='x', which='major', pad=8)
+        plt.tick_params(axis='y', which='major', pad=4)
+
+        plt.xlabel("Predicted Label")
+        plt.ylabel("Actual Label")
+
+        title_str = f"Confusion Matrix — {view.upper()} View"
+        if normalize:
+            title_str += " (Recall per class)"
+        plt.title(title_str)
+
+        # Add numbers to each cell
+        thresh = cm.max() / 2.
+        for i in range(cm.shape[0]):
+            for j in range(cm.shape[1]):
+                value = f"{cm[i, j]:.2f}" if normalize else f"{int(cm[i, j])}"
+                plt.text(j, i, value, ha="center", va="center",
+                        color="white" if cm[i, j] > thresh else "black")
+
+        plt.tight_layout()
+        plt.subplots_adjust(bottom=0.25, left=0.25)
+
+        if plot_save_path:
+            plt.savefig(plot_save_path, bbox_inches="tight")
+            print(f"Saved confusion matrix plot for {view} to {plot_save_path}")
+        else:
+            plt.show()
+        plt.close()
 
     def load_model(self):
         """

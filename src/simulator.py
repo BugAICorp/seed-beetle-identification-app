@@ -122,6 +122,17 @@ if __name__ == '__main__':
             break
         print("Invalid input. Please try again.")
 
+    while True:
+        # Ask user if they want to create per-class F1 score bar plot and a confusion matrix
+        choice = input("\nWould you like to create Model performance visualizations? (y/n): ").lower()
+        if choice == 'y':
+            show_plots = True
+            break
+        if choice == 'n':
+            show_plots = False
+            break
+        print("Invalid input. Please try again.")
+
     # Create the beetle cropper object to be used in dataset creation and image cropping
     beetle_cropper = BeetleCropper()
     # Crop the images in the original dataset so that the image is only the beetle
@@ -156,13 +167,37 @@ if __name__ == '__main__':
 
     # Training
     if train_caud:
-        species_tp.train_resnet_model(20, "caud", batch=64, rotation=9, brightness=0.18230462, lrate=0.0003845612)
+        species_tp.train_resnet_model(
+            20, "caud", batch=64, rotation=9, brightness=0.18230462, lrate=0.0003845612)
+        if show_plots:
+            species_tp.create_f1_scores_bar_plot(
+                "caud", batch_size=32, plot_save_path="species_caud_plot.png", plot=True)
+            species_tp.create_confusion_matrix(
+                "caud", batch_size=32, plot_save_path="species_caud_matrix.png", plot=True)
     if train_dors:
-        species_tp.train_resnet_model(20, "dors", batch=16, rotation=2, brightness=0.2288617393, lrate=0.00017452)
+        species_tp.train_resnet_model(
+            20, "dors", batch=16, rotation=2, brightness=0.2288617393, lrate=0.00017452)
+        if show_plots:
+            species_tp.create_f1_scores_bar_plot(
+                "dors", batch_size=32, plot_save_path="species_dors_plot.png", plot=True)
+            species_tp.create_confusion_matrix(
+                "dors", batch_size=32, plot_save_path="species_dors_matrix.png", plot=True)
     if train_fron:
-        species_tp.train_resnet_model(20, "fron", batch=32, rotation=0, brightness=0.110488612, lrate=0.0002088527)
+        species_tp.train_resnet_model(
+            20, "fron", batch=32, rotation=0, brightness=0.110488612, lrate=0.0002088527)
+        if show_plots:
+            species_tp.create_f1_scores_bar_plot(
+                "fron", batch_size=32, plot_save_path="species_fron_plot.png", plot=True)
+            species_tp.create_confusion_matrix(
+                "fron", batch_size=32, plot_save_path="species_fron_matrix.png", plot=True)
     if train_late:
-        species_tp.train_resnet_model(20, "late", batch=16, rotation=4, brightness=0.17189646, lrate=0.00007408262)
+        species_tp.train_resnet_model(
+            20, "late", batch=16, rotation=4, brightness=0.17189646, lrate=0.00007408262)
+        if show_plots:
+            species_tp.create_f1_scores_bar_plot(
+                "late", batch_size=32, plot_save_path="species_late_plot.png", plot=True)
+            species_tp.create_confusion_matrix(
+                "late", batch_size=32, plot_save_path="species_late_matrix.png", plot=True)
 
     # Save models
     species_model_filenames = {
@@ -184,13 +219,41 @@ if __name__ == '__main__':
 
     # Training
     if train_caud:
-        genus_tp.train_resnet_model(20, "caud", batch=32, rotation=12, brightness=0.153764767, lrate=0.000197477148)
+        genus_tp.train_resnet_model(
+            20, "caud", batch=32, rotation=12, brightness=0.153764767, lrate=0.000197477148)
+        if show_plots:
+            genus_tp.create_f1_scores_bar_plot(
+                "caud", batch_size=32, plot_save_path="genus_caud_plot.png", plot=True)
+            genus_tp.create_confusion_matrix(
+                "caud", batch_size=32, plot_save_path="genus_caud_matrix.png", plot=True)
+
     if train_dors:
-        genus_tp.train_resnet_model(20, "dors", batch=16, rotation=8, brightness=0.150820822, lrate=0.000216600199)
+        genus_tp.train_resnet_model(
+            20, "dors", batch=16, rotation=8, brightness=0.150820822, lrate=0.000216600199)
+        if show_plots:
+            genus_tp.create_f1_scores_bar_plot(
+                "dors", batch_size=16, plot_save_path="genus_dors_plot.png", plot=True)
+            genus_tp.create_confusion_matrix(
+                "dors", batch_size=16, plot_save_path="genus_dors_matrix.png", plot=True)
+
     if train_fron:
-        genus_tp.train_resnet_model(20, "fron", batch=16, rotation=2, brightness=0.20239523572, lrate=0.0001681036183)
+        genus_tp.train_resnet_model(
+            20, "fron", batch=16, rotation=2, brightness=0.20239523572, lrate=0.0001681036183)
+        if show_plots:
+            genus_tp.create_f1_scores_bar_plot(
+                "fron", batch_size=16, plot_save_path="genus_fron_plot.png", plot=True)
+            genus_tp.create_confusion_matrix(
+                "fron", batch_size=16, plot_save_path="genus_fron_matrix.png", plot=True)
+
     if train_late:
-        genus_tp.train_resnet_model(20, "late", batch=32, rotation=13, brightness=0.24352227695, lrate=0.0001241454983)
+        genus_tp.train_resnet_model(
+            20, "late", batch=32, rotation=13, brightness=0.24352227695, lrate=0.0001241454983)
+        if show_plots:
+            genus_tp.create_f1_scores_bar_plot(
+                "late", batch_size=32, plot_save_path="genus_late_plot.png", plot=True)
+            genus_tp.create_confusion_matrix(
+                "late", batch_size=32, plot_save_path="genus_late_matrix.png", plot=True)
+
 
     # Save models
     genus_model_filenames = {
