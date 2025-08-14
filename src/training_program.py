@@ -553,14 +553,17 @@ class TrainingProgram:
             print(f"Saved per-class F1 scores for {view} to {save_path}")
 
         if plot:
-            plt.figure(figsize=(10, 6))
+            # Dynamically adjust figure height based on number of species
+            fig_height = max(6, 0.4 * len(class_names))  # 0.4 inch per class, minimum height = 6
+            plt.figure(figsize=(10, fig_height))
             plt.barh(class_names, f1_per_class, color="skyblue")
             plt.xlabel("F1 Score")
             plt.title(f"Per-Class F1 Scores — {view.upper()} View")
             plt.xlim(0, 1.0)
             plt.tight_layout()
+
             if plot_save_path:
-                plt.savefig(plot_save_path)
+                plt.savefig(plot_save_path, bbox_inches="tight")
                 print(f"Saved plot for {view} view to {plot_save_path}")
             else:
                 plt.show()
