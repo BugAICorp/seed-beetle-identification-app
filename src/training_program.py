@@ -285,7 +285,8 @@ class TrainingProgram:
             self.model_accuracies[view] = best_macro_f1
             print(f"Best Macro F1: {100 * best_macro_f1:.2f}% — model loaded.")
 
-    def train_resnet_model(self, num_epochs, view, batch, rotation=5, brightness=0.1, lrate=0.001):
+    def train_resnet_model(self, num_epochs, view, batch, rotation=5, brightness=0.1, lrate=0.001,
+                           erasure_params=[0.4, 0.05, 0.25]):
         """
         Trains resnet model with subset of specified image views
         and save model to respective save file.
@@ -305,7 +306,7 @@ class TrainingProgram:
             rotation_degree=rotation,
             brightness=brightness,
             contrast=0.1,
-            erasing=(0.5, (0.02, 0.15))
+            erasing=(erasure_params[0], (erasure_params[1], erasure_params[2]))
         )
 
         # Create DataLoaders
@@ -316,7 +317,8 @@ class TrainingProgram:
 
         self.training_evaluation_resnet(num_epochs, training_loader, testing_loader, view, lrate=lrate)
 
-    def k_fold_resnet(self, num_epochs, view, k_folds=5, batch=32, rotation=5, brightness=0.1, lrate=0.001):
+    def k_fold_resnet(self, num_epochs, view, k_folds=5, batch=32, rotation=5, brightness=0.1, lrate=0.001,
+                      erasure_params=[0.4, 0.05, 0.25]):
         """
         Trains the model(determined by view) using Stratified K-Fold Cross Validation.
         """
@@ -332,7 +334,7 @@ class TrainingProgram:
             rotation_degree=rotation,
             brightness=brightness,
             contrast=0.1,
-            erasing=(0.5, (0.02, 0.15))
+            erasing=(erasure_params[0], (erasure_params[1], erasure_params[2]))
         )
         skf = StratifiedKFold(n_splits=k_folds, shuffle=True)
 
