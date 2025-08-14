@@ -336,15 +336,18 @@ class CAMGuidedTrainingProgram:
 
                 # Generate Grad-CAM heatmaps for the input batch
                 cam = grad_cam.generate_heatmap(inputs)
+                cam_upsampled = F.interpolate(
+                    cam.unsqueeze(1), size=(self.height, self.height), mode='bilinear', align_corners=False).squeeze(1)
 
                 # Load corresponding binary attention masks from disk
                 masks = self.load_attention_masks(paths)
 
-                if masks.sum() == 0:
+                valid_mask_indices = masks.sum(dim=(1, 2)) > 0
+                if valid_mask_indices.sum() == 0:
                     total_loss = pred_loss
                 else:
                     # Compute attention alignment loss (e.g., KL divergence between CAM and mask)
-                    attn_loss = self.cam_loss(cam, masks)
+                    attn_loss = self.cam_loss(cam_upsampled[valid_mask_indices], masks[valid_mask_indices])
                     # Combine classification loss and attention loss (weighted by lambda_attn)
                     total_loss = pred_loss + self.lambda_attn * attn_loss
 
@@ -456,11 +459,8 @@ class CAMGuidedTrainingProgram:
         Returns:
             torch.Tensor: Combined BCE + Dice loss.
         """
-        # Resize mask to match CAM shape
-        if mask.shape != cam_heatmap.shape:
-            mask = F.interpolate(
-                mask.unsqueeze(1), size=cam_heatmap.shape[-2:], mode='bilinear', align_corners=False
-            ).squeeze(1)
+        # Ensure the mask shape matches the heatmap
+        assert mask.shape == cam_heatmap.shape, "CAM and mask must be same shape"
 
         # Ensure CAM values are in [0, 1]
         cam = torch.clamp(cam_heatmap, min=1e-8, max=1.0)
@@ -595,14 +595,18 @@ class CAMGuidedTrainingProgram:
                 pred_loss = criterion(outputs, labels)
 
                 # Grad-CAM heatmaps
-                cam_heatmaps = grad_cam.generate_heatmap(inputs)
+                cam = grad_cam.generate_heatmap(inputs)
+                cam_upsampled = F.interpolate(
+                    cam.unsqueeze(1), size=(self.height, self.height), mode='bilinear', align_corners=False).squeeze(1)
+
                 masks = self.load_attention_masks(paths)
 
-                if masks.sum() == 0:
+                valid_mask_indices = masks.sum(dim=(1, 2)) > 0
+                if valid_mask_indices.sum() == 0:
                     total_loss = pred_loss
                 else:
-                    attn_loss = self.cam_loss(cam_heatmaps, masks)
-                    total_loss = pred_loss + lambda_attn * attn_loss
+                    attn_loss = self.cam_loss(cam_upsampled[valid_mask_indices], masks[valid_mask_indices])
+                    total_loss = pred_loss + self.lambda_attn * attn_loss
 
                 total_loss.backward()
                 optimizer.step()

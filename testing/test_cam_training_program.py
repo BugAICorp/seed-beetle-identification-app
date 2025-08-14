@@ -78,8 +78,8 @@ class TestCAMGuidedTrainingProgram(unittest.TestCase):
         """ Test cam_loss when CAM and mask need interpolation. """
         cam = torch.rand(4, 300, 300)
         mask = torch.rand(4, 100, 100)
-        loss = self.program.cam_loss(cam, mask)
-        self.assertTrue(torch.is_tensor(loss))
+        with self.assertRaises(AssertionError):
+            self.program.cam_loss(cam, mask)
 
     def test_load_model(self):
         """ Test load_model returns a ResNet model. """
