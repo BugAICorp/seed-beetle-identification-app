@@ -286,7 +286,7 @@ class TrainingProgram:
             print(f"Best Macro F1: {100 * best_macro_f1:.2f}% — model loaded.")
 
     def train_resnet_model(self, num_epochs, view, batch, rotation=5, brightness=0.1, lrate=0.001,
-                           erasure_params={"p": 0.4, "min": 0.05, "max": 0.25}):
+                           erasure_params=None):
         """
         Trains resnet model with subset of specified image views
         and save model to respective save file.
@@ -301,13 +301,21 @@ class TrainingProgram:
             "test_y": test_y
         }
 
+        if erasure_params is not None:
         # Define image training transformations, placeholder for preprocessing
-        self.train_transformations = self.create_train_transformations(
-            rotation_degree=rotation,
-            brightness=brightness,
-            contrast=0.1,
-            erasing=(erasure_params["p"], (erasure_params["min"], erasure_params["max"]))
-        )
+            self.train_transformations = self.create_train_transformations(
+                rotation_degree=rotation,
+                brightness=brightness,
+                contrast=0.1,
+                erasing=(erasure_params["p"], (erasure_params["min"], erasure_params["max"]))
+            )
+        else:
+            self.train_transformations = self.create_train_transformations(
+                rotation_degree=rotation,
+                brightness=brightness,
+                contrast=0.1,
+                erasing=(0.4, (0.05, 0.25))
+            )
 
         # Create DataLoaders
         train_dataset = ImageDataset(train_x, train_y, transform=self.train_transformations[view])
@@ -318,7 +326,7 @@ class TrainingProgram:
         self.training_evaluation_resnet(num_epochs, training_loader, testing_loader, view, lrate=lrate)
 
     def k_fold_resnet(self, num_epochs, view, k_folds=5, batch=32, rotation=5, brightness=0.1, lrate=0.001,
-                      erasure_params={"p": 0.4, "min": 0.05, "max": 0.25}):
+                      erasure_params=None):
         """
         Trains the model(determined by view) using Stratified K-Fold Cross Validation.
         """
@@ -329,13 +337,21 @@ class TrainingProgram:
         classes = view_df[self.class_column].values
         labels = [self.class_string_dictionary[label] for label in classes]
 
-        # Define transformation for training
-        self.train_transformations = self.create_train_transformations(
-            rotation_degree=rotation,
-            brightness=brightness,
-            contrast=0.1,
-            erasing=(erasure_params["p"], (erasure_params["min"], erasure_params["max"]))
-        )
+        if erasure_params is not None:
+        # Define image training transformations, placeholder for preprocessing
+            self.train_transformations = self.create_train_transformations(
+                rotation_degree=rotation,
+                brightness=brightness,
+                contrast=0.1,
+                erasing=(erasure_params["p"], (erasure_params["min"], erasure_params["max"]))
+            )
+        else:
+            self.train_transformations = self.create_train_transformations(
+                rotation_degree=rotation,
+                brightness=brightness,
+                contrast=0.1,
+                erasing=(0.4, (0.05, 0.25))
+            )
         skf = StratifiedKFold(n_splits=k_folds, shuffle=True)
 
         all_fold_f1s = []
