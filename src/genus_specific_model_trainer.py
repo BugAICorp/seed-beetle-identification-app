@@ -191,7 +191,15 @@ class GenusSpecificModelTrainer:
                 class_set.add(class_to_idx[class_values])
 
         train_x, test_x, train_y, test_y = self.get_train_test_split(genus_subset, class_string_dictionary)
-        train_dataset = ImageDataset(train_x, train_y, transform=self.transformation)
+        # Define image training transformations, placeholder for preprocessing
+        self.train_transformations = self.create_train_transformations(
+            rotation_degree=5,
+            brightness=0.1,
+            contrast=0.1,
+            erasing=(0.5, (0.02, 0.15))
+        )
+
+        train_dataset = ImageDataset(train_x, train_y, transform=self.train_transformations)
         test_dataset = ImageDataset(test_x, test_y, transform=self.transformation)
         training_loader = DataLoader(train_dataset, batch_size=32, shuffle=True)
         testing_loader = DataLoader(test_dataset, batch_size=32, shuffle=False)
@@ -389,7 +397,7 @@ class GenusSpecificModelTrainer:
 
                 # Extract augmented train data
                 train_x = augmented_df[self.image_column].values
-                train_y = [self.class_string_dictionary[label] for label in augmented_df[self.class_column].values]
+                train_y = [class_string_dictionary[label] for label in augmented_df["Species"].values]
 
             train_dataset = ImageDataset(train_x, train_y, transform=transformation)
             val_dataset = ImageDataset(val_x, val_y, transform=transformation)
