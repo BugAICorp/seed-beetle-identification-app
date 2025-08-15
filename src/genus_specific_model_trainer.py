@@ -17,6 +17,7 @@ from sklearn.model_selection import StratifiedKFold
 from sklearn.metrics import f1_score
 import optuna
 from transformation_classes import HistogramEqualization
+from data_augmenter import DataAugmenter
 import globals
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../')))
@@ -26,13 +27,14 @@ class GenusSpecificModelTrainer:
     Creates a model trained on the species of each genus individually resulting in
     more models, but with less outputs per model
     """
-    def __init__(self, dataframe, image_column='Image'):
+    def __init__(self, dataframe, image_column='Image', augment=False):
         """
         Initialize variables for assisting training
         """
         self.dataframe = dataframe
         self.height = 300
         self.image_column = image_column
+        self.augment = augment
 
         self.model_accuracies = {}
 
@@ -95,7 +97,7 @@ class GenusSpecificModelTrainer:
 
         base_transform = self.transformation.transforms
 
-            # Manually reorder to insert augmentations in the correct locations
+        # Manually reorder to insert augmentations in the correct locations
         new_transforms = []
         normalize_transform = None
         for t in base_transform:
@@ -129,12 +131,33 @@ class GenusSpecificModelTrainer:
         Gets train and test split for given dataframe
         Returns: list of train and test data
         """
-        image_binaries = dataframe[self.image_column].values
         classes = dataframe.iloc[:, 1].values
         labels = [class_string_dictionary[label] for label in classes]
-        train_x, test_x, train_y, test_y = train_test_split(
-            image_binaries, labels, test_size=0.2, random_state=42
+
+        # Split by index for safe DataFrame reconstruction
+        indices = np.arange(len(dataframe))
+        train_idx, test_idx = train_test_split(
+            indices, test_size=0.2, stratify=labels, random_state=42
         )
+        # Create train/test DataFrames
+        train_df = dataframe.iloc[train_idx].copy()
+        test_df = dataframe.iloc[test_idx].copy()
+
+        if self.augment:
+            augmenter = DataAugmenter(
+                dataframe=train_df,
+                class_column="Species",
+                threshold=100
+            )
+            train_df = augmenter.augment_rare_classes(num_augments_per_image=5)
+
+        # Extract final train/test values (x: images, y: labels)
+        train_x = train_df[self.image_column].values
+        train_y = [class_string_dictionary[label] for label in train_df["Species"].values]
+
+        test_x = test_df[self.image_column].values
+        test_y = [class_string_dictionary[label] for label in test_df["Species"].values]
+
         return [train_x, test_x, train_y, test_y]
 
     def train_genus(self, genus, num_epochs):
@@ -352,6 +375,22 @@ class GenusSpecificModelTrainer:
             val_x = [images[i] for i in val_idx]
             val_y = [labels[i] for i in val_idx]
 
+            if self.augment:
+                # Build train dataframe for augmenter
+                train_df = genus_df.iloc[train_idx].copy()
+
+                # Use DataAugmenter to augment rare classes
+                augmenter = DataAugmenter(
+                    dataframe=train_df,
+                    class_column="Species",
+                    threshold=100  # or some threshold appropriate for rarity
+                )
+                augmented_df = augmenter.augment_rare_classes(num_augments_per_image=5)
+
+                # Extract augmented train data
+                train_x = augmented_df[self.image_column].values
+                train_y = [self.class_string_dictionary[label] for label in augmented_df[self.class_column].values]
+
             train_dataset = ImageDataset(train_x, train_y, transform=transformation)
             val_dataset = ImageDataset(val_x, val_y, transform=transformation)
             train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
@@ -460,16 +499,16 @@ class ImageDataset(Dataset):
     and species label
     Arguments:
         image_binaries (0'b): image file in binary values
-        label (str): species label of image
+        labels (str): species label of image
         transform (transforms.Compose): transform of image to be able 
         to input into model
     """
-    def __init__(self, image_binaries, label, transform=None):
+    def __init__(self, image_binaries, labels, transform=None):
         """
         Initialize values
         """
         self.image_binaries = image_binaries
-        self.label = torch.tensor(label, dtype=torch.long)
+        self.labels = labels
         self.transform = transform
 
     def __len__(self):
@@ -488,4 +527,6 @@ class ImageDataset(Dataset):
         if self.transform:
             image = self.transform(image)
 
-        return image, self.label[idx]
+        label = torch.tensor(self.labels[idx], dtype=torch.long)
+
+        return image, label
