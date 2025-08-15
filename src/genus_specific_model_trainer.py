@@ -22,6 +22,7 @@ import globals
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../')))
 
+# pylint: disable=too-many-instance-attributes,
 class GenusSpecificModelTrainer:
     """
     Creates a model trained on the species of each genus individually resulting in
@@ -48,6 +49,8 @@ class GenusSpecificModelTrainer:
             transforms.Resize((self.height, self.height)),
             transforms.ToTensor(),
             transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])])
+
+        self.train_transformations = self.create_train_transformations()
 
     def get_subset(self, genus_type, dataframe):
         """
