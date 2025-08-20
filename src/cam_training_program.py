@@ -647,6 +647,7 @@ class CAMGuidedTrainingProgram:
         erasing_p = trial.suggest_float('erasing_p', 0.0, 0.8)
         erasing_scale_min = trial.suggest_float('erasing_scale_min', 0.01, 0.1)
         erasing_scale_max = trial.suggest_float('erasing_scale_max', 0.1, 0.4)
+        lambda_attn = trial.suggest_float("lambda_attn", 0.0, 2.0)
 
         if erasing_scale_min >= erasing_scale_max:
             return 0.0  # Invalid trial
@@ -689,7 +690,8 @@ class CAMGuidedTrainingProgram:
                 test_loader=val_loader,
                 view=view,
                 lr=lrate,
-                optimizer_type=optimizer_type
+                optimizer_type=optimizer_type,
+                lambda_attn=lambda_attn
             )
             fold_scores.append(macro_f1)
 
