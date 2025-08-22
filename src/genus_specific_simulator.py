@@ -25,6 +25,17 @@ if __name__ == '__main__':
             break
         print("Invalid Input. Please enter 1 or 2.")
 
+    while True:
+        print("\nWould you like to run hyperparameter tuning or normal training?")
+        user_input = int(input("Enter 1 for training, and 2 for tuning: "))
+        if user_input == 1:
+            train = True
+            break
+        if user_input == 2:
+            train = False
+            break
+        print("Invalid input. Please enter a 1 or 2.")
+
     # Create the beetle cropper object to be used in dataset creation and image cropping
     beetle_cropper = BeetleCropper()
     # Crop the images in the original dataset so that the image is only the beetle
@@ -39,25 +50,17 @@ if __name__ == '__main__':
     dbr = DatabaseReader(globals.training_database, class_file_path=globals.class_list)
     df = dbr.get_dataframe()
 
-    if augment:
-        # Data Augmentation - Add images for rare classes
-        augmenter = DataAugmenter(df, class_column="Species", threshold=100)
-
-        df = augmenter.augment_rare_classes(num_augments_per_image=5)
-
-        # Display how many images we have for each angle after augmenting the data
-        print("\nNumber of Images for Each Angle After Augmentation:")
-        print(f"CAUD: {(df['View'] == 'CAUD').sum()}")
-        print(f"DORS: {(df['View'] == 'DORS').sum()}")
-        print(f"FRON: {(df['View'] == 'FRON').sum()}")
-        print(f"LATE: {(df['View'] == 'LATE').sum()}")
-
     genus_list = df['Genus'].unique().tolist()
+    genus_specific_tp = GenusSpecificModelTrainer(dataframe=df, augment=augment)
+    if train:
+        print(f"Training for each genus in this list: {genus_list}")
+        for genus in genus_list:
+            genus_specific_tp.train_genus(genus, 20)
 
-    print(f"Training for each genus in this list: {genus_list}")
-    genus_specific_tp = GenusSpecificModelTrainer(df)
-    for genus in genus_list:
-        genus_specific_tp.train_genus(genus, 20)
+    else:
+        print(f"Running hyperparameter tuning for each genus in this list: {genus_list}")
+        for genus in genus_list:
+            genus_specific_tp.run_optuna_study(genus, 20)
 
     # Load Genus models
     genus_model_paths = {

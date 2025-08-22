@@ -34,7 +34,7 @@ class TestEvalSpeciesByGenus(unittest.TestCase):
         # Dummy transformation function that returns tensor with batch dim
         self.mock_transform = lambda x: torch.rand(1, 3, 224, 224)
 
-        self.mock_transformations = [self.mock_transform] * 4
+        self.mock_transformations = [self.mock_transform] * 5
 
         # Dummy output tensor for genus model (batch size 1, 2 classes)
         dummy_output = torch.tensor([[1.0, 2.0]])

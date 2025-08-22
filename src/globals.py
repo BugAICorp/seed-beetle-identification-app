@@ -46,6 +46,7 @@ caud_transformation = "src/models/caud_transformation.pth"
 dors_transformation = "src/models/dors_transformation.pth"
 fron_transformation = "src/models/fron_transformation.pth"
 late_transformation = "src/models/late_transformation.pth"
+gs_transformation = "src/models/all_transformation.pth"
 
 # CAM Species Files
 cam_spec_caud_model = "src/models/cam_spec_caud.pth"
@@ -104,7 +105,7 @@ alt_gen_class_dictionary = "src/models/alt_gen_dict.json"
 alt_gen_accuracy_list =  "src/models/alt_gen_accuracies.json"
 
 # Alternate Transformation Files
-all_transformations = "src/models/all_transformation.pth"
+all_transformation = "src/models/all_transformation.pth"
 dors_caud_transformation = "src/models/dors_caud_transformation.pth"
 dors_late_transformation = "src/models/dors_late_transformation.pth"
 

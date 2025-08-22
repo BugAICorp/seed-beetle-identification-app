@@ -2,7 +2,7 @@
 import unittest
 import sys
 import os
-from unittest.mock import patch, MagicMock, mock_open
+from unittest.mock import patch, MagicMock, mock_open, call
 import pandas as pd
 import torch
 from PIL import Image
@@ -26,13 +26,20 @@ class TestGenusSpecificModelTrainer(unittest.TestCase):
         
         # Create a mock DataFrame for testing
         self.mock_dataframe = pd.DataFrame({
-            "Genus": ["GenusA", "GenusB", "GenusC", "GenusD", "GenusE",
-                      "GenusF", "GenusG", "GenusH", "GenusI", "GenusJ"],
-            "Species": ["SpeciesA", "SpeciesB", "SpeciesC", "SpeciesD", "SpeciesE",
-                        "SpeciesF", "SpeciesG", "SpeciesH", "SpeciesI", "SpeciesJ"],
-            "UniqueID": ["ID1", "ID2", "ID3", "ID4", "ID5", "ID6", "ID7", "ID8", "ID9", "ID10"],
-            "View": ["CAUD", "DORS", "FRON", "LATE", "CAUD", "DORS", "FRON", "LATE", "CAUD", "DORS"],
-            "Image": [create_mock_image_blob() for _ in range(10)]
+            "Genus": [
+                "GenusA", "GenusA", "GenusE", "GenusE", "GenusI", "GenusI",
+                "GenusA", "GenusE", "GenusI", "GenusA", "GenusE", "GenusI",
+                "GenusB", "GenusB", "GenusC", "GenusC"
+            ],
+            "Species": [
+                "SpeciesA", "SpeciesA", "SpeciesE", "SpeciesE", "SpeciesI", "SpeciesI",
+                "SpeciesA", "SpeciesE", "SpeciesI", "SpeciesA", "SpeciesE", "SpeciesI",
+                "SpeciesB", "SpeciesB", "SpeciesC", "SpeciesC"
+            ],
+            "UniqueID": [f"ID{i}" for i in range(1, 17)],
+            "View": [
+                "CAUD"]*12 + ["DORS", "DORS", "FRON", "FRON"],  # 12 CAUD, rest other views
+            "Image": [create_mock_image_blob() for _ in range(16)]
         })
 
         # Initialize the TrainingProgram instance
@@ -52,9 +59,9 @@ class TestGenusSpecificModelTrainer(unittest.TestCase):
     def test_get_train_test_split(self):
         """Test get_train_test_split returns correctly split data"""
         df = self.mock_dataframe[self.mock_dataframe["View"] == "CAUD"]
-        fake_dict = {"SpeciesA" : 0, "SpeciesB" : 1, "SpeciesC" : 2, "SpeciesD" : 3, "SpeciesE" : 4,
-                        "SpeciesF" : 5, "SpeciesG" : 6, "SpeciesH" : 7, "SpeciesI" : 8, "SpeciesJ" : 9
-                        }
+        fake_dict = {
+            "SpeciesA": 0, "SpeciesE": 1, "SpeciesI": 2
+        }
 
         result = self.training_program.get_train_test_split(df, fake_dict)
         train_x, test_x, train_y, test_y = result
@@ -86,7 +93,11 @@ class TestGenusSpecificModelTrainer(unittest.TestCase):
         genus = "GenusX"
         self.training_program.save_model(dummy_model, genus, class_dict)
         mock_torch_save.assert_called_once()
-        mock_open_file.assert_called_with(f"src/genus_models/{genus}_dict.json", "w")
+        expected_calls = [
+            call(f"src/genus_models/{genus}_dict.json", "w"),
+            call(f"src/models/all_transformation.pth", "wb")
+        ]
+        mock_open_file.assert_has_calls(expected_calls, any_order=True)
 
     @patch("builtins.open", new_callable=mock_open)
     def test_update_accuracies_creates_file_if_missing(self, mock_open_file):
