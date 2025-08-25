@@ -38,13 +38,13 @@ class DatabaseReader:
                     self.query = f"""
                         SELECT Genus, Species, UniqueID, View, SpecimenID, Image, Filename
                         FROM {self.table}
-                        WHERE Species NOT IN ({placeholders})
+                        WHERE Genus NOT IN ({placeholders.split()[0]}) AND Species NOT IN ({placeholders.split()[-1]})
                     """
                 else:
                     self.query = f"""
                         SELECT Genus, Species, UniqueID, View, SpecimenID, Image, Filename
                         FROM {self.table}
-                        WHERE Species IN ({placeholders})
+                        WHERE Genus IN ({placeholders.split()[0]}) AND Species IN ({placeholders.split()[-1]})
                     """
             else:
                 # For create_other we fetch all data and later replace non-allowed species/genus
@@ -73,7 +73,7 @@ class DatabaseReader:
         with open(class_file_path, 'r', encoding='utf-8') as file:
             allowed_species = {
                 # Only need the species for class limiting
-                line.strip().split()[-1] for line in file if line.strip()
+                line.strip() for line in file if line.strip()
             }
 
         return allowed_species
@@ -111,8 +111,11 @@ class DatabaseReader:
             pd.DataFrame: Updated DataFrame with other species/genus mapped to 'Other'
         """
         df = df.copy()
-        df.loc[~df['Species'].isin(allowed_species), 'Species'] = 'other'
-        df.loc[~df['Species'].isin(allowed_species), 'Genus'] = 'Other'
+        full_name = df['Genus'].str.strip() + ' ' + df['Species'].str.strip()
+
+        mask = ~full_name.isin(allowed_species)
+        df.loc[mask, 'Genus'] = 'Other'
+        df.loc[mask, 'Species'] = 'other'
         return df
 
     def get_dataframe(self):
