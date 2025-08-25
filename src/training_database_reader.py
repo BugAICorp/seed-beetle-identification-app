@@ -38,13 +38,13 @@ class DatabaseReader:
                     self.query = f"""
                         SELECT Genus, Species, UniqueID, View, SpecimenID, Image, Filename
                         FROM {self.table}
-                        WHERE Genus NOT IN ({placeholders.split()[0]}) AND Species NOT IN ({placeholders.split()[-1]})
+                        WHERE Genus || ' ' || Species NOT IN ({placeholders})
                     """
                 else:
                     self.query = f"""
                         SELECT Genus, Species, UniqueID, View, SpecimenID, Image, Filename
                         FROM {self.table}
-                        WHERE Genus IN ({placeholders.split()[0]}) AND Species IN ({placeholders.split()[-1]})
+                        WHERE Genus || ' ' || Species IN ({placeholders})
                     """
             else:
                 # For create_other we fetch all data and later replace non-allowed species/genus
