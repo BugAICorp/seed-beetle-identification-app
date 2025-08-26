@@ -2,7 +2,6 @@
 
 import sys
 import os
-from PIL import Image
 from beetle_cropper import BeetleCropper
 from training_data_converter import TrainingDataConverter
 from training_database_reader import DatabaseReader
