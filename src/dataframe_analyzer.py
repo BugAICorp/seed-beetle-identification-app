@@ -9,8 +9,6 @@ import globals
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../')))
 
-# simple simulation of end-to-end functionality of files
-
 if __name__ == '__main__':
 
     # Create the beetle cropper object to be used in dataset creation and image cropping
