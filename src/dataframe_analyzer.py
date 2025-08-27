@@ -36,7 +36,7 @@ if __name__ == '__main__':
     print(f"DORS: {(df['View'] == 'DORS').sum()}")
     print(f"FRON: {(df['View'] == 'FRON').sum()}")
     print(f"LATE: {(df['View'] == 'LATE').sum()}")
-    
+
     views = ["DORS", "LATE", "FRON", "CAUD"]
 
     # Genus-level counts per view
