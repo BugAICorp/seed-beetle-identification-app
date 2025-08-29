@@ -15,3 +15,4 @@ omit =
     src/ood_simulator.py
     src/grad_cam_simulator.py
     src/cam_training_simulator.py
+    src/dataframe_analyzer.py
