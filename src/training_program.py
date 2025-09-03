@@ -630,7 +630,7 @@ class TrainingProgram:
             # Dynamically adjust figure height based on number of species
             fig_height = max(6, 0.4 * len(class_names))  # 0.4 inch per class, minimum height = 6
             plt.figure(figsize=(10, fig_height))
-            bars = plt.barh(class_names, f1_per_class, color="skyblue")
+            plt.barh(class_names, f1_per_class, color="skyblue")
 
             plt.xlabel("F1 Score")
             plt.title(f"Per-Class F1 Scores — {view.upper()} View")
