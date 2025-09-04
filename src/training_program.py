@@ -234,8 +234,8 @@ class TrainingProgram:
             )
             class_weights = torch.tensor(class_weights, dtype=torch.float).to(self.device)
             return torch.nn.CrossEntropyLoss(weight=class_weights)
-        else:
-            return torch.nn.CrossEntropyLoss()
+
+        return torch.nn.CrossEntropyLoss()
 
     def get_train_loader(self, train_dataset, train_y, batch_size):
         """
@@ -252,8 +252,8 @@ class TrainingProgram:
                 replacement=True
             )
             return DataLoader(train_dataset, batch_size=batch_size, sampler=sampler)
-        else:
-            return DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
+
+        return DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
 
     def training_evaluation_resnet(self, num_epochs, train_loader, test_loader, view, train_y, lrate=0.001):
         """
