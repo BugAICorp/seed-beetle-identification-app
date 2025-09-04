@@ -74,7 +74,7 @@ if __name__ == '__main__':
             augment = False
             break
         print("Invalid Input. Please enter 1 or 2.")
-    
+
     while True:
         print("\nWould you like to use class balancing techniques while training?")
         print("\t0 = No Balancing\n" \
