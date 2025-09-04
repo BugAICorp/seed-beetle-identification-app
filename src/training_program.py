@@ -365,7 +365,7 @@ class TrainingProgram:
         training_loader = self.get_train_loader(train_dataset, train_y, batch)
         testing_loader = DataLoader(test_dataset, batch_size=batch, shuffle=False)
 
-        self.training_evaluation_resnet(num_epochs, training_loader, testing_loader, view, lrate=lrate)
+        self.training_evaluation_resnet(num_epochs, training_loader, testing_loader, view, train_y=train_y, lrate=lrate)
 
     def k_fold_resnet(self, num_epochs, view, k_folds=5, batch=32, rotation=5, brightness=0.1, lrate=0.001,
                       erasure_params=None):
@@ -424,14 +424,14 @@ class TrainingProgram:
 
             train_dataset = ImageDataset(train_x, train_y, transform=self.train_transformations[view])
             val_dataset = ImageDataset(val_x, val_y, transform=self.transformations[view])
-            train_loader = DataLoader(train_dataset, batch_size=batch, shuffle=True)
+            train_loader = self.get_train_loader(train_dataset, np.array(train_y), batch)
             val_loader = DataLoader(val_dataset, batch_size=batch, shuffle=False)
 
             # Reinitialize model before each fold
             self.model_accuracies[view] = 0.0
             self.models[view] = self.load_model()
 
-            self.training_evaluation_resnet(num_epochs, train_loader, val_loader, view, lrate=lrate)
+            self.training_evaluation_resnet(num_epochs, train_loader, val_loader, view, train_y=train_y, lrate=lrate)
 
             fold_f1 = self.model_accuracies.get(view, 0.0)
             all_fold_f1s.append(fold_f1)
@@ -439,7 +439,8 @@ class TrainingProgram:
         average_macro_f1 = 100 * sum(all_fold_f1s)/k_folds
         print(f"\nAverage Macro F1 over {k_folds} folds: {average_macro_f1:.2f}%")
 
-    def hyperparameter_training_evaluation(self, num_epochs, train_loader, test_loader, view, lr, optimizer_type):
+    def hyperparameter_training_evaluation(
+            self, num_epochs, train_loader, test_loader, view, train_y, lr, optimizer_type):
         """
         Code for training algorithm and evaluating model, adjusted for hyperparameter tuning.
         Trains and evaluate the model for a given view using specified hyperparameters.
@@ -459,7 +460,7 @@ class TrainingProgram:
             ValueError: If `optimizer_type` is not supported.
         """
         model = self.models[view]
-        criterion = torch.nn.CrossEntropyLoss()
+        criterion = self.get_loss_function(np.array(train_y))
 
         # Determine optimizer to be used
         if optimizer_type == "adam":
@@ -564,7 +565,7 @@ class TrainingProgram:
 
             train_dataset = ImageDataset(train_x, train_y, transform=self.train_transformations[view])
             val_dataset = ImageDataset(val_x, val_y, transform=self.transformations[view])
-            train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
+            train_loader = self.get_train_loader(train_dataset, np.array(train_y), batch_size)
             val_loader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False)
 
             self.models[view] = self.load_model()
@@ -573,6 +574,7 @@ class TrainingProgram:
                 train_loader=train_loader,
                 test_loader=val_loader,
                 view=view,
+                train_y=train_y,
                 lr=lr,
                 optimizer_type="adam"
             )
