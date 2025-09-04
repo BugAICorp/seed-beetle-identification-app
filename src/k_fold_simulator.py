@@ -96,6 +96,27 @@ if __name__ == '__main__':
                 break
             print("Invalid Input. Please enter 1 or 2.")
 
+        while True:
+            print("\nWould you like to use class balancing techniques while training?")
+            print("\t0 = No Balancing\n" \
+                "\t1 = Class-Weighted Loss Function\n" \
+                "\t2 = Oversampling Only\n" \
+                "\t3 = Both (Oversampling + Class-Weighted Loss)")
+            user_input = int(input("Enter the number of your choice: "))
+            if user_input == 0:
+                balance_classes = 0
+                break
+            if user_input == 1:
+                balance_classes = 1
+                break
+            if user_input == 2:
+                balance_classes = 2
+                break
+            if user_input == 3:
+                balance_classes = 3
+                break
+            print("Invalid Input. Please enter 0, 1, 2, or 3.")
+
         # Create the beetle cropper object to be used in dataset creation and image cropping
         beetle_cropper = BeetleCropper()
         # Crop the images in the original dataset so that the image is only the beetle
@@ -124,7 +145,7 @@ if __name__ == '__main__':
         GENUS_OUTPUTS = dbr.get_num_genus()
 
         # Run training with dataframe
-        species_tp = TrainingProgram(df, "Species", SPECIES_OUTPUTS, augment=augment)
+        species_tp = TrainingProgram(df, "Species", SPECIES_OUTPUTS, augment=augment, balance_classes=balance_classes)
 
         # Training
         if k_fold_caud:
@@ -165,7 +186,7 @@ if __name__ == '__main__':
                                      erasure_params=erasure_params_late)
 
         # Run training with dataframe
-        genus_tp = TrainingProgram(df, "Genus", GENUS_OUTPUTS, augment=augment)
+        genus_tp = TrainingProgram(df, "Genus", GENUS_OUTPUTS, augment=augment, balance_classes=balance_classes)
 
         # Training
         if k_fold_caud:
