@@ -18,6 +18,7 @@ from sklearn.metrics import confusion_matrix
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import f1_score
 from sklearn.model_selection import StratifiedKFold
+from sklearn.utils.class_weight import compute_class_weight
 from transformation_classes import HistogramEqualization
 from data_augmenter import DataAugmenter
 import globals
@@ -226,7 +227,7 @@ class TrainingProgram:
         Return the loss function based on balancing strategy.
         """
         if self.balance_classes in [1, 3]:
-            from sklearn.utils.class_weight import compute_class_weight
+            train_y = np.array(train_y)  # ensures correct format
             classes = np.unique(train_y)
             class_weights = compute_class_weight(
                 class_weight="balanced", classes=classes, y=train_y
@@ -460,7 +461,7 @@ class TrainingProgram:
             ValueError: If `optimizer_type` is not supported.
         """
         model = self.models[view]
-        criterion = self.get_loss_function(np.array(train_y))
+        criterion = self.get_loss_function(train_y)
 
         # Determine optimizer to be used
         if optimizer_type == "adam":
