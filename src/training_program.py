@@ -224,10 +224,6 @@ class TrainingProgram:
     def get_loss_function(self, train_y):
         """
         Return the loss function based on balancing strategy.
-        0 = no balancing
-        1 = class-weighted loss
-        2 = oversampling only (normal loss)
-        3 = both (oversampling + class-weighted loss)
         """
         if self.balance_classes in [1, 3]:
             from sklearn.utils.class_weight import compute_class_weight
@@ -243,10 +239,6 @@ class TrainingProgram:
     def get_train_loader(self, train_dataset, train_y, batch_size):
         """
         Return DataLoader with optional oversampling.
-        0 = no balancing
-        1 = class-weighted loss only (normal sampler)
-        2 = oversampling only
-        3 = both (oversampling + class-weighted loss)
         """
         if self.balance_classes in [2, 3]:
             class_sample_counts = np.bincount(train_y)
