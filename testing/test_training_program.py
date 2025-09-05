@@ -96,7 +96,8 @@ class TestTrainingProgram(unittest.TestCase):
         ])
         mock_loader.__len__.return_value = 2  # Two batches
 
-        self.training_program.training_evaluation_resnet(1, mock_loader, mock_loader, "caud")
+        self.training_program.training_evaluation_resnet(
+            1, mock_loader, mock_loader, "caud", train_y=[0, 1, 0, 1, 1, 0, 1, 0])
 
     def test_train_resnet_model(self):
         """ Test train_resnet_model method """
@@ -176,7 +177,8 @@ class TestTrainingProgram(unittest.TestCase):
             test_loader=test_loader,
             view="caud",
             lr=0.001,
-            optimizer_type="adam"
+            optimizer_type="adam",
+            train_y=[0, 1, 0, 1]
         )
 
         self.assertIsInstance(f1, float)
