@@ -253,7 +253,7 @@ class TrainingProgram:
         """
         if self.balance_classes in [2, 3]:
             train_y = np.array(train_y)
-            
+
             # Count samples per class for all classes
             class_sample_counts = np.zeros(self.num_classes, dtype=np.int64)
             unique, counts = np.unique(train_y, return_counts=True)
