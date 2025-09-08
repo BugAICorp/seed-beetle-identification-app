@@ -225,18 +225,23 @@ class TrainingProgram:
     def get_loss_function(self, train_y):
         """
         Return the loss function based on balancing strategy.
-        Always uses self.num_classes to ensure weights match output dimension.
+        Uses class-weighted loss if specified.
         """
         if self.balance_classes in [1, 3]:
             train_y = np.array(train_y)
 
-            # Always generate weights for the full class range
-            classes = np.arange(self.num_classes)
+            # Classes present in this training split
+            classes_in_split = np.unique(train_y)
 
             class_weights = compute_class_weight(
-                class_weight="balanced", classes=classes, y=train_y
+                class_weight="balanced", classes=classes_in_split, y=train_y
             )
-            class_weights = torch.tensor(class_weights, dtype=torch.float).to(self.device)
+
+            # Expand back to full num_classes size
+            full_class_weights = np.zeros(self.num_classes, dtype=np.float32)
+            full_class_weights[classes_in_split] = class_weights
+
+            class_weights = torch.tensor(full_class_weights, dtype=torch.float).to(self.device)
             return torch.nn.CrossEntropyLoss(weight=class_weights)
 
         return torch.nn.CrossEntropyLoss()
