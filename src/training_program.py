@@ -225,10 +225,14 @@ class TrainingProgram:
     def get_loss_function(self, train_y):
         """
         Return the loss function based on balancing strategy.
+        Always uses self.num_classes to ensure weights match output dimension.
         """
         if self.balance_classes in [1, 3]:
-            train_y = np.array(train_y)  # ensures correct format
-            classes = np.unique(train_y)
+            train_y = np.array(train_y)
+
+            # Always generate weights for the full class range
+            classes = np.arange(self.num_classes)
+
             class_weights = compute_class_weight(
                 class_weight="balanced", classes=classes, y=train_y
             )
