@@ -249,10 +249,22 @@ class TrainingProgram:
     def get_train_loader(self, train_dataset, train_y, batch_size):
         """
         Return DataLoader with optional oversampling.
+        Handles missing classes by filling zeros for absent classes.
         """
         if self.balance_classes in [2, 3]:
-            class_sample_counts = np.bincount(train_y)
-            weights = 1.0 / class_sample_counts
+            train_y = np.array(train_y)
+            
+            # Count samples per class for all classes
+            class_sample_counts = np.zeros(self.num_classes, dtype=np.int64)
+            unique, counts = np.unique(train_y, return_counts=True)
+            class_sample_counts[unique] = counts
+
+            # Avoid division by zero for missing classes
+            weights = np.zeros_like(class_sample_counts, dtype=np.float32)
+            nonzero_mask = class_sample_counts > 0
+            weights[nonzero_mask] = 1.0 / class_sample_counts[nonzero_mask]
+
+            # Assign weight to each sample in train_y
             sample_weights = [weights[t] for t in train_y]
 
             sampler = WeightedRandomSampler(
