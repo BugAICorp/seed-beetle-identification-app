@@ -343,6 +343,9 @@ class TrainingProgram:
                 else:
                     print(f"No improvement to model, the best epoch is {best_epoch}.")
 
+            # Free unused VRAM after each epoch
+            torch.cuda.empty_cache()
+
         # Set model to the best model after training
         if best_state_dict is not None:
             self.models[view].load_state_dict(best_state_dict)
