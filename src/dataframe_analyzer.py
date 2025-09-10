@@ -11,6 +11,16 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../'
 
 if __name__ == '__main__':
 
+    while True:
+        choice = input("\nWould you like to limit the DataFrame based on the class list? (y/n): ").lower()
+        if choice == 'y':
+            class_file_path = globals.class_list
+            break
+        if choice == 'n':
+            class_file_path = None
+            break
+        print("Invalid input. Please try again.")
+
     # Create the beetle cropper object to be used in dataset creation and image cropping
     beetle_cropper = BeetleCropper()
     # Crop the images in the original dataset so that the image is only the beetle
@@ -25,7 +35,7 @@ if __name__ == '__main__':
 
     # Read converted data
     dbr = DatabaseReader(
-        database=globals.training_database, class_file_path=globals.class_list)
+        database=globals.training_database, class_file_path=class_file_path)
     df = dbr.get_dataframe()
 
     # Display how many images we have for each angle
