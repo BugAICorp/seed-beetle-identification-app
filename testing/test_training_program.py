@@ -192,7 +192,8 @@ class TestTrainingProgram(unittest.TestCase):
 
         # Setup mock Optuna trial
         trial = MagicMock()
-        trial.suggest_float.side_effect = [0.001, 0.2, 0.1, 0.02, 0.2]  # lr, brightness, contrast, erasing
+        trial.suggest_float.side_effect = [0.001, 0.2, 0.02, 0.01, 0.1, 3.0]
+        # lr, brightness, erasing_p, erasing_scale_min, erasing_scale_max, max_os_ratio
         trial.suggest_categorical.side_effect = [32]  # batch_size
         trial.suggest_int.return_value = 15  # rotation
 
