@@ -598,7 +598,8 @@ class TrainingProgram:
 
             train_dataset = ImageDataset(train_x, train_y, transform=self.train_transformations[view])
             val_dataset = ImageDataset(val_x, val_y, transform=self.transformations[view])
-            train_loader = self.get_train_loader(train_dataset, np.array(train_y), batch_size, max_os_ratio=max_os_ratio)
+            train_loader = self.get_train_loader(
+                train_dataset, np.array(train_y), batch_size, max_os_ratio=max_os_ratio)
             val_loader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False)
 
             self.models[view] = self.load_model()
