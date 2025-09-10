@@ -246,7 +246,7 @@ class TrainingProgram:
 
         return torch.nn.CrossEntropyLoss()
 
-    def get_train_loader(self, train_dataset, train_y, batch_size):
+    def get_train_loader(self, train_dataset, train_y, batch_size, max_os_ratio: float = 3.0):
         """
         Return DataLoader with optional oversampling.
         Handles missing classes by filling zeros for absent classes.
@@ -263,6 +263,13 @@ class TrainingProgram:
             weights = np.zeros_like(class_sample_counts, dtype=np.float32)
             nonzero_mask = class_sample_counts > 0
             weights[nonzero_mask] = 1.0 / class_sample_counts[nonzero_mask]
+
+            # Light oversampling safeguard
+            # Normalize so max ratio between classes <= max_os_ratio
+            min_w, max_w = weights[nonzero_mask].min(), weights[nonzero_mask].max()
+            if max_w / min_w > max_os_ratio:
+                scale = (min_w * max_os_ratio) / max_w
+                weights = np.clip(weights, a_min=None, a_max=scale * weights.max())
 
             # Assign weight to each sample in train_y
             sample_weights = [weights[t] for t in train_y]
@@ -353,7 +360,7 @@ class TrainingProgram:
             print(f"Best Macro F1: {100 * best_macro_f1:.2f}% — model loaded.")
 
     def train_resnet_model(self, num_epochs, view, batch, rotation=5, brightness=0.1, lrate=0.001,
-                           erasure_params=None):
+                           erasure_params=None, max_os_ratio: float = 3.0):
         """
         Trains resnet model with subset of specified image views
         and save model to respective save file.
@@ -387,13 +394,13 @@ class TrainingProgram:
         # Create DataLoaders
         train_dataset = ImageDataset(train_x, train_y, transform=self.train_transformations[view])
         test_dataset = ImageDataset(test_x, test_y, transform=self.transformations[view])
-        training_loader = self.get_train_loader(train_dataset, train_y, batch)
+        training_loader = self.get_train_loader(train_dataset, train_y, batch, max_os_ratio=max_os_ratio)
         testing_loader = DataLoader(test_dataset, batch_size=batch, shuffle=False)
 
         self.training_evaluation_resnet(num_epochs, training_loader, testing_loader, view, train_y=train_y, lrate=lrate)
 
     def k_fold_resnet(self, num_epochs, view, k_folds=5, batch=32, rotation=5, brightness=0.1, lrate=0.001,
-                      erasure_params=None):
+                      erasure_params=None, max_os_ratio: float = 3.0):
         """
         Trains the model(determined by view) using Stratified K-Fold Cross Validation.
         """
@@ -449,7 +456,7 @@ class TrainingProgram:
 
             train_dataset = ImageDataset(train_x, train_y, transform=self.train_transformations[view])
             val_dataset = ImageDataset(val_x, val_y, transform=self.transformations[view])
-            train_loader = self.get_train_loader(train_dataset, np.array(train_y), batch)
+            train_loader = self.get_train_loader(train_dataset, np.array(train_y), batch, max_os_ratio=max_os_ratio)
             val_loader = DataLoader(val_dataset, batch_size=batch, shuffle=False)
 
             # Reinitialize model before each fold
@@ -544,6 +551,7 @@ class TrainingProgram:
         erasing_p = trial.suggest_float('erasing_p', 0.0, 0.8)
         erasing_scale_min = trial.suggest_float('erasing_scale_min', 0.01, 0.1)
         erasing_scale_max = trial.suggest_float('erasing_scale_max', 0.1, 0.4)
+        max_os_ratio = trial.suggest_float('max_os_ratio', 1.0, 5.0, step=0.5)
 
         if erasing_scale_min >= erasing_scale_max:
             return 0.0  # Invalid trial
@@ -590,7 +598,7 @@ class TrainingProgram:
 
             train_dataset = ImageDataset(train_x, train_y, transform=self.train_transformations[view])
             val_dataset = ImageDataset(val_x, val_y, transform=self.transformations[view])
-            train_loader = self.get_train_loader(train_dataset, np.array(train_y), batch_size)
+            train_loader = self.get_train_loader(train_dataset, np.array(train_y), batch_size, max_os_ratio=max_os_ratio)
             val_loader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False)
 
             self.models[view] = self.load_model()
