@@ -75,7 +75,7 @@ class BeetleCropper:
 
         print(f"Cropping beetles from images in {image_dir}...")
 
-        dropped_count = 0
+        dropped_files = []
         for img_file in image_dir.iterdir():
             if img_file.suffix.lower() not in [".jpg", ".jpeg", ".png"]:
                 continue
@@ -85,7 +85,7 @@ class BeetleCropper:
                 cropped = self.crop_beetle(img)
 
                 if cropped is None:
-                    dropped_count += 1
+                    dropped_files.append(img_file.name)
                     continue
 
                 cropped.save(output_dir / img_file.name, format="JPEG")
@@ -97,7 +97,11 @@ class BeetleCropper:
                 print(f"OS error processing {img_file.name}: {e}")
                 dropped_count += 1
 
-        print(f"Dropped {dropped_count} image(s) from the dataset.")
+        print(f"Dropped {len(dropped_files)} image(s) from the dataset.")
+        if dropped_files:
+            print("Dropped files:")
+            for f in dropped_files:
+                print("  -", f)
         print(f"Cropped dataset saved to {output_dir}")
 
     def crop_beetle(self, image: Image.Image):
