@@ -2,6 +2,7 @@
 
 import sys
 import os
+import pandas as pd
 from beetle_cropper import BeetleCropper
 from training_data_converter import TrainingDataConverter
 from training_database_reader import DatabaseReader
@@ -85,3 +86,17 @@ if __name__ == '__main__':
 
         print(f"\nSpecies counts - {v} view:")
         print(species_tables[v])
+
+    output_dir = "dataframe_analysis"
+    os.makedirs(output_dir, exist_ok=True)
+
+    for v in views:
+        genus_path = os.path.join(output_dir, f"genus_counts_{v}.csv")
+        species_path = os.path.join(output_dir, f"species_counts_{v}.csv")
+
+        # Save to CSV
+        genus_tables[v].to_csv(genus_path, index=False)
+        species_tables[v].to_csv(species_path, index=False)
+
+        print(f"✅ Saved genus counts for {v} view -> {genus_path}")
+        print(f"✅ Saved species counts for {v} view -> {species_path}")
