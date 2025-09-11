@@ -98,5 +98,5 @@ if __name__ == '__main__':
         genus_tables[v].to_csv(genus_path, index=False)
         species_tables[v].to_csv(species_path, index=False)
 
-        print(f"✅ Saved genus counts for {v} view -> {genus_path}")
-        print(f"✅ Saved species counts for {v} view -> {species_path}")
+        print(f"Saved genus counts for {v} view -> {genus_path}")
+        print(f"Saved species counts for {v} view -> {species_path}")
