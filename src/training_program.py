@@ -9,6 +9,7 @@ import pandas as pd
 from PIL import Image
 import numpy as np
 import matplotlib.pyplot as plt
+import torch.nn.functional as F
 from torch.utils.data import DataLoader, Dataset, WeightedRandomSampler
 from torchvision import transforms, models
 import torch
@@ -645,6 +646,27 @@ class TrainingProgram:
         print(f"F1 Score: {100 * study.best_value:.2f}%")
         print("Best hyperparameters:", study.best_params)
         return study.best_params
+    
+    def mc_dropout_predict(self, view, inputs, n_samples=30):
+        """
+        Run Monte Carlo Dropout inference for uncertainty estimation.
+        """
+        self.models[view].to(self.device)
+        self.models[view].train()  # keep dropout active
+        inputs = inputs.to(self.device)
+
+        probs = []
+        with torch.no_grad():
+            for _ in range(n_samples):
+                outputs = self.models[view](inputs)
+                probs.append(F.softmax(outputs, dim=1).unsqueeze(0))  # (1, N, C)
+
+        probs = torch.cat(probs, dim=0)        # (n_samples, N, C)
+        mean_probs = probs.mean(dim=0)         # (N, C)
+        max_probs, _ = probs.max(dim=2)        # (n_samples, N)
+        uncertainties = max_probs.var(dim=0)   # (N,)
+
+        return mean_probs, uncertainties
 
     def create_f1_scores_bar_plot(
             self, view, model=None, batch_size=32, save_path=None, plot=True, plot_save_path=None):
