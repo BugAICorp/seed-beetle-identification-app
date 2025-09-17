@@ -2,6 +2,7 @@
 
 import sys
 import os
+import pandas as pd
 from beetle_cropper import BeetleCropper
 from training_data_converter import TrainingDataConverter
 from training_database_reader import DatabaseReader
@@ -10,6 +11,26 @@ import globals
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../')))
 
 if __name__ == '__main__':
+
+    while True:
+        print("\nSelect which DataFrame you would like to analyze: ")
+        print("\t1 = The Entire Dataset\n" \
+            "\t2 = Dataset Limited to Class List\n" \
+            "\t3 = The Entire Dataset Excluding the Class List")
+        user_input = int(input("Enter the number of your choice: "))
+        if user_input == 1:
+            class_file_path = None
+            exclude_classes = False
+            break
+        if user_input == 2:
+            class_file_path = globals.class_list
+            exclude_classes = False
+            break
+        if user_input == 3:
+            class_file_path = globals.class_list
+            exclude_classes = True
+            break
+        print("Invalid Input. Please enter 1, 2, or 3.")
 
     # Create the beetle cropper object to be used in dataset creation and image cropping
     beetle_cropper = BeetleCropper()
@@ -25,7 +46,7 @@ if __name__ == '__main__':
 
     # Read converted data
     dbr = DatabaseReader(
-        database=globals.training_database, class_file_path=globals.class_list)
+        database=globals.training_database, class_file_path=class_file_path, exclude_classes=exclude_classes)
     df = dbr.get_dataframe()
 
     # Display how many images we have for each angle
@@ -65,3 +86,17 @@ if __name__ == '__main__':
 
         print(f"\nSpecies counts - {v} view:")
         print(species_tables[v])
+
+    output_dir = "dataframe_analysis"
+    os.makedirs(output_dir, exist_ok=True)
+
+    for v in views:
+        genus_path = os.path.join(output_dir, f"genus_counts_{v}.csv")
+        species_path = os.path.join(output_dir, f"species_counts_{v}.csv")
+
+        # Save to CSV
+        genus_tables[v].to_csv(genus_path, index=False)
+        species_tables[v].to_csv(species_path, index=False)
+
+        print(f"Saved genus counts for {v} view -> {genus_path}")
+        print(f"Saved species counts for {v} view -> {species_path}")
