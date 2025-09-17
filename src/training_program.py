@@ -652,7 +652,7 @@ class TrainingProgram:
         Run Monte Carlo Dropout inference for uncertainty estimation.
         """
         self.models[view].to(self.device)
-        self.models[view].train()  # keep dropout active
+        self.enable_dropout(view)  # only dropout layers active
         inputs = inputs.to(self.device)
 
         probs = []
@@ -663,10 +663,66 @@ class TrainingProgram:
 
         probs = torch.cat(probs, dim=0)        # (n_samples, N, C)
         mean_probs = probs.mean(dim=0)         # (N, C)
-        max_probs, _ = probs.max(dim=2)        # (n_samples, N)
-        uncertainties = max_probs.var(dim=0)   # (N,)
+        uncertainties = probs.var(dim=0).mean(dim=1)  # (N,) average variance across classes
 
         return mean_probs, uncertainties
+
+    def enable_dropout(self, view):
+        """ Function to enable dropout layers during test-time """
+        for m in self.models[view].modules():
+            if m.__class__.__name__.startswith('Dropout'):
+                m.train()
+
+    def evaluate_uncertainty(self, view, n_samples=30, batch_size=32, threshold=None):
+        """
+        Evaluate model uncertainty on the test split using Monte Carlo Dropout.
+
+        Args:
+            view (str): dataset view (e.g. "late", "caud").
+            model (torch.nn.Module): trained model.
+            n_samples (int): number of MC dropout forward passes.
+            batch_size (int): batch size for evaluation.
+            threshold (float, optional): uncertainty cutoff. If set, only keep predictions below this.
+
+        Returns:
+            dict: containing predictions, labels, and uncertainties.
+        """
+        # Get test indices
+        test_x = self.train_test_indices[view]["test_x"]
+        test_y = self.train_test_indices[view]["test_y"]
+
+        test_dataset = ImageDataset(test_x, test_y, transform=self.transformations[view])
+        test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False)
+
+
+        all_preds, all_labels, all_uncertainties = [], [], []
+
+        self.models[view].eval()  # reset model first
+        for images, labels in test_loader:
+            mean_probs, uncertainties = self.mc_dropout_predict(view, images, n_samples=n_samples)
+            preds = mean_probs.argmax(dim=1)
+
+            all_preds.extend(preds.cpu().numpy())
+            all_labels.extend(labels.cpu().numpy())
+            all_uncertainties.extend(uncertainties.cpu().numpy())
+
+        results = {
+            "all_preds": all_preds,
+            "all_labels": all_labels,
+            "all_uncertainties": all_uncertainties
+        }
+
+        # Optionally filter by threshold
+        if threshold is not None:
+            kept_preds, kept_labels = [], []
+            for pred, label, unc in zip(all_preds, all_labels, all_uncertainties):
+                if unc < threshold:
+                    kept_preds.append(pred)
+                    kept_labels.append(label)
+            results["filtered_preds"] = kept_preds
+            results["filtered_labels"] = kept_labels
+
+        return results
 
     def create_f1_scores_bar_plot(
             self, view, model=None, batch_size=32, save_path=None, plot=True, plot_save_path=None):
