@@ -5,28 +5,26 @@ import json
 import copy
 import gc
 from io import BytesIO
+import dill
+import optuna
 import pandas as pd
-from PIL import Image
 import numpy as np
 import matplotlib.pyplot as plt
+from PIL import Image
+from sklearn.metrics import confusion_matrix, f1_score
+from sklearn.model_selection import train_test_split, StratifiedKFold
+from sklearn.utils.class_weight import compute_class_weight
+import torch
 import torch.nn.functional as F
 from torch.utils.data import DataLoader, Dataset, WeightedRandomSampler
 from torchvision import transforms, models
-import torch
-import dill
-import optuna
-from sklearn.metrics import confusion_matrix
-from sklearn.model_selection import train_test_split
-from sklearn.metrics import f1_score
-from sklearn.model_selection import StratifiedKFold
-from sklearn.utils.class_weight import compute_class_weight
 from transformation_classes import HistogramEqualization
 from data_augmenter import DataAugmenter
 import globals
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../')))
 
-# pylint: disable=too-many-instance-attributes, too-many-arguments, too-many-positional-arguments, unspecified-encoding too-many-public-methods
+# pylint: disable=too-many-instance-attributes, too-many-arguments, too-many-positional-arguments, unspecified-encoding too-many-public-methods, disable=too-many-lines
 class TrainingProgram:
     """
     Reads 4 subsets of pandas database from DatabaseReader, and trains and saves 4 models
@@ -646,7 +644,7 @@ class TrainingProgram:
         print(f"F1 Score: {100 * study.best_value:.2f}%")
         print("Best hyperparameters:", study.best_params)
         return study.best_params
-    
+
     def mc_dropout_predict(self, view, inputs, n_samples=30):
         """
         Run Monte Carlo Dropout inference for uncertainty estimation.
