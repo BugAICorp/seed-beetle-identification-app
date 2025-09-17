@@ -693,7 +693,8 @@ class TrainingProgram:
         f1_per_class = f1_score(
             all_true, all_preds,
             average=None,
-            labels=list(range(self.num_classes))
+            labels=list(range(self.num_classes)),
+            zero_division=0
         )
 
         class_names = [self.class_index_dictionary[i] for i in range(self.num_classes)]
@@ -708,10 +709,20 @@ class TrainingProgram:
             fig_height = max(6, 0.4 * len(class_names))  # 0.4 inch per class, minimum height = 6
             plt.figure(figsize=(10, fig_height))
             plt.barh(class_names, f1_per_class, color="skyblue")
+
             plt.xlabel("F1 Score")
             plt.title(f"Per-Class F1 Scores — {view.upper()} View")
             plt.xlim(0, 1.0)
             plt.tight_layout()
+
+            # Add labels to bars
+            for i, v in enumerate(f1_per_class):
+                plt.text(
+                    v + 0.01,  # to the right of the bar
+                    i,
+                    f"{v:.2f}",
+                    va="center"
+                )
 
             if plot_save_path:
                 plt.savefig(plot_save_path, bbox_inches="tight")
