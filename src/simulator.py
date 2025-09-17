@@ -220,7 +220,9 @@ if __name__ == '__main__':
             # Print quick summary
             avg_uncertainty = sum(results["all_uncertainties"]) / len(results["all_uncertainties"])
             print(f"Average uncertainty across test set: {avg_uncertainty:.4f}")
-            print(f"Total predictions kept after thresholding: {len(results['filtered_preds'])}/{len(results['all_preds'])}")
+            kept = len(results["filtered_preds"])
+            total = len(results["all_preds"])
+            print(f"Total predictions kept after thresholding: {kept}/{total}")
 
         if show_plots:
             species_tp.create_f1_scores_bar_plot(
@@ -249,7 +251,9 @@ if __name__ == '__main__':
 
             avg_uncertainty = sum(results["all_uncertainties"]) / len(results["all_uncertainties"])
             print(f"Average uncertainty across test set: {avg_uncertainty:.4f}")
-            print(f"Total predictions kept after thresholding: {len(results['filtered_preds'])}/{len(results['all_preds'])}")
+            kept = len(results["filtered_preds"])
+            total = len(results["all_preds"])
+            print(f"Total predictions kept after thresholding: {kept}/{total}")
 
         if show_plots:
             species_tp.create_f1_scores_bar_plot(
@@ -278,7 +282,9 @@ if __name__ == '__main__':
 
             avg_uncertainty = sum(results["all_uncertainties"]) / len(results["all_uncertainties"])
             print(f"Average uncertainty across test set: {avg_uncertainty:.4f}")
-            print(f"Total predictions kept after thresholding: {len(results['filtered_preds'])}/{len(results['all_preds'])}")
+            kept = len(results["filtered_preds"])
+            total = len(results["all_preds"])
+            print(f"Total predictions kept after thresholding: {kept}/{total}")
 
         if show_plots:
             species_tp.create_f1_scores_bar_plot(
@@ -307,7 +313,9 @@ if __name__ == '__main__':
 
             avg_uncertainty = sum(results["all_uncertainties"]) / len(results["all_uncertainties"])
             print(f"Average uncertainty across test set: {avg_uncertainty:.4f}")
-            print(f"Total predictions kept after thresholding: {len(results['filtered_preds'])}/{len(results['all_preds'])}")
+            kept = len(results["filtered_preds"])
+            total = len(results["all_preds"])
+            print(f"Total predictions kept after thresholding: {kept}/{total}")
 
         if show_plots:
             species_tp.create_f1_scores_bar_plot(
@@ -355,7 +363,9 @@ if __name__ == '__main__':
 
             avg_uncertainty = sum(results["all_uncertainties"]) / len(results["all_uncertainties"])
             print(f"Average uncertainty across test set: {avg_uncertainty:.4f}")
-            print(f"Total predictions kept after thresholding: {len(results['filtered_preds'])}/{len(results['all_preds'])}")
+            kept = len(results["filtered_preds"])
+            total = len(results["all_preds"])
+            print(f"Total predictions kept after thresholding: {kept}/{total}")
 
         if show_plots:
             genus_tp.create_f1_scores_bar_plot(
@@ -384,7 +394,9 @@ if __name__ == '__main__':
 
             avg_uncertainty = sum(results["all_uncertainties"]) / len(results["all_uncertainties"])
             print(f"Average uncertainty across test set: {avg_uncertainty:.4f}")
-            print(f"Total predictions kept after thresholding: {len(results['filtered_preds'])}/{len(results['all_preds'])}")
+            kept = len(results["filtered_preds"])
+            total = len(results["all_preds"])
+            print(f"Total predictions kept after thresholding: {kept}/{total}")
 
         if show_plots:
             genus_tp.create_f1_scores_bar_plot(
@@ -413,7 +425,9 @@ if __name__ == '__main__':
 
             avg_uncertainty = sum(results["all_uncertainties"]) / len(results["all_uncertainties"])
             print(f"Average uncertainty across test set: {avg_uncertainty:.4f}")
-            print(f"Total predictions kept after thresholding: {len(results['filtered_preds'])}/{len(results['all_preds'])}")
+            kept = len(results["filtered_preds"])
+            total = len(results["all_preds"])
+            print(f"Total predictions kept after thresholding: {kept}/{total}")
 
         if show_plots:
             genus_tp.create_f1_scores_bar_plot(
@@ -442,7 +456,9 @@ if __name__ == '__main__':
 
             avg_uncertainty = sum(results["all_uncertainties"]) / len(results["all_uncertainties"])
             print(f"Average uncertainty across test set: {avg_uncertainty:.4f}")
-            print(f"Total predictions kept after thresholding: {len(results['filtered_preds'])}/{len(results['all_preds'])}")
+            kept = len(results["filtered_preds"])
+            total = len(results["all_preds"])
+            print(f"Total predictions kept after thresholding: {kept}/{total}")
 
         if show_plots:
             genus_tp.create_f1_scores_bar_plot(
