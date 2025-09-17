@@ -9,7 +9,7 @@ import pandas as pd
 from PIL import Image
 import numpy as np
 import matplotlib.pyplot as plt
-from torch.utils.data import DataLoader, Dataset
+from torch.utils.data import DataLoader, Dataset, WeightedRandomSampler
 from torchvision import transforms, models
 import torch
 import dill
@@ -18,6 +18,7 @@ from sklearn.metrics import confusion_matrix
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import f1_score
 from sklearn.model_selection import StratifiedKFold
+from sklearn.utils.class_weight import compute_class_weight
 from transformation_classes import HistogramEqualization
 from data_augmenter import DataAugmenter
 import globals
@@ -30,7 +31,8 @@ class TrainingProgram:
     Reads 4 subsets of pandas database from DatabaseReader, and trains and saves 4 models
     according to their respective image angles.
     """
-    def __init__(self, dataframe, class_column, num_classes, image_column='Image', augment=False):
+    def __init__(self, dataframe, class_column, num_classes,
+                 image_column='Image', augment=False, balance_classes=0):
         """
         Initialize dataset, image height, and individual model training
         Args:
@@ -39,6 +41,11 @@ class TrainingProgram:
             num_classes (int): Number of classes/outputs for the models
             image_column (str): Column header used to determine the image column
             augment (bool): Determines if data is augmented or not
+            balance_classes (int): Determines if class balancing will be used during training.
+                        0 = no balancing
+                        1 = class-weighted loss
+                        2 = oversampling only (normal loss)
+                        3 = both (oversampling + class-weighted loss)
         """
         self.dataframe = dataframe
         self.height = 300
@@ -47,6 +54,9 @@ class TrainingProgram:
         self.image_column = image_column
         self.class_column = class_column
         self.augment = augment
+
+        self.balance_classes = balance_classes
+
         # subsets to save database reading to
         self.subsets = {
             "caud" : self.get_subset("CAUD", self.dataframe),
@@ -212,13 +222,74 @@ class TrainingProgram:
 
         return [train_x, test_x, train_y, test_y]
 
-    def training_evaluation_resnet(self, num_epochs, train_loader, test_loader, view, lrate=0.001):
+    def get_loss_function(self, train_y):
+        """
+        Return the loss function based on balancing strategy.
+        Uses class-weighted loss if specified.
+        """
+        if self.balance_classes in [1, 3]:
+            train_y = np.array(train_y)
+
+            # Classes present in this training split
+            classes_in_split = np.unique(train_y)
+
+            class_weights = compute_class_weight(
+                class_weight="balanced", classes=classes_in_split, y=train_y
+            )
+
+            # Expand back to full num_classes size
+            full_class_weights = np.zeros(self.num_classes, dtype=np.float32)
+            full_class_weights[classes_in_split] = class_weights
+
+            class_weights = torch.tensor(full_class_weights, dtype=torch.float).to(self.device)
+            return torch.nn.CrossEntropyLoss(weight=class_weights)
+
+        return torch.nn.CrossEntropyLoss()
+
+    def get_train_loader(self, train_dataset, train_y, batch_size, max_os_ratio: float = 3.0):
+        """
+        Return DataLoader with optional oversampling.
+        Handles missing classes by filling zeros for absent classes.
+        """
+        if self.balance_classes in [2, 3]:
+            train_y = np.array(train_y)
+
+            # Count samples per class for all classes
+            class_sample_counts = np.zeros(self.num_classes, dtype=np.int64)
+            unique, counts = np.unique(train_y, return_counts=True)
+            class_sample_counts[unique] = counts
+
+            # Avoid division by zero for missing classes
+            weights = np.zeros_like(class_sample_counts, dtype=np.float32)
+            nonzero_mask = class_sample_counts > 0
+            weights[nonzero_mask] = 1.0 / class_sample_counts[nonzero_mask]
+
+            # Light oversampling safeguard
+            # Normalize so max ratio between classes <= max_os_ratio
+            min_w, max_w = weights[nonzero_mask].min(), weights[nonzero_mask].max()
+            if max_w / min_w > max_os_ratio:
+                scale = (min_w * max_os_ratio) / max_w
+                weights = np.clip(weights, a_min=None, a_max=scale * weights.max())
+
+            # Assign weight to each sample in train_y
+            sample_weights = [weights[t] for t in train_y]
+
+            sampler = WeightedRandomSampler(
+                weights=sample_weights,
+                num_samples=len(sample_weights),
+                replacement=True
+            )
+            return DataLoader(train_dataset, batch_size=batch_size, sampler=sampler)
+
+        return DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
+
+    def training_evaluation_resnet(self, num_epochs, train_loader, test_loader, view, train_y, lrate=0.001):
         """
         Code for training algorithm and evaluating model
         """
         # Model Training
         # define loss function, optimization function, and image transformation
-        criterion = torch.nn.CrossEntropyLoss()
+        criterion = self.get_loss_function(train_y)
         optimizer = torch.optim.Adam(self.models[view].parameters(), lr=lrate)
 
         best_epoch = 0
@@ -279,6 +350,9 @@ class TrainingProgram:
                 else:
                     print(f"No improvement to model, the best epoch is {best_epoch}.")
 
+            # Free unused VRAM after each epoch
+            torch.cuda.empty_cache()
+
         # Set model to the best model after training
         if best_state_dict is not None:
             self.models[view].load_state_dict(best_state_dict)
@@ -286,7 +360,7 @@ class TrainingProgram:
             print(f"Best Macro F1: {100 * best_macro_f1:.2f}% — model loaded.")
 
     def train_resnet_model(self, num_epochs, view, batch, rotation=5, brightness=0.1, lrate=0.001,
-                           erasure_params=None):
+                           erasure_params=None, max_os_ratio: float = 3.0):
         """
         Trains resnet model with subset of specified image views
         and save model to respective save file.
@@ -320,13 +394,13 @@ class TrainingProgram:
         # Create DataLoaders
         train_dataset = ImageDataset(train_x, train_y, transform=self.train_transformations[view])
         test_dataset = ImageDataset(test_x, test_y, transform=self.transformations[view])
-        training_loader = DataLoader(train_dataset, batch_size=batch, shuffle=True)
+        training_loader = self.get_train_loader(train_dataset, train_y, batch, max_os_ratio=max_os_ratio)
         testing_loader = DataLoader(test_dataset, batch_size=batch, shuffle=False)
 
-        self.training_evaluation_resnet(num_epochs, training_loader, testing_loader, view, lrate=lrate)
+        self.training_evaluation_resnet(num_epochs, training_loader, testing_loader, view, train_y=train_y, lrate=lrate)
 
     def k_fold_resnet(self, num_epochs, view, k_folds=5, batch=32, rotation=5, brightness=0.1, lrate=0.001,
-                      erasure_params=None):
+                      erasure_params=None, max_os_ratio: float = 3.0):
         """
         Trains the model(determined by view) using Stratified K-Fold Cross Validation.
         """
@@ -382,14 +456,14 @@ class TrainingProgram:
 
             train_dataset = ImageDataset(train_x, train_y, transform=self.train_transformations[view])
             val_dataset = ImageDataset(val_x, val_y, transform=self.transformations[view])
-            train_loader = DataLoader(train_dataset, batch_size=batch, shuffle=True)
+            train_loader = self.get_train_loader(train_dataset, np.array(train_y), batch, max_os_ratio=max_os_ratio)
             val_loader = DataLoader(val_dataset, batch_size=batch, shuffle=False)
 
             # Reinitialize model before each fold
             self.model_accuracies[view] = 0.0
             self.models[view] = self.load_model()
 
-            self.training_evaluation_resnet(num_epochs, train_loader, val_loader, view, lrate=lrate)
+            self.training_evaluation_resnet(num_epochs, train_loader, val_loader, view, train_y=train_y, lrate=lrate)
 
             fold_f1 = self.model_accuracies.get(view, 0.0)
             all_fold_f1s.append(fold_f1)
@@ -397,7 +471,8 @@ class TrainingProgram:
         average_macro_f1 = 100 * sum(all_fold_f1s)/k_folds
         print(f"\nAverage Macro F1 over {k_folds} folds: {average_macro_f1:.2f}%")
 
-    def hyperparameter_training_evaluation(self, num_epochs, train_loader, test_loader, view, lr, optimizer_type):
+    def hyperparameter_training_evaluation(
+            self, num_epochs, train_loader, test_loader, view, train_y, lr, optimizer_type):
         """
         Code for training algorithm and evaluating model, adjusted for hyperparameter tuning.
         Trains and evaluate the model for a given view using specified hyperparameters.
@@ -417,7 +492,7 @@ class TrainingProgram:
             ValueError: If `optimizer_type` is not supported.
         """
         model = self.models[view]
-        criterion = torch.nn.CrossEntropyLoss()
+        criterion = self.get_loss_function(train_y)
 
         # Determine optimizer to be used
         if optimizer_type == "adam":
@@ -476,6 +551,7 @@ class TrainingProgram:
         erasing_p = trial.suggest_float('erasing_p', 0.0, 0.8)
         erasing_scale_min = trial.suggest_float('erasing_scale_min', 0.01, 0.1)
         erasing_scale_max = trial.suggest_float('erasing_scale_max', 0.1, 0.4)
+        max_os_ratio = trial.suggest_float('max_os_ratio', 1.0, 5.0, step=0.5)
 
         if erasing_scale_min >= erasing_scale_max:
             return 0.0  # Invalid trial
@@ -522,7 +598,8 @@ class TrainingProgram:
 
             train_dataset = ImageDataset(train_x, train_y, transform=self.train_transformations[view])
             val_dataset = ImageDataset(val_x, val_y, transform=self.transformations[view])
-            train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
+            train_loader = self.get_train_loader(
+                train_dataset, np.array(train_y), batch_size, max_os_ratio=max_os_ratio)
             val_loader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False)
 
             self.models[view] = self.load_model()
@@ -531,6 +608,7 @@ class TrainingProgram:
                 train_loader=train_loader,
                 test_loader=val_loader,
                 view=view,
+                train_y=train_y,
                 lr=lr,
                 optimizer_type="adam"
             )

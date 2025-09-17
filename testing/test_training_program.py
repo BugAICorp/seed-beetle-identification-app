@@ -96,7 +96,8 @@ class TestTrainingProgram(unittest.TestCase):
         ])
         mock_loader.__len__.return_value = 2  # Two batches
 
-        self.training_program.training_evaluation_resnet(1, mock_loader, mock_loader, "caud")
+        self.training_program.training_evaluation_resnet(
+            1, mock_loader, mock_loader, "caud", train_y=[0, 1, 0, 1, 1, 0, 1, 0])
 
     def test_train_resnet_model(self):
         """ Test train_resnet_model method """
@@ -176,7 +177,8 @@ class TestTrainingProgram(unittest.TestCase):
             test_loader=test_loader,
             view="caud",
             lr=0.001,
-            optimizer_type="adam"
+            optimizer_type="adam",
+            train_y=[0, 1, 0, 1]
         )
 
         self.assertIsInstance(f1, float)
@@ -190,7 +192,8 @@ class TestTrainingProgram(unittest.TestCase):
 
         # Setup mock Optuna trial
         trial = MagicMock()
-        trial.suggest_float.side_effect = [0.001, 0.2, 0.1, 0.02, 0.2]  # lr, brightness, contrast, erasing
+        trial.suggest_float.side_effect = [0.001, 0.2, 0.02, 0.01, 0.1, 3.0]
+        # lr, brightness, erasing_p, erasing_scale_min, erasing_scale_max, max_os_ratio
         trial.suggest_categorical.side_effect = [32]  # batch_size
         trial.suggest_int.return_value = 15  # rotation
 
