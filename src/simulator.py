@@ -25,23 +25,23 @@ if __name__ == '__main__':
 
     while not can_continue:
         print("Dorsal: 1\nCaudal: 2\nFrontal: 3\nLateral: 4")
-        input = int(input("Choose a model you would like to train (type corresponding number): "))
-        if input == 1:
+        user_input = int(input("Choose a model you would like to train (type corresponding number): "))
+        if user_input == 1:
             train_dors = True
-        elif input == 2:
+        elif user_input == 2:
             train_caud = True
-        elif input == 3:
+        elif user_input == 3:
             train_fron = True
-        elif input == 4:
+        elif user_input == 4:
             train_late = True
-        elif input == 5:
+        elif user_input == 5:
             train_dors = True
             train_caud = True
             train_fron = True
             train_late = True
         else:
             print("Invalid Input")
-        del input
+        del user_input
         continue_input = int(
             input(
                 "Press 1 to choose more models to train, anything other number to continue: "
@@ -144,6 +144,17 @@ if __name__ == '__main__':
         print("Invalid input. Please try again.")
 
     while True:
+        # Ask user if they want to run uncertainty evaluation after training has completed
+        choice = input("\nWould you like to evaluate the uncertainty of the model(s) after training? (y/n): ").lower()
+        if choice == 'y':
+            uncertainty_eval = True
+            break
+        if choice == 'n':
+            uncertainty_eval = False
+            break
+        print("Invalid input. Please try again.")
+
+    while True:
         # Ask user if they want to create per-class F1 score bar plot and a confusion matrix
         choice = input("\nWould you like to create Model performance visualizations? (y/n): ").lower()
         if choice == 'y':
@@ -196,11 +207,27 @@ if __name__ == '__main__':
         species_tp.train_resnet_model(
             20, "caud", batch=16, rotation=1, brightness=0.0052372665532581155, lrate=0.000208665948737891,
             erasure_params=erasure_params_caud)
+
+        if uncertainty_eval:
+            print("\nRunning Monte Carlo Dropout uncertainty evaluation for species CAUD view...")
+            results = species_tp.evaluate_uncertainty(
+                view="caud",
+                n_samples=30,
+                batch_size=16,
+                threshold=0.02
+            )
+
+            # Print quick summary
+            avg_uncertainty = sum(results["all_uncertainties"]) / len(results["all_uncertainties"])
+            print(f"Average uncertainty across test set: {avg_uncertainty:.4f}")
+            print(f"Total predictions kept after thresholding: {len(results['filtered_preds'])}/{len(results['all_preds'])}")
+
         if show_plots:
             species_tp.create_f1_scores_bar_plot(
                 "caud", batch_size=32, plot_save_path="species_caud_plot.png", plot=True)
             species_tp.create_confusion_matrix(
                 "caud", batch_size=32, plot_save_path="species_caud_matrix.png", plot=True)
+
     if train_dors:
         erasure_params_dors = {
             "p": 0.5763301129483613,
@@ -210,11 +237,26 @@ if __name__ == '__main__':
         species_tp.train_resnet_model(
             20, "dors", batch=16, rotation=8, brightness=0.11266599539746057, lrate=0.00016310975593889832,
             erasure_params=erasure_params_dors)
+
+        if uncertainty_eval:
+            print("\nRunning Monte Carlo Dropout uncertainty evaluation for species DORS view...")
+            results = species_tp.evaluate_uncertainty(
+                view="dors",
+                n_samples=30,
+                batch_size=16,
+                threshold=0.02
+            )
+
+            avg_uncertainty = sum(results["all_uncertainties"]) / len(results["all_uncertainties"])
+            print(f"Average uncertainty across test set: {avg_uncertainty:.4f}")
+            print(f"Total predictions kept after thresholding: {len(results['filtered_preds'])}/{len(results['all_preds'])}")
+
         if show_plots:
             species_tp.create_f1_scores_bar_plot(
                 "dors", batch_size=32, plot_save_path="species_dors_plot.png", plot=True)
             species_tp.create_confusion_matrix(
                 "dors", batch_size=32, plot_save_path="species_dors_matrix.png", plot=True)
+
     if train_fron:
         erasure_params_fron = {
             "p": 0.265585095702728,
@@ -224,11 +266,26 @@ if __name__ == '__main__':
         species_tp.train_resnet_model(
             20, "fron", batch=32, rotation=12, brightness=0.14763773752336606, lrate=0.00018738820725043863,
             erasure_params=erasure_params_fron)
+
+        if uncertainty_eval:
+            print("\nRunning Monte Carlo Dropout uncertainty evaluation for species FRON view...")
+            results = species_tp.evaluate_uncertainty(
+                view="fron",
+                n_samples=30,
+                batch_size=32,
+                threshold=0.02
+            )
+
+            avg_uncertainty = sum(results["all_uncertainties"]) / len(results["all_uncertainties"])
+            print(f"Average uncertainty across test set: {avg_uncertainty:.4f}")
+            print(f"Total predictions kept after thresholding: {len(results['filtered_preds'])}/{len(results['all_preds'])}")
+
         if show_plots:
             species_tp.create_f1_scores_bar_plot(
                 "fron", batch_size=32, plot_save_path="species_fron_plot.png", plot=True)
             species_tp.create_confusion_matrix(
                 "fron", batch_size=32, plot_save_path="species_fron_matrix.png", plot=True)
+
     if train_late:
         erasure_params_late = {
             "p": 0.5189325280363017,
@@ -238,6 +295,20 @@ if __name__ == '__main__':
         species_tp.train_resnet_model(
             20, "late", batch=16, rotation=18, brightness=0.10813954357888121, lrate=0.0001659616690805536,
             erasure_params=erasure_params_late)
+
+        if uncertainty_eval:
+            print("\nRunning Monte Carlo Dropout uncertainty evaluation for species LATE view...")
+            results = species_tp.evaluate_uncertainty(
+                view="late",
+                n_samples=30,
+                batch_size=16,
+                threshold=0.02
+            )
+
+            avg_uncertainty = sum(results["all_uncertainties"]) / len(results["all_uncertainties"])
+            print(f"Average uncertainty across test set: {avg_uncertainty:.4f}")
+            print(f"Total predictions kept after thresholding: {len(results['filtered_preds'])}/{len(results['all_preds'])}")
+
         if show_plots:
             species_tp.create_f1_scores_bar_plot(
                 "late", batch_size=32, plot_save_path="species_late_plot.png", plot=True)
@@ -272,6 +343,20 @@ if __name__ == '__main__':
         genus_tp.train_resnet_model(
             20, "caud", batch=16, rotation=0, brightness=0.2983619077722387, lrate=0.00039800494669978446,
             erasure_params=erasure_params_caud)
+
+        if uncertainty_eval:
+            print("\nRunning Monte Carlo Dropout uncertainty evaluation for genus CAUD view...")
+            results = genus_tp.evaluate_uncertainty(
+                view="caud",
+                n_samples=30,
+                batch_size=16,
+                threshold=0.02
+            )
+
+            avg_uncertainty = sum(results["all_uncertainties"]) / len(results["all_uncertainties"])
+            print(f"Average uncertainty across test set: {avg_uncertainty:.4f}")
+            print(f"Total predictions kept after thresholding: {len(results['filtered_preds'])}/{len(results['all_preds'])}")
+
         if show_plots:
             genus_tp.create_f1_scores_bar_plot(
                 "caud", batch_size=32, plot_save_path="genus_caud_plot.png", plot=True)
@@ -287,6 +372,20 @@ if __name__ == '__main__':
         genus_tp.train_resnet_model(
             20, "dors", batch=16, rotation=9, brightness=0.05452949803911396, lrate=0.00034069432228042864,
             erasure_params=erasure_params_dors)
+
+        if uncertainty_eval:
+            print("\nRunning Monte Carlo Dropout uncertainty evaluation for genus DORS view...")
+            results = genus_tp.evaluate_uncertainty(
+                view="dors",
+                n_samples=30,
+                batch_size=16,
+                threshold=0.02
+            )
+
+            avg_uncertainty = sum(results["all_uncertainties"]) / len(results["all_uncertainties"])
+            print(f"Average uncertainty across test set: {avg_uncertainty:.4f}")
+            print(f"Total predictions kept after thresholding: {len(results['filtered_preds'])}/{len(results['all_preds'])}")
+
         if show_plots:
             genus_tp.create_f1_scores_bar_plot(
                 "dors", batch_size=16, plot_save_path="genus_dors_plot.png", plot=True)
@@ -302,6 +401,20 @@ if __name__ == '__main__':
         genus_tp.train_resnet_model(
             20, "fron", batch=32, rotation=4, brightness=0.17667183838225514, lrate=0.0001997249630754838,
             erasure_params=erasure_params_fron)
+
+        if uncertainty_eval:
+            print("\nRunning Monte Carlo Dropout uncertainty evaluation for genus FRON view...")
+            results = genus_tp.evaluate_uncertainty(
+                view="fron",
+                n_samples=30,
+                batch_size=32,
+                threshold=0.02
+            )
+
+            avg_uncertainty = sum(results["all_uncertainties"]) / len(results["all_uncertainties"])
+            print(f"Average uncertainty across test set: {avg_uncertainty:.4f}")
+            print(f"Total predictions kept after thresholding: {len(results['filtered_preds'])}/{len(results['all_preds'])}")
+
         if show_plots:
             genus_tp.create_f1_scores_bar_plot(
                 "fron", batch_size=16, plot_save_path="genus_fron_plot.png", plot=True)
@@ -317,6 +430,20 @@ if __name__ == '__main__':
         genus_tp.train_resnet_model(
             20, "late", batch=16, rotation=10, brightness=0.25458958614413363, lrate=0.00010421711239748923,
             erasure_params=erasure_params_late)
+
+        if uncertainty_eval:
+            print("\nRunning Monte Carlo Dropout uncertainty evaluation for genus LATE view...")
+            results = genus_tp.evaluate_uncertainty(
+                view="late",
+                n_samples=30,
+                batch_size=16,
+                threshold=0.02
+            )
+
+            avg_uncertainty = sum(results["all_uncertainties"]) / len(results["all_uncertainties"])
+            print(f"Average uncertainty across test set: {avg_uncertainty:.4f}")
+            print(f"Total predictions kept after thresholding: {len(results['filtered_preds'])}/{len(results['all_preds'])}")
+
         if show_plots:
             genus_tp.create_f1_scores_bar_plot(
                 "late", batch_size=32, plot_save_path="genus_late_plot.png", plot=True)
@@ -350,7 +477,7 @@ if __name__ == '__main__':
     genus_ml = ModelLoader(genus_model_paths, GENUS_OUTPUTS)
     genus_models = genus_ml.get_models()
 
-    print(genus_models.keys)
+    print(genus_models.keys())
     print(genus_ml.get_model("caud").named_parameters())
 
     # Inititialize the EvaluationMethod object with the heaviest eval method set
@@ -387,7 +514,7 @@ if __name__ == '__main__':
     species_ml = ModelLoader(species_model_paths, SPECIES_OUTPUTS)
     species_models = species_ml.get_models()
 
-    print(species_models.keys)
+    print(species_models.keys())
     print(species_ml.get_model("caud").named_parameters())
 
     # Inititialize the EvaluationMethod object with the heaviest eval method set
