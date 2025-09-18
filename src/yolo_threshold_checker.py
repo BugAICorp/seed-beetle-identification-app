@@ -1,12 +1,12 @@
 """ yolo_threshold_checker.py """
 
-import numpy as np
 from pathlib import Path
+import numpy as np
 import matplotlib.pyplot as plt
 from PIL import Image
 from beetle_cropper import BeetleCropper
 
-def evaluate_thresholds(image_dir, thresholds, expected_positive=True):
+def evaluate_thresholds(image_dir, threshold_list, expected_positive=True):
     """
     Run YOLO beetle detection at different thresholds and measure acceptance rate.
 
@@ -23,7 +23,7 @@ def evaluate_thresholds(image_dir, thresholds, expected_positive=True):
     image_files = [f for f in image_dir.iterdir() if f.suffix.lower() in [".jpg", ".jpeg", ".png"]]
 
     results = {}
-    for t in thresholds:
+    for t in threshold_list:
         cropper = BeetleCropper(threshold=t)
         detected = 0
         for img_file in image_files:
@@ -52,8 +52,10 @@ if __name__ == "__main__":
 
     # Plot results: threshold-performance graph (recall vs FPR)
     plt.figure(figsize=(8, 6))
-    plt.plot(list(recall_results.keys()), list(recall_results.values()), marker="o", label="Recall (beetles)")
-    plt.plot(list(fpr_results.keys()), list(fpr_results.values()), marker="s", label="False Positive Rate (non-beetles)")
+    plt.plot(
+        list(recall_results.keys()), list(recall_results.values()), marker="o", label="Recall (beetles)")
+    plt.plot(
+        list(fpr_results.keys()), list(fpr_results.values()), marker="s", label="False Positive Rate (non-beetles)")
 
     plt.xlabel("Confidence Threshold")
     plt.ylabel("Detection Rate")

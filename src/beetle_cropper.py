@@ -129,7 +129,7 @@ class BeetleCropper:
 
         if len(boxes) == 0:
             return None
-        
+
         # Filter by confidence
         boxes = [b for b in boxes if b.conf.cpu().item() >= self.threshold]
         if len(boxes) == 0:
