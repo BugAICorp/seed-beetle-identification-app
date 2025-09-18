@@ -2,9 +2,11 @@ from django.contrib import admin
 from django.urls import path
 from django.utils.html import format_html
 from django.utils.safestring import mark_safe
+from django.http import HttpResponse
+import io
 import os
 import uuid
-from io import BytesIO
+import zipfile
 from PIL import Image as img
 
 # Register your models here.
@@ -12,7 +14,6 @@ from .models import SpecimenUpload, Image, KnownSpecies, Genus, TrainingDatabase
 
 admin.site.register(KnownSpecies)
 admin.site.register(Genus)
-admin.site.register(TrainingDatabase)
 
 
 @admin.action(description="Transfer to Training Database")
@@ -27,14 +28,7 @@ def add_to_trainingdb(modeladmin, request, queryset):
             continue
 
         # Generate a new id for the specimen and parse its classication
-        new_is_unique = False
         new_uid = str(uuid.uuid4())
-        while (not new_is_unique):
-            if TrainingDatabase.objects.filter(uniqueid=new_uid).exists():
-                new_uid = str(uuid.uuid4())
-            else:
-                new_is_unique = True
-
         parsed_field = obj.final_identification.split(' ')
         if len(parsed_field) != 2:
             continue
@@ -57,7 +51,7 @@ def add_to_trainingdb(modeladmin, request, queryset):
                 specimenid=new_uid,
                 image=image_binary
             )
-            pil_img = img.open(BytesIO(image_binary)).convert("RGB")
+            pil_img = img.open(io.BytesIO(image_binary)).convert("RGB")
             pil_img.save(os.path.join(dir, f"{parsed_field[0]} {parsed_field[1]} {new_uid} USER FRON.jpg"), format="JPEG")
         if obj.caudal_image and obj.caudal_image.image:
             obj.caudal_image.image.seek(0)
@@ -70,7 +64,7 @@ def add_to_trainingdb(modeladmin, request, queryset):
                 specimenid=new_uid,
                 image=image_binary
             )
-            pil_img = img.open(BytesIO(image_binary)).convert("RGB")
+            pil_img = img.open(io.BytesIO(image_binary)).convert("RGB")
             pil_img.save(os.path.join(dir, f"{parsed_field[0]} {parsed_field[1]} {new_uid} USER CAUD.jpg"), format="JPEG")
         if obj.dorsal_image and obj.dorsal_image.image:
             obj.dorsal_image.image.seek(0)
@@ -83,7 +77,7 @@ def add_to_trainingdb(modeladmin, request, queryset):
                 specimenid=new_uid,
                 image=image_binary
             )
-            pil_img = img.open(BytesIO(image_binary)).convert("RGB")
+            pil_img = img.open(io.BytesIO(image_binary)).convert("RGB")
             pil_img.save(os.path.join(dir, f"{parsed_field[0]} {parsed_field[1]} {new_uid} USER DORS.jpg"), format="JPEG")
         if obj.lateral_image and obj.lateral_image.image:
             obj.lateral_image.image.seek(0)
@@ -96,8 +90,42 @@ def add_to_trainingdb(modeladmin, request, queryset):
                 specimenid=new_uid,
                 image=image_binary
             )
-            pil_img = img.open(BytesIO(image_binary)).convert("RGB")
+            pil_img = img.open(io.BytesIO(image_binary)).convert("RGB")
             pil_img.save(os.path.join(dir, f"{parsed_field[0]} {parsed_field[1]} {new_uid} USER LATE.jpg"), format="JPEG")
+
+
+@admin.action(description="Download for training")
+def download_training_db(modeladmin, request, queryset):
+    zip_buffer = io.BytesIO()
+
+    with zipfile.ZipFile(zip_buffer, 'w', zipfile.ZIP_DEFLATED) as zip_file:
+        for obj in queryset:
+            try:
+                img_binary = io.BytesIO(obj.image)
+                pil_img = img.open(img_binary)
+
+                filename = f"{obj.genus} {obj.species} {obj.specimenid} WEB {obj.view}.jpg"
+                
+                img_io = io.BytesIO()
+                pil_img.convert("RGB").save(img_io, format='JPEG')
+                img_io.seek(0)
+                zip_file.writestr(filename, img_io.read())
+
+                obj.delete()
+
+            except Exception as e:
+                print(f"Error processing {obj}: {e}")
+    
+    zip_buffer.seek(0)
+    response = HttpResponse(zip_buffer.getvalue(), content_type='application/zip')
+    response['Content-Disposition'] = 'attachment; filename=training_images.zip'
+    return response
+
+
+@admin.register(TrainingDatabase)
+class TrainingDatabaseAdmin(admin.ModelAdmin):
+    list_display = ('genus', 'species', 'specimenid', 'view')
+    actions = [download_training_db]
 
 
 @admin.register(SpecimenUpload)
