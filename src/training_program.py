@@ -677,7 +677,6 @@ class TrainingProgram:
 
         Args:
             view (str): dataset view (e.g. "late", "caud").
-            model (torch.nn.Module): trained model.
             n_samples (int): number of MC dropout forward passes.
             batch_size (int): batch size for evaluation.
             threshold (float, optional): uncertainty cutoff. If set, only keep predictions below this.
