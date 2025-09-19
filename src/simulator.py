@@ -153,7 +153,7 @@ if __name__ == '__main__':
             show_plots = False
             break
         print("Invalid input. Please try again.")
-    
+
     if show_plots:
         while True:
             # Ask user which type of confusion matrix they would like to generate
