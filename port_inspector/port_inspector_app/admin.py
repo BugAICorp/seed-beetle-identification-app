@@ -105,7 +105,7 @@ def download_training_db(modeladmin, request, queryset):
                 pil_img = img.open(img_binary)
 
                 filename = f"{obj.genus} {obj.species} {obj.specimenid} WEB {obj.view}.jpg"
-                
+
                 img_io = io.BytesIO()
                 pil_img.convert("RGB").save(img_io, format='JPEG')
                 img_io.seek(0)
@@ -115,7 +115,7 @@ def download_training_db(modeladmin, request, queryset):
 
             except Exception as e:
                 print(f"Error processing {obj}: {e}")
-    
+
     zip_buffer.seek(0)
     response = HttpResponse(zip_buffer.getvalue(), content_type='application/zip')
     response['Content-Disposition'] = 'attachment; filename=training_images.zip'
