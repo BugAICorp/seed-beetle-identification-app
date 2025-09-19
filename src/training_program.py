@@ -661,7 +661,8 @@ class TrainingProgram:
 
         probs = torch.cat(probs, dim=0)        # (n_samples, N, C)
         mean_probs = probs.mean(dim=0)         # (N, C)
-        uncertainties = probs.var(dim=0).mean(dim=1)  # (N,) average variance across classes
+        entropy = -(mean_probs * torch.log(mean_probs + 1e-8)).sum(dim=1)
+        uncertainties = entropy
 
         return mean_probs, uncertainties
 
@@ -914,20 +915,11 @@ class TrainingProgram:
 
     def load_model(self):
         """
-        Loads resnet50 model to be trained and saved
+        Loads ResNet50 model with dropout for MC Dropout uncertainty to be trained and saved
         Return: ResNet model
         """
-        model = models.resnet50(weights=models.ResNet50_Weights.IMAGENET1K_V1)
-        num_features = model.fc.in_features
-        # Number of classifications tentative
-
-        # Replace the final classification head
-        model.fc = torch.nn.Sequential(
-            torch.nn.Dropout(p=0.5),
-            torch.nn.Linear(num_features, self.num_classes)
-        )
+        model = ResNet50Dropout(num_classes=self.num_classes, dropout_p=0.5)
         model = model.to(self.device)
-
         return model
 
     def save_models(self, model_filenames = None, height_filename = None,
@@ -1051,3 +1043,35 @@ class ImageDataset(Dataset):
         label = torch.tensor(self.labels[idx], dtype=torch.long)
 
         return image, label
+
+class ResNet50Dropout(torch.nn.Module):
+    def __init__(self, num_classes, dropout_p=0.5):
+        super().__init__()
+        base_model = models.resnet50(weights=models.ResNet50_Weights.IMAGENET1K_V1)
+        
+        # Keep all layers except the final FC
+        self.features = torch.nn.Sequential(
+            base_model.conv1,
+            base_model.bn1,
+            base_model.relu,
+            base_model.maxpool,
+            base_model.layer1,
+            base_model.layer2,
+            base_model.layer3,
+            torch.nn.Dropout(p=dropout_p),   # 🔹 Dropout after layer3
+            base_model.layer4,
+            torch.nn.Dropout(p=dropout_p),   # 🔹 Dropout after layer4
+            base_model.avgpool,
+        )
+        
+        num_features = base_model.fc.in_features
+        self.classifier = torch.nn.Sequential(
+            torch.nn.Flatten(),
+            torch.nn.Dropout(p=dropout_p),   # 🔹 Dropout before FC
+            torch.nn.Linear(num_features, num_classes)
+        )
+
+    def forward(self, x):
+        x = self.features(x)
+        x = self.classifier(x)
+        return x
