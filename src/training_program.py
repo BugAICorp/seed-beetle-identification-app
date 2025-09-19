@@ -917,10 +917,15 @@ class TrainingProgram:
         Loads resnet50 model to be trained and saved
         Return: ResNet model
         """
-        model = models.resnet50()
+        model = models.resnet50(weights=models.ResNet50_Weights.IMAGENET1K_V1)
         num_features = model.fc.in_features
-        # number of classifications tentative
-        model.fc = torch.nn.Linear(num_features, self.num_classes)
+        # Number of classifications tentative
+
+        # Replace the final classification head
+        model.fc = torch.nn.Sequential(
+            torch.nn.Dropout(p=0.5),
+            torch.nn.Linear(num_features, self.num_classes)
+        )
         model = model.to(self.device)
 
         return model
