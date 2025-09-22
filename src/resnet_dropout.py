@@ -27,7 +27,7 @@ class ResNet50Dropout(torch.nn.Module):
         """
         super().__init__()
         base_model = models.resnet50(weights=models.ResNet50_Weights.IMAGENET1K_V1)
-        
+
         # Keep all layers except the final FC
         self.features = torch.nn.Sequential(
             base_model.conv1,
@@ -42,7 +42,7 @@ class ResNet50Dropout(torch.nn.Module):
             torch.nn.Dropout(p=dropout_p),   # Dropout after layer4
             base_model.avgpool,
         )
-        
+
         num_features = base_model.fc.in_features
         self.classifier = torch.nn.Sequential(
             torch.nn.Flatten(),
