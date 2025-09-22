@@ -3,22 +3,27 @@
 import json
 from torchvision import models
 import torch
+from resnet_dropout import ResNet50Dropout
 
 class ModelLoader:
     """
     Initializes and loads four models with the designated pretrained weights for
     the different image angles.
     """
-    def __init__(self, weights_file_paths, num_classes = 15, test = False):
+    def __init__(self, weights_file_paths, num_classes = 15, use_mc_dropout=False, test = False):
         """
         Initializes the TrainedModels class.
 
         Args:
             weights_file_paths (dict): A dictionary mapping model keys to their weight file paths.
+            num_classes (int): Number of output classes (default=15).
+            use_mc_dropout (bool): If True, initializes ResNet50Dropout instead
+                                   of standard ResNet50.
             test (bool, optional): If True, skips model initialization for testing purposes.
         """
         self.weights_file_paths = weights_file_paths
         self.num_classes = num_classes
+        self.use_mc_dropout = use_mc_dropout
 
         self.models = {
             "caud" : None, 
@@ -28,7 +33,6 @@ class ModelLoader:
         }
         # Set device to a CUDA-compatible gpu
         # Else use CPU to allow general usability and MPS if user has Apple Silicon
-        self.device = torch.device("mps" if torch.backends.mps.is_built() else "cpu")
         self.device = torch.device(
             'cuda' if torch.cuda.is_available()
             else 'mps' if torch.backends.mps.is_built()
@@ -47,12 +51,16 @@ class ModelLoader:
             None
         """
         for key in self.models:
-            # Initialize a fresh model with weights = None, so there are no weights
-            self.models[key] = models.resnet50(weights=None)
+            if self.use_mc_dropout:
+                # Initialize with dropout layers for uncertainty estimation
+                self.models[key] = ResNet50Dropout(num_classes=self.num_classes)
 
-            # Initialize the models to have 15 outputs(~number of species to be identified)
-            num_features = self.models[key].fc.in_features
-            self.models[key].fc = torch.nn.Linear(num_features, self.num_classes)
+            else:
+                # Standard ResNet50
+                # Initialize a fresh model with weights = None, so there are no weights
+                self.models[key] = models.resnet50(weights=None)
+                num_features = self.models[key].fc.in_features
+                self.models[key].fc = torch.nn.Linear(num_features, self.num_classes)
 
             self.models[key] = self.models[key].to(self.device)
 
