@@ -20,6 +20,7 @@ from torch.utils.data import DataLoader, Dataset, WeightedRandomSampler
 from torchvision import transforms, models
 from transformation_classes import HistogramEqualization
 from data_augmenter import DataAugmenter
+from resnet_dropout import ResNet50Dropout
 import globals
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../')))
@@ -1043,35 +1044,3 @@ class ImageDataset(Dataset):
         label = torch.tensor(self.labels[idx], dtype=torch.long)
 
         return image, label
-
-class ResNet50Dropout(torch.nn.Module):
-    def __init__(self, num_classes, dropout_p=0.5):
-        super().__init__()
-        base_model = models.resnet50(weights=models.ResNet50_Weights.IMAGENET1K_V1)
-        
-        # Keep all layers except the final FC
-        self.features = torch.nn.Sequential(
-            base_model.conv1,
-            base_model.bn1,
-            base_model.relu,
-            base_model.maxpool,
-            base_model.layer1,
-            base_model.layer2,
-            base_model.layer3,
-            torch.nn.Dropout(p=dropout_p),   # 🔹 Dropout after layer3
-            base_model.layer4,
-            torch.nn.Dropout(p=dropout_p),   # 🔹 Dropout after layer4
-            base_model.avgpool,
-        )
-        
-        num_features = base_model.fc.in_features
-        self.classifier = torch.nn.Sequential(
-            torch.nn.Flatten(),
-            torch.nn.Dropout(p=dropout_p),   # 🔹 Dropout before FC
-            torch.nn.Linear(num_features, num_classes)
-        )
-
-    def forward(self, x):
-        x = self.features(x)
-        x = self.classifier(x)
-        return x
