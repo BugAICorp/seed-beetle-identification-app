@@ -24,7 +24,7 @@ if __name__ == '__main__':
     can_continue = False
 
     while not can_continue:
-        print("Dorsal: 1\nCaudal: 2\nFrontal: 3\nLateral: 4")
+        print("Dorsal: 1\nCaudal: 2\nFrontal: 3\nLateral: 4\nAll: 5")
         user_input = int(input("Choose a model you would like to train (type corresponding number): "))
         if user_input == 1:
             train_dors = True
