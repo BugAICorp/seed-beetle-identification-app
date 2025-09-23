@@ -17,16 +17,22 @@ class ResNet50Dropout(torch.nn.Module):
         classifier (torch.nn.Sequential): Flatten + dropout + linear
             classification head.
     """
-    def __init__(self, num_classes, dropout_p=0.5):
+    def __init__(self, num_classes, dropout_p=0.5, weights=True):
         """
         Constructor for ResNet50Dropout class.
 
         Args:
             num_classes (int): Number of output classes for classification.
             dropout_p (float, optional): Dropout probability (default=0.5).
+            weights (bool):
+                - True: Use ImageNet pretrained weights
+                - False: Initialize with random weights
         """
         super().__init__()
-        base_model = models.resnet50(weights=models.ResNet50_Weights.IMAGENET1K_V1)
+        if weights:
+            base_model = models.resnet50(weights=models.ResNet50_Weights.IMAGENET1K_V1)
+        else:
+            base_model = models.resnet50(weights=None)
 
         # Keep all layers except the final FC
         self.features = torch.nn.Sequential(

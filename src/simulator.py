@@ -490,7 +490,7 @@ if __name__ == '__main__':
             "late" : gen_late_model
         }
 
-    genus_ml = ModelLoader(genus_model_paths, GENUS_OUTPUTS, use_mc_dropout=uncertainty_eval)
+    genus_ml = ModelLoader(genus_model_paths, GENUS_OUTPUTS, use_dropout=True)
     genus_models = genus_ml.get_models()
 
     print(genus_models.keys())
@@ -527,7 +527,7 @@ if __name__ == '__main__':
             "fron" : spec_fron_model,
             "late" : spec_late_model
         }
-    species_ml = ModelLoader(species_model_paths, SPECIES_OUTPUTS, use_mc_dropout=uncertainty_eval)
+    species_ml = ModelLoader(species_model_paths, SPECIES_OUTPUTS, use_dropout=True)
     species_models = species_ml.get_models()
 
     print(species_models.keys())

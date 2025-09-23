@@ -10,7 +10,7 @@ class ModelLoader:
     Initializes and loads four models with the designated pretrained weights for
     the different image angles.
     """
-    def __init__(self, weights_file_paths, num_classes = 15, use_mc_dropout=False, test = False):
+    def __init__(self, weights_file_paths, num_classes = 15, use_dropout=False, test = False):
         """
         Initializes the TrainedModels class.
 
@@ -23,7 +23,7 @@ class ModelLoader:
         """
         self.weights_file_paths = weights_file_paths
         self.num_classes = num_classes
-        self.use_mc_dropout = use_mc_dropout
+        self.use_dropout = use_dropout
 
         self.models = {
             "caud" : None, 
@@ -51,9 +51,9 @@ class ModelLoader:
             None
         """
         for key in self.models:
-            if self.use_mc_dropout:
+            if self.use_dropout:
                 # Initialize with dropout layers for uncertainty estimation
-                self.models[key] = ResNet50Dropout(num_classes=self.num_classes)
+                self.models[key] = ResNet50Dropout(num_classes=self.num_classes, weights=False)
 
             else:
                 # Standard ResNet50

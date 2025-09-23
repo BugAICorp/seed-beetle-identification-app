@@ -919,7 +919,8 @@ class TrainingProgram:
         Loads ResNet50 model with dropout for MC Dropout uncertainty to be trained and saved
         Return: ResNet model
         """
-        model = ResNet50Dropout(num_classes=self.num_classes, dropout_p=0.5)
+        # Load ResNet50 model with dropout layers and pretrained weights (weights=True)
+        model = ResNet50Dropout(num_classes=self.num_classes, dropout_p=0.5, weights=True)
         model = model.to(self.device)
         return model
 
