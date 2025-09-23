@@ -344,9 +344,17 @@ class EvaluationMethod:
             topk = min(self.k, mean_probs.size(0))
             top_scores, top_species = torch.topk(mean_probs, topk)
 
+            # Map indices to species names
+            mapped_species = []
+            for idx in top_species.tolist():
+                if idx == -1 or idx not in self.species_idx_dict:
+                    mapped_species.append("Unknown Species")
+                else:
+                    mapped_species.append(self.species_idx_dict[idx])
+
             predictions[view] = {
                 "mean_scores": top_scores.tolist(),
-                "species": top_species.tolist(),
+                "species": mapped_species,
                 "uncertainty": entropy
             }
 
