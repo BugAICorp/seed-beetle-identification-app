@@ -165,6 +165,17 @@ if __name__ == '__main__':
             break
         print("Invalid input. Please try again.")
 
+    while True:
+        # Ask user which evaluation method they would like to use
+        choice = input("\nWould you like to evaluate using Monte Carlo Dropout? (y/n): ").lower()
+        if choice == 'y':
+            mc_eval = True
+            break
+        if choice == 'n':
+            mc_eval = False
+            break
+        print("Invalid input. Please try again.")
+
     # Create the beetle cropper object to be used in dataset creation and image cropping
     beetle_cropper = BeetleCropper()
     # Crop the images in the original dataset so that the image is only the beetle
@@ -513,12 +524,33 @@ if __name__ == '__main__':
     CAUD_IMG = beetle_cropper.crop_beetle(Image.open(CAUD_PATH)) if CAUD_PATH else None
 
     # Run the evaluation method to find the predicted genus
-    top_genus, genus_conf_score = genus_evaluator.evaluate_image(
-        late=LATE_IMG, dors=DORS_IMG, fron=FRON_IMG, caud=CAUD_IMG
-    )
+    if mc_eval:
+        mc_genus_eval = genus_evaluator.evaluate_image_mc_dropout(
+            late=LATE_IMG,
+            dors=DORS_IMG,
+            fron=FRON_IMG,
+            caud=CAUD_IMG,
+            n_samples=20)
+        
+        for view in [ "caud", "dors", "fron", "late"]:
+            if mc_genus_eval[view]:
+                genus_eval_dict = mc_genus_eval[view]
+                top_genus = genus_eval_dict["genus"]
+                genus_conf_score = genus_eval_dict["score"]
+                genus_uncertainty = genus_eval_dict["uncertainty"]
+                # Print classification results for genus
+                print(f"Monte Carlo Dropout Genus Evaluation Results for {view} View:")
+                print(f"\tPredicted Genus: {top_genus}, Confidence: {genus_conf_score:.2f}\n")
+                print(f"\tUncertainty for {view} View: {genus_uncertainty:.4f}\n")
+    else:
+        top_genus, genus_conf_score = genus_evaluator.evaluate_image(
+            late=LATE_IMG,
+            dors=DORS_IMG,
+            fron=FRON_IMG,
+            caud=CAUD_IMG)
 
-    # Print classification results for genus
-    print(f"Predicted Genus: {top_genus}, Confidence: {genus_conf_score:.2f}\n")
+        # Print classification results for genus
+        print(f"Predicted Genus: {top_genus}, Confidence: {genus_conf_score:.2f}\n")
 
     # Load species models
     species_model_paths = {
@@ -538,13 +570,35 @@ if __name__ == '__main__':
                                          spec_class_dictionary, spec_accuracy_list)
 
     # Run the evaluation method
-    top_5_species = species_evaluator.evaluate_image(
-        late=LATE_IMG, dors=DORS_IMG, fron=FRON_IMG, caud=CAUD_IMG
-    )
+    if mc_eval:
+        mc_species_eval = species_evaluator.evaluate_image_mc_dropout(
+            late=LATE_IMG,
+            dors=DORS_IMG,
+            fron=FRON_IMG,
+            caud=CAUD_IMG,
+            n_samples=20)
+        
+        for view in [ "caud", "dors", "fron", "late"]:
+            if mc_species_eval[view]:
+                species_eval_dict = mc_species_eval[view]
+                top_5_species = species_eval_dict["species"]
+                species_conf_scores = species_eval_dict["mean_scores"]
+                species_uncertainty = species_eval_dict["uncertainty"]
 
-    # Print classification results
-    print(f"1. Predicted Species: {top_5_species[0][0]}, Confidence: {top_5_species[0][1]:.2f}\n")
-    print(f"2. Predicted Species: {top_5_species[1][0]}, Confidence: {top_5_species[1][1]:.2f}\n")
-    print(f"3. Predicted Species: {top_5_species[2][0]}, Confidence: {top_5_species[2][1]:.2f}\n")
-    print(f"4. Predicted Species: {top_5_species[3][0]}, Confidence: {top_5_species[3][1]:.2f}\n")
-    print(f"5. Predicted Species: {top_5_species[4][0]}, Confidence: {top_5_species[4][1]:.2f}\n")
+                print(f"Monte Carlo Dropout Species Evaluation Results for {view} View:")
+                for i in range(len(top_5_species)):
+                    species_name = top_5_species[i]
+                    species_conf = species_conf_scores[i]
+                    print(f"\t{i+1}. Predicted Species: {species_name}, Confidence: {species_conf:.2f}")
+                print(f"Uncertainty for {view} view: {species_uncertainty:.4f}\n")
+
+    else:
+        top_5_species = species_evaluator.evaluate_image(
+            late=LATE_IMG, dors=DORS_IMG, fron=FRON_IMG, caud=CAUD_IMG
+        )
+        # Print classification results
+        print(f"1. Predicted Species: {top_5_species[0][0]}, Confidence: {top_5_species[0][1]:.2f}\n")
+        print(f"2. Predicted Species: {top_5_species[1][0]}, Confidence: {top_5_species[1][1]:.2f}\n")
+        print(f"3. Predicted Species: {top_5_species[2][0]}, Confidence: {top_5_species[2][1]:.2f}\n")
+        print(f"4. Predicted Species: {top_5_species[3][0]}, Confidence: {top_5_species[3][1]:.2f}\n")
+        print(f"5. Predicted Species: {top_5_species[4][0]}, Confidence: {top_5_species[4][1]:.2f}\n")
