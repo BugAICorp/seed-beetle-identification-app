@@ -30,7 +30,7 @@ class ResNet50Dropout(torch.nn.Module):
         """
         super().__init__()
         if weights:
-            base_model = models.resnet50(weights=models.ResNet50_Weights.IMAGENET1K_V1)
+            base_model = models.resnet50(weights=models.ResNet50_Weights.IMAGENET1K_V2)
         else:
             base_model = models.resnet50(weights=None)
 
