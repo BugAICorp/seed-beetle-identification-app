@@ -267,6 +267,71 @@ class GenusEvaluationMethod:
 
         return self.genus_idx_dict.get(highest_species, "Unknown Species"), highest_score
 
+    def evaluate_image_mc_dropout(self, late=None, dors=None, fron=None, caud=None,
+                                n_samples=20):
+        """
+        Create an evaluation of the input image(s) using Monte Carlo Dropout.
+        This method performs multiple stochastic forward passes with dropout enabled,
+        averages predictions, computes predictive uncertainty, and returns the
+        single top-1 genus prediction per view.
+
+        Args:
+            late, dors, fron, caud (PIL.Image, optional): Input images for each view.
+            n_samples (int): Number of stochastic forward passes.
+
+        Returns:
+            dict: Dictionary with per-view predictions including:
+                - "genus": predicted genus name
+                - "score": confidence score of the top prediction
+                - "uncertainty": predictive entropy (higher = more uncertain)
+        """
+        device = torch.device('cuda' if torch.cuda.is_available()
+                            else 'mps' if torch.backends.mps.is_built() else 'cpu')
+
+        inputs = {
+            "caud": (caud, self.transformations[0]),
+            "dors": (dors, self.transformations[1]),
+            "fron": (fron, self.transformations[2]),
+            "late": (late, self.transformations[3]),
+        }
+
+        predictions = {}
+        for view, (image, transform) in inputs.items():
+            if not image:
+                continue
+
+            transformed_image = self.transform_input(image, transform).to(device)
+
+            # Collect predictions across n_samples passes
+            softmax_samples = []
+            self.trained_models[view].train()  # enable dropout
+            with torch.no_grad():
+                for _ in range(n_samples):
+                    logits = self.trained_models[view](transformed_image)
+                    softmax_probs = torch.nn.functional.softmax(logits, dim=1)
+                    softmax_samples.append(softmax_probs.cpu())
+
+            # [n_samples, num_classes]
+            softmax_samples = torch.stack(softmax_samples)
+            mean_probs = softmax_samples.mean(dim=0)[0]  # [num_classes]
+
+            # Predictive uncertainty (entropy)
+            entropy = -(mean_probs * mean_probs.log()).sum().item()
+
+            # Top-1 prediction
+            score, genus_idx = torch.max(mean_probs, dim=0)
+            genus_name = self.genus_idx_dict.get(genus_idx.item(), "Unknown Genus")
+
+            predictions[view] = {
+                "genus": genus_name,
+                "score": score.item(),
+                "uncertainty": entropy
+            }
+
+            self.trained_models[view].eval()  # reset to eval
+
+        return predictions
+
     def stacked_eval(self):
         """
         Takes the classifications of the models and runs them through another model that determines
