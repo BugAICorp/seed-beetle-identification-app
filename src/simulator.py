@@ -531,7 +531,7 @@ if __name__ == '__main__':
             fron=FRON_IMG,
             caud=CAUD_IMG,
             n_samples=20)
-        
+
         for view in [ "caud", "dors", "fron", "late"]:
             if mc_genus_eval[view]:
                 genus_eval_dict = mc_genus_eval[view]
@@ -577,7 +577,7 @@ if __name__ == '__main__':
             fron=FRON_IMG,
             caud=CAUD_IMG,
             n_samples=20)
-        
+
         for view in [ "caud", "dors", "fron", "late"]:
             if mc_species_eval[view]:
                 species_eval_dict = mc_species_eval[view]
@@ -586,8 +586,7 @@ if __name__ == '__main__':
                 species_uncertainty = species_eval_dict["uncertainty"]
 
                 print(f"Monte Carlo Dropout Species Evaluation Results for {view} View:")
-                for i in range(len(top_5_species)):
-                    species_name = top_5_species[i]
+                for i, species_name in enumerate(top_5_species):
                     species_conf = species_conf_scores[i]
                     print(f"\t{i+1}. Predicted Species: {species_name}, Confidence: {species_conf:.2f}")
                 print(f"Uncertainty for {view} view: {species_uncertainty:.4f}\n")
