@@ -125,7 +125,8 @@ if __name__ == "__main__":
     species_tp = TrainingProgram(df, "Species", SPECIES_OUTPUTS, augment=True, balance_classes=balance_classes)
 
     # Training
-    thresholds = np.linspace(0.0, 1.0, 11)  # 0.0 to 1.0 in 0.1 steps
+    threshold_list = np.linspace(0.0, 1.0, 11)  # 0.0 to 1.0 in 0.1 steps
+    all_results = {}
     # Species CAUD
     erasure_params_caud = {
         "p": 0.3978357251429255,
@@ -138,8 +139,8 @@ if __name__ == "__main__":
 
     # Species CAUD MC Dropout
     print("\nRunning Monte Carlo Dropout uncertainty evaluation for species CAUD view...")
-    results = evaluate_thresholds(
-        species_tp, view="caud", thresholds=thresholds, n_samples=20, batch_size=16, title_prefix="Species"
+    all_results["species_caud"] = evaluate_thresholds(
+        species_tp, view="caud", thresholds=threshold_list, n_samples=20, batch_size=16, title_prefix="Species"
     )
 
     # Species DORS
@@ -154,8 +155,8 @@ if __name__ == "__main__":
 
     # Species DORS MC Dropout
     print("\nRunning Monte Carlo Dropout uncertainty evaluation for species DORS view...")
-    results = evaluate_thresholds(
-        species_tp, view="dors", thresholds=thresholds, n_samples=20, batch_size=16, title_prefix="Species"
+    all_results["species_dors"] = evaluate_thresholds(
+        species_tp, view="dors", thresholds=threshold_list, n_samples=20, batch_size=16, title_prefix="Species"
     )
 
     # Species FRON
@@ -170,8 +171,8 @@ if __name__ == "__main__":
 
     # Species FRON MC Dropout
     print("\nRunning Monte Carlo Dropout uncertainty evaluation for species FRON view...")
-    results = evaluate_thresholds(
-        species_tp, view="fron", thresholds=thresholds, n_samples=20, batch_size=32, title_prefix="Species"
+    all_results["species_fron"] = evaluate_thresholds(
+        species_tp, view="fron", thresholds=threshold_list, n_samples=20, batch_size=32, title_prefix="Species"
     )
 
     # Species LATE
@@ -186,8 +187,8 @@ if __name__ == "__main__":
 
     # Species LATE MC Dropout
     print("\nRunning Monte Carlo Dropout uncertainty evaluation for species LATE view...")
-    results = evaluate_thresholds(
-        species_tp, view="late", thresholds=thresholds, n_samples=20, batch_size=16, title_prefix="Species"
+    all_results["species_late"] = evaluate_thresholds(
+        species_tp, view="late", thresholds=threshold_list, n_samples=20, batch_size=16, title_prefix="Species"
     )
 
     # Run training with dataframe
@@ -206,8 +207,8 @@ if __name__ == "__main__":
 
     # Genus CAUD MC Dropout
     print("\nRunning Monte Carlo Dropout uncertainty evaluation for genus CAUD view...")
-    results = evaluate_thresholds(
-        genus_tp, view="caud", thresholds=thresholds, n_samples=20, batch_size=16, title_prefix="Genus"
+    all_results["genus_caud"] = evaluate_thresholds(
+        genus_tp, view="caud", thresholds=threshold_list, n_samples=20, batch_size=16, title_prefix="Genus"
     )
 
     # Genus DORS
@@ -222,8 +223,8 @@ if __name__ == "__main__":
 
     # Genus DORS MC Dropout
     print("\nRunning Monte Carlo Dropout uncertainty evaluation for genus DORS view...")
-    results = evaluate_thresholds(
-        genus_tp, view="dors", thresholds=thresholds, n_samples=20, batch_size=16, title_prefix="Genus"
+    all_results["genus_dors"] = evaluate_thresholds(
+        genus_tp, view="dors", thresholds=threshold_list, n_samples=20, batch_size=16, title_prefix="Genus"
     )
 
     # Genus FRON
@@ -238,8 +239,8 @@ if __name__ == "__main__":
 
     # Genus FRON MC Dropout
     print("\nRunning Monte Carlo Dropout uncertainty evaluation for genus FRON view...")
-    results = evaluate_thresholds(
-        genus_tp, view="fron", thresholds=thresholds, n_samples=20, batch_size=32, title_prefix="Genus"
+    all_results["genus_fron"] = evaluate_thresholds(
+        genus_tp, view="fron", thresholds=threshold_list, n_samples=20, batch_size=32, title_prefix="Genus"
     )
 
     # Genus LATE
@@ -254,6 +255,6 @@ if __name__ == "__main__":
 
     # Genus LATE MC Dropout
     print("\nRunning Monte Carlo Dropout uncertainty evaluation for genus LATE view...")
-    results = evaluate_thresholds(
-        genus_tp, view="late", thresholds=thresholds, n_samples=20, batch_size=16, title_prefix="Genus"
+    all_results["genus_late"] = evaluate_thresholds(
+        genus_tp, view="late", thresholds=threshold_list, n_samples=20, batch_size=16, title_prefix="Genus"
     )
