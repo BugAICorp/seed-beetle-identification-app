@@ -1,8 +1,8 @@
 """ image_quality_counter.py """
 
 import os
-import pandas as pd
 from collections import defaultdict, Counter
+import pandas as pd
 
 if __name__ == '__main__':
     dataset_dir = "dataset"
@@ -14,15 +14,15 @@ if __name__ == '__main__':
     for fname in os.listdir(dataset_dir):
         if not fname.lower().endswith(".jpg"):
             continue
-        
+
         parts = fname.split()
         if len(parts) < 5:
             continue
-        
+
         genus = parts[0]
         species = " ".join(parts[0:2])
         resolution = next((p for p in parts if "X" in p.upper()), "UNKNOWN")
-        
+
         # Update nested counters
         species_resolution_counts[species][resolution] += 1
         genus_resolution_counts[genus][resolution] += 1
