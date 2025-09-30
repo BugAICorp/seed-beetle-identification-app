@@ -44,8 +44,8 @@ class ModelLoader:
     def model_initializer(self):
         """
         Initializes ResNet50 models for each key in self.models and replaces the fully connected
-        layer to output 15 classes. Lastly, loads pretrained weights into the initialized
-        model with load_model_weights(key).
+        layer to output x classes(determined by self.num_classes).
+        Lastly, loads pretrained weights into the initialized model with load_model_weights(key).
 
         Returns:
             None
@@ -92,6 +92,9 @@ class ModelLoader:
                 torch.load(weights_file_path, map_location=self.device, weights_only=True))
         except FileNotFoundError:
             print(f"Weights File for {key} Model Does Not Exist.")
+        except RuntimeError as e:
+            # If weights file is corrupt or doesn’t match the architecture
+            print(f"Error loading weights for {key}: {e}")
 
     def get_models(self):
         """
