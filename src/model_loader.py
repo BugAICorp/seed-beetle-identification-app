@@ -17,8 +17,7 @@ class ModelLoader:
         Args:
             weights_file_paths (dict): A dictionary mapping model keys to their weight file paths.
             num_classes (int): Number of output classes (default=15).
-            use_dropout (bool): If True, initializes ResNet50Dropout instead
-                                   of standard ResNet50.
+            use_dropout (bool): If True, initializes ResNet50Dropout instead of standard ResNet50.
             test (bool, optional): If True, skips model initialization for testing purposes.
         """
         self.weights_file_paths = weights_file_paths
