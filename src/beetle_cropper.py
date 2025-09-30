@@ -100,10 +100,10 @@ class BeetleCropper:
 
             except UnidentifiedImageError:
                 print(f"Cannot identify image file: {img_file.name}")
-                dropped_count += 1
+                dropped_files.append(img_file.name)
             except OSError as e:
                 print(f"OS error processing {img_file.name}: {e}")
-                dropped_count += 1
+                dropped_files.append(img_file.name)
 
         print(f"Dropped {len(dropped_files)} image(s) from the dataset.")
         if dropped_files:
