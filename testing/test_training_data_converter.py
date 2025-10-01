@@ -5,7 +5,7 @@ import sys
 import os
 import io
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../src')))
-from training_data_converter import TrainingDataConverter
+from training_database_creator import TrainingDataConverter
 
 class TestTrainingDataConverter(unittest.TestCase):
     """
