@@ -1,4 +1,4 @@
-""" resnet_dropout.py """
+""" resnet_dropout_model.py """
 
 import torch
 from torchvision import models
