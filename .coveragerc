@@ -17,3 +17,4 @@ omit =
     src/cam_training_simulator.py
     src/dataframe_analyzer.py
     src/yolo_threshold_checker.py
+    src/mc_dropout_threshold_checker.py

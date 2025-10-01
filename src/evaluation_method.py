@@ -292,6 +292,88 @@ class EvaluationMethod:
 
         return top_5
 
+    def enable_dropout(self, view):
+        """
+        Enable dropout layers for MC Dropout inference while keeping
+        other layers (e.g., BatchNorm, Linear) in eval mode.
+        """
+        for m in self.trained_models[view].modules():
+            if isinstance(m, torch.nn.Dropout) or m.__class__.__name__.startswith('Dropout'):
+                m.train()
+
+    def evaluate_image_mc_dropout(self, late=None, dors=None, fron=None, caud=None,
+                                n_samples=20):
+        """
+        Create an evaluation of the input image(s) using Monte Carlo Dropout only.
+        This method performs multiple stochastic forward passes with dropout enabled,
+        then averages predictions and computes predictive uncertainty.
+
+        Args:
+            late, dors, fron, caud (PIL.Image, optional): Input images for each view.
+            n_samples (int): Number of stochastic forward passes.
+
+        Returns:
+            dict: Dictionary with per-view predictions including:
+                - "mean_scores": top-k averaged softmax probabilities
+                - "species": top-k predicted species indices
+                - "uncertainty": predictive entropy (higher = more uncertain)
+        """
+        device = torch.device('cuda' if torch.cuda.is_available()
+                            else 'mps' if torch.backends.mps.is_built() else 'cpu')
+
+        inputs = {
+            "caud": (caud, self.transformations[0]),
+            "dors": (dors, self.transformations[1]),
+            "fron": (fron, self.transformations[2]),
+            "late": (late, self.transformations[3]),
+        }
+
+        predictions = {}
+        for view, (image, transform) in inputs.items():
+            if not image:
+                continue
+
+            transformed_image = self.transform_input(image, transform).to(device)
+
+            # keep model in eval but activate dropout
+            self.trained_models[view].eval()
+            self.enable_dropout(view)
+
+            # collect predictions across n_samples passes
+            softmax_samples = []
+            with torch.no_grad():
+                for _ in range(n_samples):
+                    logits = self.trained_models[view](transformed_image)
+                    softmax_probs = torch.nn.functional.softmax(logits, dim=1)
+                    softmax_samples.append(softmax_probs.cpu())
+
+            # stack into [n_samples, num_classes]
+            softmax_samples = torch.stack(softmax_samples)
+            mean_probs = softmax_samples.mean(dim=0)[0]  # [num_classes]
+            entropy = -(mean_probs * mean_probs.log()).sum().item()
+
+            # Top-k predictions
+            topk = min(self.k, mean_probs.size(0))
+            top_scores, top_species = torch.topk(mean_probs, topk)
+
+            # Map indices to species names
+            mapped_species = []
+            for idx in top_species.tolist():
+                if idx == -1 or idx not in self.species_idx_dict:
+                    mapped_species.append("Unknown Species")
+                else:
+                    mapped_species.append(self.species_idx_dict[idx])
+
+            predictions[view] = {
+                "mean_scores": top_scores.tolist(),
+                "species": mapped_species,
+                "uncertainty": entropy
+            }
+
+            self.trained_models[view].eval()  # reset back to eval after MC dropout passes
+
+        return predictions
+
     def stacked_eval(self):
         """
         Takes the classifications of the models and runs them through another model that determines
