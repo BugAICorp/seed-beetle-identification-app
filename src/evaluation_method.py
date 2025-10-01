@@ -292,6 +292,15 @@ class EvaluationMethod:
 
         return top_5
 
+    def enable_dropout(self, view):
+        """
+        Enable dropout layers for MC Dropout inference while keeping
+        other layers (e.g., BatchNorm, Linear) in eval mode.
+        """
+        for m in self.trained_models[view].modules():
+            if isinstance(m, torch.nn.Dropout) or m.__class__.__name__.startswith('Dropout'):
+                m.train()
+
     def evaluate_image_mc_dropout(self, late=None, dors=None, fron=None, caud=None,
                                 n_samples=20):
         """
@@ -326,9 +335,12 @@ class EvaluationMethod:
 
             transformed_image = self.transform_input(image, transform).to(device)
 
+            # keep model in eval but activate dropout
+            self.trained_models[view].eval()
+            self.enable_dropout(view)
+
             # collect predictions across n_samples passes
             softmax_samples = []
-            self.trained_models[view].train()  # enable dropout layers
             with torch.no_grad():
                 for _ in range(n_samples):
                     logits = self.trained_models[view](transformed_image)
@@ -358,7 +370,7 @@ class EvaluationMethod:
                 "uncertainty": entropy
             }
 
-            self.trained_models[view].eval()  # reset back to eval
+            self.trained_models[view].eval()  # reset back to eval after MC dropout passes
 
         return predictions
 
