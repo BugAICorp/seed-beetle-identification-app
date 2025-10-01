@@ -20,7 +20,7 @@ from torch.utils.data import DataLoader, Dataset, WeightedRandomSampler
 from torchvision import transforms, models
 from transformation_classes import HistogramEqualization
 from data_augmenter import DataAugmenter
-from resnet_dropout import ResNet50Dropout
+from resnet_dropout_model import ResNet50Dropout
 import globals
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../')))

@@ -3,7 +3,7 @@
 import json
 from torchvision import models
 import torch
-from resnet_dropout import ResNet50Dropout
+from resnet_dropout_model import ResNet50Dropout
 
 class ModelLoader:
     """
