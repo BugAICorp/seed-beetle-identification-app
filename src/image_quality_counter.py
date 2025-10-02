@@ -22,6 +22,8 @@ if __name__ == '__main__':
         genus = parts[0]
         species = " ".join(parts[0:2])
         resolution = parts[3] if len(parts) == 5 else "UNKNOWN"
+        if resolution == "UNKNOWN":
+            print(f"Unknown resolution in file: {fname}")
 
         # Update nested counters
         species_resolution_counts[species][resolution] += 1
