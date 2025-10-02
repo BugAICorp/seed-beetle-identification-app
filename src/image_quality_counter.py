@@ -21,7 +21,7 @@ if __name__ == '__main__':
 
         genus = parts[0]
         species = " ".join(parts[0:2])
-        resolution = next((p for p in parts if "X" in p.upper()), "UNKNOWN")
+        resolution = parts[3] if len(parts) == 5 else "UNKNOWN"
 
         # Update nested counters
         species_resolution_counts[species][resolution] += 1
