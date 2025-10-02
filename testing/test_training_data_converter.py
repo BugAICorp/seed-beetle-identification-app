@@ -70,8 +70,8 @@ class TestTrainingDataConverter(unittest.TestCase):
 
     @patch('os.path.exists')
     @patch('os.listdir')
-    @patch('training_data_converter.TrainingDataConverter.img_to_binary')
-    @patch('training_data_converter.TrainingDataConverter.add_img')
+    @patch('training_database_creator.TrainingDataConverter.img_to_binary')
+    @patch('training_database_creator.TrainingDataConverter.add_img')
     def test_valid_conversion(
         self, mock_add_img, mock_img_to_binary, mock_listdir, mock_path_exists
         ):
