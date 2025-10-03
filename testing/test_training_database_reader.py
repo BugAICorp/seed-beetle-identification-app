@@ -175,7 +175,7 @@ class TestDatabaseReader(unittest.TestCase):
         self.assertIn("Other", df["Genus"].values)
 
         # Check that SpeciesA and GenusA remain unchanged
-        row = df[df["Species"] == "SpeciesA"].iloc[0]
+        row = df[df["Species"] == "GenusA SpeciesA"].iloc[0]
         self.assertEqual(row["Genus"], "GenusA")
 
         os.remove("test_classes.txt")
