@@ -37,11 +37,11 @@ class TestDatabaseReader(unittest.TestCase):
 
         # insert sample data
         sample_data = [
-            ("GenusA", "SpeciesA", "ID1", "View1", sqlite3.Binary(b'\xff\xd8\xff\xe0...'),
+            ("GenusA", "GenusA SpeciesA", "ID1", "View1", sqlite3.Binary(b'\xff\xd8\xff\xe0...'),
              "ID4", "GenusA SpeciesA GEM_ID4 5XEXT View1.jpg"),
-            ("GenusB", "SpeciesB", "ID2", "View2", sqlite3.Binary(b'\xff\xd8\xff\xe0...'),
+            ("GenusB", "GenusB SpeciesB", "ID2", "View2", sqlite3.Binary(b'\xff\xd8\xff\xe0...'),
              "ID5", "GenusB SpeciesB GEM_ID5 5XEXT View2.jpg"),
-            ("GenusC", "SpeciesC", "ID3", "View3", sqlite3.Binary(b'\xff\xd8\xff\xe0...'),
+            ("GenusC", "GenusC SpeciesC", "ID3", "View3", sqlite3.Binary(b'\xff\xd8\xff\xe0...'),
              "ID6", "GenusC SpeciesC GEM_ID6 5XEXT View3.jpg"),
         ]
         # ensure table is empty before inserting rows
