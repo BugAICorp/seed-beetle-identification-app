@@ -111,7 +111,7 @@ class DatabaseReader:
             pd.DataFrame: Updated DataFrame with other species/genus mapped to 'Other'
         """
         df = df.copy()
-        full_name = df['Genus'].str.strip() + ' ' + df['Species'].str.strip()
+        full_name = df['Species'].str.strip()
 
         mask = ~full_name.isin(allowed_species)
         df.loc[mask, 'Genus'] = 'Other'
