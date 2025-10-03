@@ -135,7 +135,7 @@ class TestDatabaseReader(unittest.TestCase):
         df = reader.dataframe
 
         self.assertEqual(len(df), 1)
-        self.assertEqual(df.iloc[0]["Species"], "SpeciesA")
+        self.assertEqual(df.iloc[0]["Species"], "GenusA SpeciesA")
 
         os.remove("test_classes.txt")
 
@@ -149,7 +149,7 @@ class TestDatabaseReader(unittest.TestCase):
         df = reader.dataframe
 
         self.assertEqual(len(df), 2)
-        self.assertNotIn("SpeciesA", df["Species"].values)
+        self.assertNotIn("GenusA SpeciesA", df["Species"].values)
 
         os.remove("test_classes.txt")
 
