@@ -5,7 +5,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.metrics import f1_score, accuracy_score
 from beetle_cropper import BeetleCropper
-from training_data_converter import TrainingDataConverter
+from training_database_creator import TrainingDataConverter
 from training_database_reader import DatabaseReader
 from training_program import TrainingProgram
 import globals

@@ -38,13 +38,13 @@ class DatabaseReader:
                     self.query = f"""
                         SELECT Genus, Species, UniqueID, View, SpecimenID, Image, Filename
                         FROM {self.table}
-                        WHERE Genus || ' ' || Species NOT IN ({placeholders})
+                        WHERE Species NOT IN ({placeholders})
                     """
                 else:
                     self.query = f"""
                         SELECT Genus, Species, UniqueID, View, SpecimenID, Image, Filename
                         FROM {self.table}
-                        WHERE Genus || ' ' || Species IN ({placeholders})
+                        WHERE Species IN ({placeholders})
                     """
             else:
                 # For create_other we fetch all data and later replace non-allowed species/genus
@@ -111,7 +111,7 @@ class DatabaseReader:
             pd.DataFrame: Updated DataFrame with other species/genus mapped to 'Other'
         """
         df = df.copy()
-        full_name = df['Genus'].str.strip() + ' ' + df['Species'].str.strip()
+        full_name = df['Species'].str.strip()
 
         mask = ~full_name.isin(allowed_species)
         df.loc[mask, 'Genus'] = 'Other'

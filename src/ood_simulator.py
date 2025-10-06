@@ -4,7 +4,7 @@ import sys
 import os
 import dill
 from beetle_cropper import BeetleCropper
-from training_data_converter import TrainingDataConverter
+from training_database_creator import TrainingDataConverter
 from training_database_reader import DatabaseReader
 from model_loader import ModelLoader
 from data_augmenter import DataAugmenter

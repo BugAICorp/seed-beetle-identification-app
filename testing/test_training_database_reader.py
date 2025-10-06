@@ -37,11 +37,11 @@ class TestDatabaseReader(unittest.TestCase):
 
         # insert sample data
         sample_data = [
-            ("GenusA", "SpeciesA", "ID1", "View1", sqlite3.Binary(b'\xff\xd8\xff\xe0...'),
+            ("GenusA", "GenusA SpeciesA", "ID1", "View1", sqlite3.Binary(b'\xff\xd8\xff\xe0...'),
              "ID4", "GenusA SpeciesA GEM_ID4 5XEXT View1.jpg"),
-            ("GenusB", "SpeciesB", "ID2", "View2", sqlite3.Binary(b'\xff\xd8\xff\xe0...'),
+            ("GenusB", "GenusB SpeciesB", "ID2", "View2", sqlite3.Binary(b'\xff\xd8\xff\xe0...'),
              "ID5", "GenusB SpeciesB GEM_ID5 5XEXT View2.jpg"),
-            ("GenusC", "SpeciesC", "ID3", "View3", sqlite3.Binary(b'\xff\xd8\xff\xe0...'),
+            ("GenusC", "GenusC SpeciesC", "ID3", "View3", sqlite3.Binary(b'\xff\xd8\xff\xe0...'),
              "ID6", "GenusC SpeciesC GEM_ID6 5XEXT View3.jpg"),
         ]
         # ensure table is empty before inserting rows
@@ -135,7 +135,7 @@ class TestDatabaseReader(unittest.TestCase):
         df = reader.dataframe
 
         self.assertEqual(len(df), 1)
-        self.assertEqual(df.iloc[0]["Species"], "SpeciesA")
+        self.assertEqual(df.iloc[0]["Species"], "GenusA SpeciesA")
 
         os.remove("test_classes.txt")
 
@@ -149,7 +149,7 @@ class TestDatabaseReader(unittest.TestCase):
         df = reader.dataframe
 
         self.assertEqual(len(df), 2)
-        self.assertNotIn("SpeciesA", df["Species"].values)
+        self.assertNotIn("GenusA SpeciesA", df["Species"].values)
 
         os.remove("test_classes.txt")
 
@@ -175,7 +175,7 @@ class TestDatabaseReader(unittest.TestCase):
         self.assertIn("Other", df["Genus"].values)
 
         # Check that SpeciesA and GenusA remain unchanged
-        row = df[df["Species"] == "SpeciesA"].iloc[0]
+        row = df[df["Species"] == "GenusA SpeciesA"].iloc[0]
         self.assertEqual(row["Genus"], "GenusA")
 
         os.remove("test_classes.txt")
