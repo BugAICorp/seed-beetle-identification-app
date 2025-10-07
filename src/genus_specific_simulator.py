@@ -4,7 +4,7 @@ import os
 from PIL import Image
 from beetle_cropper import BeetleCropper
 from data_augmenter import DataAugmenter
-from training_data_converter import TrainingDataConverter
+from training_database_creator import TrainingDataConverter
 from training_database_reader import DatabaseReader
 from genus_specific_model_trainer import GenusSpecificModelTrainer
 from model_loader import ModelLoader

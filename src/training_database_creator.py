@@ -1,4 +1,4 @@
-""" training_data_converter.py """
+""" training_database_creator.py """
 import sqlite3
 import os
 import sys
@@ -83,7 +83,8 @@ class TrainingDataConverter:
         unique_id = name_parts[cur_index] + view
         specimen_id = name_parts[cur_index]
         cur_index -= 1
-        species = name_parts[cur_index]
+        print(name_parts[cur_index - 1][name_parts[cur_index - 1].find('/')+1:] + " " + name_parts[cur_index])
+        species = name_parts[cur_index - 1][name_parts[cur_index - 1].find('/')+1:] + " " + name_parts[cur_index]
         cur_index -= 1
         genus = name_parts[cur_index][name_parts[cur_index].find('/')+1:]
 

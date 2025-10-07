@@ -4,7 +4,7 @@ import sys
 import os
 import pandas as pd
 from beetle_cropper import BeetleCropper
-from training_data_converter import TrainingDataConverter
+from training_database_creator import TrainingDataConverter
 from training_database_reader import DatabaseReader
 import globals
 

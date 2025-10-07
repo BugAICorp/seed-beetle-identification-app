@@ -5,27 +5,27 @@ import json
 import copy
 import gc
 from io import BytesIO
-import pandas as pd
-from PIL import Image
-import numpy as np
-import matplotlib.pyplot as plt
-from torch.utils.data import DataLoader, Dataset, WeightedRandomSampler
-from torchvision import transforms, models
-import torch
 import dill
 import optuna
-from sklearn.metrics import confusion_matrix
-from sklearn.model_selection import train_test_split
-from sklearn.metrics import f1_score
-from sklearn.model_selection import StratifiedKFold
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+from PIL import Image
+from sklearn.metrics import confusion_matrix, f1_score
+from sklearn.model_selection import train_test_split, StratifiedKFold
 from sklearn.utils.class_weight import compute_class_weight
+import torch
+import torch.nn.functional as F
+from torch.utils.data import DataLoader, Dataset, WeightedRandomSampler
+from torchvision import transforms, models
 from transformation_classes import HistogramEqualization
 from data_augmenter import DataAugmenter
+from resnet_dropout_model import ResNet50Dropout
 import globals
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../')))
 
-# pylint: disable=too-many-instance-attributes, too-many-arguments, too-many-positional-arguments, unspecified-encoding too-many-public-methods
+# pylint: disable=too-many-instance-attributes, too-many-arguments, too-many-positional-arguments, unspecified-encoding too-many-public-methods, disable=too-many-lines
 class TrainingProgram:
     """
     Reads 4 subsets of pandas database from DatabaseReader, and trains and saves 4 models
@@ -646,6 +646,83 @@ class TrainingProgram:
         print("Best hyperparameters:", study.best_params)
         return study.best_params
 
+    def mc_dropout_predict(self, view, inputs, n_samples=30):
+        """
+        Run Monte Carlo Dropout inference for uncertainty estimation.
+        """
+        self.models[view].to(self.device)
+        self.enable_dropout(view)  # only dropout layers active
+        inputs = inputs.to(self.device)
+
+        probs = []
+        with torch.no_grad():
+            for _ in range(n_samples):
+                outputs = self.models[view](inputs)
+                probs.append(F.softmax(outputs, dim=1).unsqueeze(0))  # (1, N, C)
+
+        probs = torch.cat(probs, dim=0)        # (n_samples, N, C)
+        mean_probs = probs.mean(dim=0)         # (N, C)
+        entropy = -(mean_probs * torch.log(mean_probs + 1e-8)).sum(dim=1)
+        uncertainties = entropy
+
+        return mean_probs, uncertainties
+
+    def enable_dropout(self, view):
+        """ Function to enable dropout layers during test-time """
+        for m in self.models[view].modules():
+            if m.__class__.__name__.startswith('Dropout'):
+                m.train()
+
+    def evaluate_uncertainty(self, view, n_samples=30, batch_size=32, threshold=None):
+        """
+        Evaluate model uncertainty on the test split using Monte Carlo Dropout.
+
+        Args:
+            view (str): dataset view (e.g. "late", "caud").
+            n_samples (int): number of MC dropout forward passes.
+            batch_size (int): batch size for evaluation.
+            threshold (float, optional): uncertainty cutoff. If set, only keep predictions below this.
+
+        Returns:
+            dict: containing predictions, labels, and uncertainties.
+        """
+        # Get test indices
+        test_x = self.train_test_indices[view]["test_x"]
+        test_y = self.train_test_indices[view]["test_y"]
+
+        test_dataset = ImageDataset(test_x, test_y, transform=self.transformations[view])
+        test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False)
+
+
+        all_preds, all_labels, all_uncertainties = [], [], []
+
+        self.models[view].eval()  # reset model first
+        for images, labels in test_loader:
+            mean_probs, uncertainties = self.mc_dropout_predict(view, images, n_samples=n_samples)
+            preds = mean_probs.argmax(dim=1)
+
+            all_preds.extend(preds.cpu().numpy())
+            all_labels.extend(labels.cpu().numpy())
+            all_uncertainties.extend(uncertainties.cpu().numpy())
+
+        results = {
+            "all_preds": all_preds,
+            "all_labels": all_labels,
+            "all_uncertainties": all_uncertainties
+        }
+
+        # Optionally filter by threshold
+        if threshold is not None:
+            kept_preds, kept_labels = [], []
+            for pred, label, unc in zip(all_preds, all_labels, all_uncertainties):
+                if unc < threshold:
+                    kept_preds.append(pred)
+                    kept_labels.append(label)
+            results["filtered_preds"] = kept_preds
+            results["filtered_labels"] = kept_labels
+
+        return results
+
     def create_f1_scores_bar_plot(
             self, view, model=None, batch_size=32, save_path=None, plot=True, plot_save_path=None):
         """
@@ -839,15 +916,12 @@ class TrainingProgram:
 
     def load_model(self):
         """
-        Loads resnet50 model to be trained and saved
+        Loads ResNet50 model with dropout for MC Dropout uncertainty to be trained and saved
         Return: ResNet model
         """
-        model = models.resnet50()
-        num_features = model.fc.in_features
-        # number of classifications tentative
-        model.fc = torch.nn.Linear(num_features, self.num_classes)
+        # Load ResNet50 model with dropout layers and pretrained weights (weights=True)
+        model = ResNet50Dropout(num_classes=self.num_classes, dropout_p=0.5, weights=True)
         model = model.to(self.device)
-
         return model
 
     def save_models(self, model_filenames = None, height_filename = None,

@@ -1,5 +1,5 @@
 """stack_simulator.py"""
-from training_data_converter import TrainingDataConverter
+from training_database_creator import TrainingDataConverter
 from training_database_reader import DatabaseReader
 from model_loader import ModelLoader
 from evaluation_method import EvaluationMethod
