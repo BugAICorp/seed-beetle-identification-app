@@ -3,6 +3,7 @@
 import torch
 from torchvision import models
 
+
 class ResNet50Dropout(torch.nn.Module):
     """
     ResNet50 model with added dropout layers for Monte Carlo Dropout.

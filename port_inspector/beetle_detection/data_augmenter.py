@@ -5,6 +5,7 @@ import pandas as pd
 from PIL import Image
 from torchvision import transforms
 
+
 class DataAugmenter:
     """
     Takes in a dataframe and augments more images for rare classes using the passed
@@ -26,8 +27,8 @@ class DataAugmenter:
         self.threshold = threshold
         # Create minor image transformation for newly generated images
         self.transformation = transforms.Compose([
-                transforms.RandomRotation(degrees=5)
-            ])
+            transforms.RandomRotation(degrees=5)
+        ])
 
     def binary_to_pil(self, binary_blob):
         """

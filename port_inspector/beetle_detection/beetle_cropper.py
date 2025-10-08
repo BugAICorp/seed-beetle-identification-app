@@ -49,9 +49,9 @@ class BeetleCropper:
         Initialize the YOLO model.
 
         Args:
-            threshold (float): Minimum confidence score required for a detection 
-                to be considered valid. Detections below this threshold will be 
-                ignored, and the image will be rejected if no boxes meet the 
+            threshold (float): Minimum confidence score required for a detection
+                to be considered valid. Detections below this threshold will be
+                ignored, and the image will be rejected if no boxes meet the
                 threshold.
         """
         self.device = torch.device(
