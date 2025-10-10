@@ -1,3 +1,5 @@
+""" app_training_program.py """
+
 import globals
 import os
 import sys
@@ -6,15 +8,19 @@ import json
 import copy
 from io import BytesIO
 from PIL import Image
+import pandas as pd
 import numpy as np
-from torch.utils.data import DataLoader, Dataset
+from torch.utils.data import DataLoader, Dataset, WeightedRandomSampler
 from torchvision import transforms, models
 import torch
 import dill
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import f1_score
-from transformation_classes import HistogramEqualization
+from sklearn.utils.class_weight import compute_class_weight
+from .transformation_classes import HistogramEqualization
 from port_inspector_app.models import TrainingDatabase
+from .data_augmenter import DataAugmenter
+from .resnet_dropout_model import ResNet50Dropout
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'port_inspector.settings')
 django.setup()
@@ -26,14 +32,19 @@ class TrainingProgram:
     Reads 4 subsets of pandas database from DatabaseReader, and trains and saves 4 models
     according to their respective image angles.
     """
-    def __init__(self, class_column, image_column='image'):
+    def __init__(self, class_column, image_column='image', augment=False, balance_classes=0):
         """
         Initialize dataset, image height, and individual model training
         Args:
-            dataframe (pd.DataFrame): Original dataset with image blobs
             class_column (str): Column header used to determine class
             num_classes (int): Number of classes/outputs for the models
             image_column (str): Column header used to determine the image column
+            augment (bool): Determines if data is augmented or not
+            balance_classes (int): Determines if class balancing will be used during training.
+                        0 = no balancing
+                        1 = class-weighted loss
+                        2 = oversampling only (normal loss)
+                        3 = both (oversampling + class-weighted loss)
         """
         self.dataframe = TrainingDatabase.objects.all()
         self.height = 300
@@ -41,6 +52,10 @@ class TrainingProgram:
         # Dataframe variables
         self.image_column = image_column
         self.class_column = class_column
+        self.augment = augment
+
+        self.balance_classes = balance_classes
+
         # subsets to save database reading to
         self.subsets = {
             "caud": self.get_subset("CAUD", self.dataframe),
@@ -176,26 +191,113 @@ class TrainingProgram:
 
     def get_train_test_split(self, df):
         """
-        Gets train and test split for given dataframe
-        Returns: List of train and test data
+        Gets stratified train and test splits for given queryset.
+        Returns: List of train and test data. [train_x, test_x, train_y, test_y]
         """
-        image_binaries = list(df.values_list(self.image_column, flat=True))
-        classes = list(df.values_list(self.class_column, flat=True))
+        # Convert queryset -> DataFrame so augmentation works properly
+        data_df = pd.DataFrame.from_records(list(df.values()))
+
+        # Extract class labels and encode them
+        classes = data_df[self.class_column].values
         labels = [self.class_string_dictionary[label] for label in classes]
-        # Split subset into training and testing sets
-        # x: images, y: species
-        train_x, test_x, train_y, test_y = train_test_split(
-            image_binaries, labels, test_size=0.2, random_state=42)
+
+        # Split by index for safe DataFrame reconstruction
+        indices = np.arange(len(data_df))
+        train_idx, test_idx = train_test_split(
+            indices, test_size=0.2, stratify=labels, random_state=42
+        )
+
+        # Build train/test DataFrames
+        train_df = data_df.iloc[train_idx].copy()
+        test_df = data_df.iloc[test_idx].copy()
+
+        # Apply augmentation ONLY on training set if enabled
+        if self.augment:
+            augmenter = DataAugmenter(
+                dataframe=train_df,
+                class_column="Species",
+                threshold=100
+            )
+            train_df = augmenter.augment_rare_classes(num_augments_per_image=5)
+
+        # Extract final values
+        train_x = train_df[self.image_column].values
+        train_y = [self.class_string_dictionary[label] for label in train_df[self.class_column].values]
+
+        test_x = test_df[self.image_column].values
+        test_y = [self.class_string_dictionary[label] for label in test_df[self.class_column].values]
+
         return [train_x, test_x, train_y, test_y]
 
-    def training_evaluation_resnet(self, num_epochs, train_loader, test_loader, view):
+    def get_loss_function(self, train_y):
+        """
+        Return the loss function based on balancing strategy.
+        Uses class-weighted loss if specified.
+        """
+        if self.balance_classes in [1, 3]:
+            train_y = np.array(train_y)
+
+            # Classes present in this training split
+            classes_in_split = np.unique(train_y)
+
+            class_weights = compute_class_weight(
+                class_weight="balanced", classes=classes_in_split, y=train_y
+            )
+
+            # Expand back to full num_classes size
+            full_class_weights = np.zeros(self.num_classes, dtype=np.float32)
+            full_class_weights[classes_in_split] = class_weights
+
+            class_weights = torch.tensor(full_class_weights, dtype=torch.float).to(self.device)
+            return torch.nn.CrossEntropyLoss(weight=class_weights)
+
+        return torch.nn.CrossEntropyLoss()
+
+    def get_train_loader(self, train_dataset, train_y, batch_size, max_os_ratio: float = 3.0):
+        """
+        Return DataLoader with optional oversampling.
+        Handles missing classes by filling zeros for absent classes.
+        """
+        if self.balance_classes in [2, 3]:
+            train_y = np.array(train_y)
+
+            # Count samples per class for all classes
+            class_sample_counts = np.zeros(self.num_classes, dtype=np.int64)
+            unique, counts = np.unique(train_y, return_counts=True)
+            class_sample_counts[unique] = counts
+
+            # Avoid division by zero for missing classes
+            weights = np.zeros_like(class_sample_counts, dtype=np.float32)
+            nonzero_mask = class_sample_counts > 0
+            weights[nonzero_mask] = 1.0 / class_sample_counts[nonzero_mask]
+
+            # Light oversampling safeguard
+            # Normalize so max ratio between classes <= max_os_ratio
+            min_w, max_w = weights[nonzero_mask].min(), weights[nonzero_mask].max()
+            if max_w / min_w > max_os_ratio:
+                scale = (min_w * max_os_ratio) / max_w
+                weights = np.clip(weights, a_min=None, a_max=scale * weights.max())
+
+            # Assign weight to each sample in train_y
+            sample_weights = [weights[t] for t in train_y]
+
+            sampler = WeightedRandomSampler(
+                weights=sample_weights,
+                num_samples=len(sample_weights),
+                replacement=True
+            )
+            return DataLoader(train_dataset, batch_size=batch_size, sampler=sampler)
+
+        return DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
+
+    def training_evaluation_resnet(self, num_epochs, train_loader, test_loader, view, train_y, lrate=0.0001):
         """
         Code for training algorithm and evaluating model
         """
         # Model Training
         # define loss function, optimization function, and image transformation
-        criterion = torch.nn.CrossEntropyLoss()
-        optimizer = torch.optim.Adam(self.models[view].parameters(), lr=0.001)
+        criterion = self.get_loss_function(train_y)
+        optimizer = torch.optim.Adam(self.models[view].parameters(), lr=lrate)
 
         best_epoch = 0
         best_macro_f1 = 0.0
@@ -255,13 +357,17 @@ class TrainingProgram:
                 else:
                     print(f"No improvement to model, the best epoch is {best_epoch}.")
 
+            # Free unused VRAM after each epoch
+            torch.cuda.empty_cache()
+
         # Set model to the best model after training
         if best_state_dict is not None:
             self.models[view].load_state_dict(best_state_dict)
             self.model_accuracies[view] = best_macro_f1
             print(f"Best Macro F1: {100 * best_macro_f1:.2f}% — model loaded.")
 
-    def train_resnet_model(self, num_epochs, view):
+    def train_resnet_model(self, num_epochs, view, batch, rotation=5, brightness=0.1, lrate=0.0001,
+                           erasure_params=None, max_os_ratio: float = 3.0):
         """
         Trains resnet model with subset of specified image views
         and save model to respective save file.
@@ -269,16 +375,30 @@ class TrainingProgram:
         """
         # Get training and testing data
         train_x, test_x, train_y, test_y = self.get_train_test_split(self.subsets[view])
-        # Define image training transformations, placeholder for preprocessing
-        transformation = self.train_transformations[view]
+
+        # Define image training transformations
+        if erasure_params is not None:
+            self.train_transformations = self.create_train_transformations(
+                rotation_degree=rotation,
+                brightness=brightness,
+                contrast=0.1,
+                erasing=(erasure_params["p"], (erasure_params["min"], erasure_params["max"]))
+            )
+        else:
+            self.train_transformations = self.create_train_transformations(
+                rotation_degree=rotation,
+                brightness=brightness,
+                contrast=0.1,
+                erasing=(0.4, (0.05, 0.25))
+            )
 
         # Create DataLoaders
-        train_dataset = ImageDataset(train_x, train_y, transform=transformation)
-        test_dataset = ImageDataset(test_x, test_y, transform=transformation)
-        training_loader = DataLoader(train_dataset, batch_size=32, shuffle=True)
-        testing_loader = DataLoader(test_dataset, batch_size=32, shuffle=False)
+        train_dataset = ImageDataset(train_x, train_y, transform=self.train_transformations[view])
+        test_dataset = ImageDataset(test_x, test_y, transform=self.transformations[view])
+        training_loader = self.get_train_loader(train_dataset, train_y, batch, max_os_ratio=max_os_ratio)
+        testing_loader = DataLoader(test_dataset, batch_size=batch, shuffle=False)
 
-        self.training_evaluation_resnet(num_epochs, training_loader, testing_loader, view)
+        self.training_evaluation_resnet(num_epochs, training_loader, testing_loader, view, train_y=train_y, lrate=lrate)
 
     def save_models(self, model_filenames=None, height_filename=None,
                     class_dict_filename=None, accuracy_dict_filename=None):
@@ -351,15 +471,12 @@ class TrainingProgram:
 
     def load_model(self):
         """
-        Loads resnet50 model to be trained and saved
+        Loads ResNet50 model with dropout for MC Dropout uncertainty to be trained and saved
         Return: ResNet model
         """
-        model = models.resnet50()
-        num_features = model.fc.in_features
-        # number of classifications tentative
-        model.fc = torch.nn.Linear(num_features, self.num_classes)
+        # Load ResNet50 model with dropout layers and pretrained weights (weights=True)
+        model = ResNet50Dropout(num_classes=self.num_classes, dropout_p=0.5, weights=True)
         model = model.to(self.device)
-
         return model
 
     def save_transformation(self, transformation, angle):
@@ -384,12 +501,12 @@ class ImageDataset(Dataset):
         transform (transforms.Compose): transform of image to be able
         to input into model
     """
-    def __init__(self, image_binaries, label, transform=None):
+    def __init__(self, image_binaries, labels, transform=None):
         """
         Initialize values
         """
         self.image_binaries = image_binaries
-        self.label = torch.tensor(label, dtype=torch.long)
+        self.labels = labels
         self.transform = transform
 
     def __len__(self):
@@ -408,4 +525,6 @@ class ImageDataset(Dataset):
         if self.transform:
             image = self.transform(image)
 
-        return image, self.label[idx]
+        label = torch.tensor(self.labels[idx], dtype=torch.long)
+
+        return image, label

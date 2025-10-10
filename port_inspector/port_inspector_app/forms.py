@@ -126,14 +126,39 @@ class SpecimenUploadForm(forms.ModelForm):
             raise forms.ValidationError("You must upload at least one image.")
 
         # Check each of the image forms fit within our filesize limits
-        cleaned_data = super().clean()
         field_names = ["frontal_upload", "dorsal_upload", "caudal_upload", "lateral_upload"]
+        # Create beetle cropper object
+        cropper = beetle_cropper.BeetleCropper(threshold=0.8)
 
         for name in field_names:
             field = cleaned_data.get(name)
-            if field and hasattr(field, 'size'):
-                if field.size > settings.MAX_UPLOAD_SIZE:
-                    self.add_error(name, f"File size must be less than {settings.MAX_UPLOAD_SIZE // (1024 * 1024)}MB.")
+            if not field:
+                continue
+
+            # File size check
+            if hasattr(field, 'size') and field.size > settings.MAX_UPLOAD_SIZE:
+                self.add_error(name, f"File size must be less than {settings.MAX_UPLOAD_SIZE // (1024 * 1024)}MB.")
+                continue
+
+            # Try to crop beetle
+            try:
+                img = Image.open(field).convert("RGB")
+                cropped_img = cropper.crop_beetle(img)
+
+                if cropped_img is None:
+                    self.add_error(name, "No beetle detected in this image. Please upload a clearer beetle photo.")
+                    continue
+
+                # Replace upload with cropped image in memory
+                img_bytes = io.BytesIO()
+                cropped_img.save(img_bytes, format="JPEG")
+                img_bytes.seek(0)
+                cleaned_data[name] = ContentFile(img_bytes.read(), name=field.name)
+
+            except UnidentifiedImageError:
+                self.add_error(name, "Uploaded file is not a valid image.")
+            except Exception as e:
+                self.add_error(name, f"Error processing image: {e}")
 
         return cleaned_data
 
@@ -159,43 +184,17 @@ class SpecimenUploadForm(forms.ModelForm):
         if commit:
             specimen.save()  # Must save the SpecimenUpload first
 
-            def generate_image_object(data, existing_image):
-                # Delete previous image if there is one
-                if data is False:
-                    if existing_image:
-                        existing_image.delete()
-                    return None
-
-                elif data:
-                    try:
-                        cropper = beetle_cropper.BeetleCropper()
-                        img = Image.open(data).convert("RGB")
-                        cropped_img = cropper.crop_beetle(img)
-
-                        img_bytes = io.BytesIO()
-                        cropped_img.save(img_bytes, format='JPEG')
-                        img_bytes.seek(0)
-
-                        img_file = ContentFile(img_bytes.read(), name=data.name)
-
-                        return models.Image.objects.create(specimen_upload=specimen, image=img_file)
-
-                    except UnidentifiedImageError:
-                        print(f"Could not identify uploaded image: {data.name}")
-                    except Exception as e:
-                        print(f"Error processing image: {e}")
+            # Save Image objects from cleaned_data (already cropped in clean())
+            def generate_image_object(data):
+                if data:
+                    return models.Image.objects.create(specimen_upload=specimen, image=data)
 
                 return None
 
-            frontal_obj = generate_image_object(self.cleaned_data.get("frontal_upload"), specimen.frontal_image)
-            dorsal_obj = generate_image_object(self.cleaned_data.get("dorsal_upload"), specimen.dorsal_image)
-            caudal_obj = generate_image_object(self.cleaned_data.get("caudal_upload"), specimen.caudal_image)
-            lateral_obj = generate_image_object(self.cleaned_data.get("lateral_upload"), specimen.lateral_image)
-
-            specimen.frontal_image = frontal_obj
-            specimen.dorsal_image = dorsal_obj
-            specimen.caudal_image = caudal_obj
-            specimen.lateral_image = lateral_obj
+            specimen.frontal_image = generate_image_object(self.cleaned_data.get("frontal_upload"))
+            specimen.dorsal_image = generate_image_object(self.cleaned_data.get("dorsal_upload"))
+            specimen.caudal_image = generate_image_object(self.cleaned_data.get("caudal_upload"))
+            specimen.lateral_image = generate_image_object(self.cleaned_data.get("lateral_upload"))
 
             specimen.save()  # Save again for the FK fields
 

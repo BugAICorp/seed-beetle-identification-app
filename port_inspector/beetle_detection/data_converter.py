@@ -13,7 +13,7 @@ class DjangoTrainingDatabaseConverter:
     def __init__(self, dir):
         base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '../../'))
         self.dir = os.path.join(base_dir, dir)
-        self.beetle_cropper = BeetleCropper()
+        self.beetle_cropper = BeetleCropper(threshold=0)
 
     def img_to_binary(self, image):
         try:
