@@ -48,7 +48,14 @@
           <label for="id_frontal_upload" class="custom-upload-bttn" id="label-id_frontal_upload">Choose File</label>
           <span id="filename-id_frontal_upload" class="filename-text">No file selected</span>
         </div>
-        
+        {% if form.frontal_upload.errors %}
+        <div class="field-error-block">
+          {% for error in form.frontal_upload.errors %}
+          <p class="field-error">{{ error }}</p>
+          {% endfor %}
+        </div>
+        {% endif %}
+
 
       <label for="id_dorsal_upload" class="upload-label">
         Dorsal Image:
@@ -67,6 +74,13 @@
         <label for="id_dorsal_upload" class="custom-upload-bttn" id="label-id_dorsal_upload">Choose File</label>
         <span id="filename-id_dorsal_upload" class="filename-text">No file selected</span>
       </div>
+      {% if form.dorsal_upload.errors %}
+      <div class="field-error-block">
+        {% for error in form.dorsal_upload.errors %}
+        <p class="field-error">{{ error }}</p>
+        {% endfor %}
+      </div>
+      {% endif %}
 
       <label for="id_caudal_upload" class="upload-label">
         Caudal Image:
@@ -84,6 +98,13 @@
         <label for="id_caudal_upload" class="custom-upload-bttn" id="label-id_caudal_upload">Choose File</label>
         <span id="filename-id_caudal_upload" class="filename-text">No file selected</span>
       </div>
+      {% if form.caudal_upload.errors %}
+      <div class="field-error-block">
+        {% for error in form.caudal_upload.errors %}
+        <p class="field-error">{{ error }}</p>
+        {% endfor %}
+      </div>
+      {% endif %}
 
       <label for="id_lateral_upload" class="upload-label">
         Lateral Image:
@@ -101,36 +122,27 @@
         <label for="id_lateral_upload" class="custom-upload-bttn" id="label-id_lateral_upload">Choose File</label>
         <span id="filename-id_lateral_upload" class="filename-text">No file selected</span>
       </div>
+      {% if form.lateral_upload.errors %}
+      <div class="field-error-block">
+        {% for error in form.lateral_upload.errors %}
+        <p class="field-error">{{ error }}</p>
+        {% endfor %}
+      </div>
+      {% endif %}
 
       <button type="submit" class="upload-btn">Upload</button>
     </form>
 
-    {% if form.errors %}
-    <div class="form-errors">
-        <ul class="error-type-block">
-        {% for field in form %}
-            {% if field.errors %}
-            <li class="field-error"><strong>{{ field.label }}:</strong>
-                <ul>
-                {% for error in field.errors %}
-                    <li>{{ error }}</li>
-                {% endfor %}
-                </ul>
-            </li>
-            {% endif %}
-        {% endfor %}
-        </ul>
-        {% if form.non_field_errors %}
-        <ul class="error-type-block">
-            <li class="non-field-error-block"><strong>Error:</strong></li>
-                {% for error in form.non_field_errors %}
-                <li>{{ error }}</li>
-                {% endfor %}
-        </ul>
-        {% endif %}
-        </ul>
-    </div>
-    {% endif %}
+  {% if form.non_field_errors %}
+  <div class="form-errors">
+    <ul class="error-type-block">
+      <li class="non-field-error-block"><strong>Error:</strong></li>
+      {% for error in form.non_field_errors %}
+      <li>{{ error }}</li>
+      {% endfor %}
+    </ul>
+  </div>
+  {% endif %}
 
   <footer>
     &copy; 2025 Port Inspector App

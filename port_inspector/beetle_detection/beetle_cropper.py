@@ -44,9 +44,15 @@ class BeetleCropper:
     Uses a YOLOv8 model to crop beetles from images in a directory or a single image.
     """
 
-    def __init__(self):
+    def __init__(self, threshold=0.8):
         """
         Initialize the YOLO model.
+
+        Args:
+            threshold (float): Minimum confidence score required for a detection
+                to be considered valid. Detections below this threshold will be
+                ignored, and the image will be rejected if no boxes meet the
+                threshold.
         """
         self.device = torch.device(
             "cuda" if torch.cuda.is_available() else
@@ -57,6 +63,8 @@ class BeetleCropper:
         self.yolo_model = YOLO(os.path.join(os.path.dirname(os.path.abspath(__file__)), "models/yolov8n_whole_image.pt"))
         torch.load = _original_torch_load
         self.yolo_model.to(self.device)
+
+        self.threshold = threshold
 
     def build(self, image_dir, output_dir):
         """
@@ -76,7 +84,7 @@ class BeetleCropper:
 
         print(f"Cropping beetles from images in {image_dir}...")
 
-        dropped_count = 0
+        dropped_files = []
         for img_file in image_dir.iterdir():
             if img_file.suffix.lower() not in [".jpg", ".jpeg", ".png"]:
                 continue
@@ -86,19 +94,23 @@ class BeetleCropper:
                 cropped = self.crop_beetle(img)
 
                 if cropped is None:
-                    dropped_count += 1
+                    dropped_files.append(img_file.name)
                     continue
 
                 cropped.save(output_dir / img_file.name, format="JPEG")
 
             except UnidentifiedImageError:
                 print(f"Cannot identify image file: {img_file.name}")
-                dropped_count += 1
+                dropped_files.append(img_file.name)
             except OSError as e:
                 print(f"OS error processing {img_file.name}: {e}")
-                dropped_count += 1
+                dropped_files.append(img_file.name)
 
-        print(f"Dropped {dropped_count} image(s) from the dataset.")
+        print(f"Dropped {len(dropped_files)} image(s) from the dataset.")
+        if dropped_files:
+            print("Dropped files:")
+            for f in dropped_files:
+                print("  -", f)
         print(f"Cropped dataset saved to {output_dir}")
 
     def crop_beetle(self, image: Image.Image):
@@ -119,6 +131,12 @@ class BeetleCropper:
         if len(boxes) == 0:
             return None
 
+        # Filter by confidence
+        boxes = [b for b in boxes if b.conf.cpu().item() >= self.threshold]
+        if len(boxes) == 0:
+            return None
+
+        # Choose largest surviving box
         largest_box = max(
             boxes,
             key=lambda b: (b.xyxy[0][2] - b.xyxy[0][0]) * (b.xyxy[0][3] - b.xyxy[0][1])
