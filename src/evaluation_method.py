@@ -350,7 +350,8 @@ class EvaluationMethod:
             # stack into [n_samples, num_classes]
             softmax_samples = torch.stack(softmax_samples)
             mean_probs = softmax_samples.mean(dim=0)[0]  # [num_classes]
-            entropy = -(mean_probs * mean_probs.log()).sum().item()
+            mean_probs = mean_probs / mean_probs.sum()  # ensure proper normalization
+            entropy = -(mean_probs * (mean_probs + 1e-8).log()).sum().item()
 
             # Top-k predictions
             topk = min(self.k, mean_probs.size(0))
@@ -419,7 +420,8 @@ class EvaluationMethod:
 
             softmax_samples = torch.stack(softmax_samples)
             mean_probs = softmax_samples.mean(dim=0)[0]
-            entropy = -(mean_probs * mean_probs.log()).sum().item()
+            mean_probs = mean_probs / mean_probs.sum()  # ensure normalization
+            entropy = -(mean_probs * (mean_probs + 1e-8).log()).sum().item()
 
             # Top-k predictions
             topk = min(self.k, mean_probs.size(0))
@@ -446,6 +448,8 @@ class EvaluationMethod:
             if entropy < uncertainty_threshold:
                 result["status"] = "accepted"
                 return result
+
+            self.trained_models[view].eval()  # reset to eval after MC dropout passes
 
         # Fallback: reject if all models uncertain
         best_result["status"] = "rejected"
