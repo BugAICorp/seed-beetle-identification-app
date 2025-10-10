@@ -165,6 +165,25 @@ if __name__ == '__main__':
             break
         print("Invalid input. Please try again.")
 
+    if show_plots:
+        while True:
+            # Ask user which type of confusion matrix they would like to generate
+            print("\nWhich confusion matrix would you like to generate?")
+            print("\t0 = Row-normalized Recall Values\n" \
+                "\t1 = Raw Counts\n" \
+                "\t2 = Both (Normalized Recall and Raw Counts)")
+            choice = int(input("Enter the number of your choice: "))
+            if choice == 0:
+                recall = True
+                break
+            if choice == 1:
+                raw_counts = True
+                break
+            if choice == 2:
+                recall = True
+                raw_counts = True
+                break
+            print("Invalid Input. Please enter 0, 1, or 2.")
     while True:
         # Ask user which evaluation method they would like to use
         choice = input("\nWould you like to evaluate using Monte Carlo Dropout? (y/n): ").lower()
@@ -238,8 +257,12 @@ if __name__ == '__main__':
         if show_plots:
             species_tp.create_f1_scores_bar_plot(
                 "caud", batch_size=32, plot_save_path="species_caud_plot.png", plot=True)
-            species_tp.create_confusion_matrix(
-                "caud", batch_size=32, plot_save_path="species_caud_matrix.png", plot=True)
+            if recall:
+                species_tp.create_confusion_matrix(
+                    "caud", batch_size=32, plot_save_path="species_caud_matrix_recall.png", plot=True, normalize=True)
+            if raw_counts:
+                species_tp.create_confusion_matrix(
+                    "caud", batch_size=32, plot_save_path="species_caud_matrix_counts.png", plot=True, normalize=False)
 
     if train_dors:
         erasure_params_dors = {
@@ -269,8 +292,12 @@ if __name__ == '__main__':
         if show_plots:
             species_tp.create_f1_scores_bar_plot(
                 "dors", batch_size=32, plot_save_path="species_dors_plot.png", plot=True)
-            species_tp.create_confusion_matrix(
-                "dors", batch_size=32, plot_save_path="species_dors_matrix.png", plot=True)
+            if recall:
+                species_tp.create_confusion_matrix(
+                    "dors", batch_size=32, plot_save_path="species_dors_matrix_recall.png", plot=True, normalize=True)
+            if raw_counts:
+                species_tp.create_confusion_matrix(
+                    "dors", batch_size=32, plot_save_path="species_dors_matrix_counts.png", plot=True, normalize=False)
 
     if train_fron:
         erasure_params_fron = {
@@ -300,8 +327,12 @@ if __name__ == '__main__':
         if show_plots:
             species_tp.create_f1_scores_bar_plot(
                 "fron", batch_size=32, plot_save_path="species_fron_plot.png", plot=True)
-            species_tp.create_confusion_matrix(
-                "fron", batch_size=32, plot_save_path="species_fron_matrix.png", plot=True)
+            if recall:
+                species_tp.create_confusion_matrix(
+                    "fron", batch_size=32, plot_save_path="species_fron_matrix_recall.png", plot=True, normalize=True)
+            if raw_counts:
+                species_tp.create_confusion_matrix(
+                    "fron", batch_size=32, plot_save_path="species_fron_matrix_counts.png", plot=True, normalize=False)
 
     if train_late:
         erasure_params_late = {
@@ -331,8 +362,12 @@ if __name__ == '__main__':
         if show_plots:
             species_tp.create_f1_scores_bar_plot(
                 "late", batch_size=32, plot_save_path="species_late_plot.png", plot=True)
-            species_tp.create_confusion_matrix(
-                "late", batch_size=32, plot_save_path="species_late_matrix.png", plot=True)
+            if recall:
+                species_tp.create_confusion_matrix(
+                    "late", batch_size=32, plot_save_path="species_late_matrix_recall.png", plot=True, normalize=True)
+            if raw_counts:
+                species_tp.create_confusion_matrix(
+                    "late", batch_size=32, plot_save_path="species_late_matrix_counts.png", plot=True, normalize=False)
 
     # Save models
     species_model_filenames = {
@@ -381,8 +416,12 @@ if __name__ == '__main__':
         if show_plots:
             genus_tp.create_f1_scores_bar_plot(
                 "caud", batch_size=32, plot_save_path="genus_caud_plot.png", plot=True)
-            genus_tp.create_confusion_matrix(
-                "caud", batch_size=32, plot_save_path="genus_caud_matrix.png", plot=True)
+            if recall:
+                genus_tp.create_confusion_matrix(
+                    "caud", batch_size=32, plot_save_path="genus_caud_matrix_recall.png", plot=True, normalize=True)
+            if raw_counts:
+                genus_tp.create_confusion_matrix(
+                    "caud", batch_size=32, plot_save_path="genus_caud_matrix_counts.png", plot=True, normalize=False)
 
     if train_dors:
         erasure_params_dors = {
@@ -412,8 +451,12 @@ if __name__ == '__main__':
         if show_plots:
             genus_tp.create_f1_scores_bar_plot(
                 "dors", batch_size=16, plot_save_path="genus_dors_plot.png", plot=True)
-            genus_tp.create_confusion_matrix(
-                "dors", batch_size=16, plot_save_path="genus_dors_matrix.png", plot=True)
+            if recall:
+                genus_tp.create_confusion_matrix(
+                    "dors", batch_size=16, plot_save_path="genus_dors_matrix_recall.png", plot=True, normalize=True)
+            if raw_counts:
+                genus_tp.create_confusion_matrix(
+                    "dors", batch_size=16, plot_save_path="genus_dors_matrix_counts.png", plot=True, normalize=False)
 
     if train_fron:
         erasure_params_fron = {
@@ -443,8 +486,12 @@ if __name__ == '__main__':
         if show_plots:
             genus_tp.create_f1_scores_bar_plot(
                 "fron", batch_size=16, plot_save_path="genus_fron_plot.png", plot=True)
-            genus_tp.create_confusion_matrix(
-                "fron", batch_size=16, plot_save_path="genus_fron_matrix.png", plot=True)
+            if recall:
+                genus_tp.create_confusion_matrix(
+                    "fron", batch_size=16, plot_save_path="genus_fron_matrix_recall.png", plot=True, normalize=True)
+            if raw_counts:
+                genus_tp.create_confusion_matrix(
+                    "fron", batch_size=16, plot_save_path="genus_fron_matrix_counts.png", plot=True, normalize=False)
 
     if train_late:
         erasure_params_late = {
@@ -474,8 +521,12 @@ if __name__ == '__main__':
         if show_plots:
             genus_tp.create_f1_scores_bar_plot(
                 "late", batch_size=32, plot_save_path="genus_late_plot.png", plot=True)
-            genus_tp.create_confusion_matrix(
-                "late", batch_size=32, plot_save_path="genus_late_matrix.png", plot=True)
+            if recall:
+                genus_tp.create_confusion_matrix(
+                    "late", batch_size=32, plot_save_path="genus_late_matrix_recall.png", plot=True, normalize=True)
+            if raw_counts:
+                genus_tp.create_confusion_matrix(
+                    "late", batch_size=32, plot_save_path="genus_late_matrix_counts.png", plot=True, normalize=False)
 
 
     # Save models
