@@ -495,5 +495,5 @@ class EvaluationMethod:
         scaled_logits = logits / temperature
         softmax_probs = torch.nn.functional.softmax(scaled_logits, dim=1)
         energy_score = -temperature * torch.logsumexp(scaled_logits, dim=1)
-        is_confident = energy_score.item() > threshold  # lower = less confident
+        is_confident = energy_score.item() < threshold  # lower = less confident
         return is_confident, energy_score.item(), softmax_probs[0]
