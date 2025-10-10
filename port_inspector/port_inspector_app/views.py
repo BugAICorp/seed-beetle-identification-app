@@ -321,10 +321,12 @@ def results_view(request, hashed_ID):
     confirmed_species = upload.final_identification if upload else None
 
     #Process genus and species stats to determine success
-    if s_stat is "accepted":
+    s_acceptance = False
+    if s_stat == "accepted":
         s_acceptance = True
 
-    if g_stat is "accepted":
+    g_acceptance = False
+    if g_stat == "accepted":
         g_acceptance = True
 
     return render(
