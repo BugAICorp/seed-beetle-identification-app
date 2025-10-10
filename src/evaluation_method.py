@@ -81,11 +81,15 @@ class EvaluationMethod:
 
         return transformations
 
-    def evaluate_image(self, late=None, dors=None, fron=None, caud=None):
+    def evaluate_image(self, late=None, dors=None, fron=None, caud=None, ood_check=False):
         """
         Create an evaluation of the input image(s) by running each given image through
         its respective model and then run the output of the models through the evaluation method
         and returns the top classifications
+
+        Args:
+            late, dors, fron, caud (PIL.Image, optional): Input images for each view.
+            ood_check (bool): Whether to apply OOD detection for out-of-distribution rejection.
 
         Returns: List of tuples [(species_name, confidence_score), ...]
             sorted by confidence(index 0 being the highest).
@@ -118,10 +122,16 @@ class EvaluationMethod:
                 with torch.no_grad():
                     model_output = self.trained_models[view].to(device)(transformed_image)
 
-                # Apply OOD for out-of-distribution detection
-                # Threshold to be adjusted (If threshold is too strict (try −14) If too lenient (try −10))
-                # _ is the energy score returned, which is not used
-                is_confident, _, softmax_scores = self.apply_ood(model_output, temperature=1000, threshold=-12.0)
+                if ood_check:
+                    # Apply OOD for out-of-distribution detection
+                    # Threshold to be adjusted (If threshold is too strict (try −14) If too lenient (try −10))
+                    # _ is the energy score returned, which is not used
+                    is_confident, _, softmax_scores = self.apply_ood(
+                        model_output, temperature=1000, threshold=-12.0
+                    )
+                else:
+                    softmax_scores = torch.nn.functional.softmax(model_output[0], dim=0)
+                    is_confident = True  # Treat as in-distribution
 
                 if not is_confident:
                     # Get the predicted top 5 species(or less if not enough outputs) and their indices
