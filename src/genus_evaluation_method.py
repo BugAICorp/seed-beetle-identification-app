@@ -83,11 +83,15 @@ class GenusEvaluationMethod:
 
         return transformations
 
-    def evaluate_image(self, late=None, dors=None, fron=None, caud=None):
+    def evaluate_image(self, late=None, dors=None, fron=None, caud=None, ood_check = False):
         """
         Create an evaluation of the input image(s) by running each given image through
         its respective model and then run the output of the models through the evaluation method
         and return the classification
+
+        Args:
+            late, dors, fron, caud (PIL.Image, optional): Input images for each view.
+            ood_check (bool): Whether to apply OOD detection for out-of-distribution rejection.
 
         Returns: Classification of input images and confidence score. 
                 A return of None, -1 indicates an error
@@ -123,10 +127,16 @@ class GenusEvaluationMethod:
                 with torch.no_grad():
                     model_output = self.trained_models[view].to(device)(transformed_image)
 
-                # Apply OOD for out-of-distribution detection
-                # Threshold to be adjusted (If threshold is too strict (try −14) If too lenient (try −10))
-                # energy is not needed but is returned
-                is_confident, _, softmax_scores = self.apply_ood(model_output, temperature=1000, threshold=-12.0)
+                if ood_check:
+                    # Apply OOD for out-of-distribution detection
+                    # Threshold to be adjusted (If threshold is too strict (try −14) If too lenient (try −10))
+                    # energy is not needed but is returned
+                    is_confident, _, softmax_scores = self.apply_ood(
+                        model_output, temperature=1000, threshold=-12.0
+                    )
+                else:
+                    softmax_scores = torch.nn.functional.softmax(model_output[0], dim=0)
+                    is_confident = True  # Treat as in-distribution
 
                 if is_confident:
                     # Use the predicted class and softmax confidence
