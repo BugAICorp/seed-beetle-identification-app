@@ -38,6 +38,18 @@
       <h1>Upload #{{ upload_id }}</h1>
       <p><strong>Likely Species:</strong> <span id="likely-species">{{ likely_species }}</span></p>
       <p><strong>Confirmed Species:</strong> <span id="likely-species">{{ confirmed_species | default:" Not Confirmed"}}</span></p>
+      {% if is_usda or is_special_status %}
+        <p><strong>Genus Uncertainty:</strong> 
+          <span class="{% if species_results.0.confidence_level >= 50 %}confidence-high{% elif species_results.0.confidence_level >= 20 %}confidence-medium{% else %}confidence-low{% endif %}">
+          {{ species_results.0.species_uncertainty }}
+        </span>
+        </p>
+        <p><strong>Species Uncertainty:</strong> 
+          <span id="{% if species_results.0.confidence_level >= 50 %}confidence-high{% elif species_results.0.confidence_level >= 20 %}confidence-medium{% else %}confidence-low{% endif %}">
+          {{ species_results.0.genus_uncertainty }}
+        </span>
+        </p>
+      {% endif %}
 
       <table>
         <tr>
