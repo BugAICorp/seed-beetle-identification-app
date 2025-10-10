@@ -230,6 +230,11 @@ def results_view(request, hashed_ID):
         is_special_status = False
 
     # If SpecimenUpload has not been evaluated yet, evaluate and store in db
+    s_uncert = None
+    s_stat = None
+    g_uncert = None
+    g_stat = None
+
     if upload:
         if upload.genus[0] is None and upload.species[0][0] is None:
             lat_image = upload.lateral_image.image if upload.lateral_image else None
@@ -238,8 +243,7 @@ def results_view(request, hashed_ID):
             caud_image = upload.caudal_image.image if upload.caudal_image else None
 
             if is_usda or is_special_status:
-                #TODO add new eval method in here
-                s, g = species_eval.evaluate_images(lat_image, dor_image, fron_image, caud_image)
+                s, g, s_uncert, s_stat, g_uncert, g_stat = species_eval.evaluate_mc_dropout(lat_image, dor_image, fron_image, caud_image)
 
                 upload.species = s
                 upload.genus = g
@@ -247,6 +251,10 @@ def results_view(request, hashed_ID):
             
             else:
                 s, g = species_eval.evaluate_images(lat_image, dor_image, fron_image, caud_image)
+                s_uncert = 0.0
+                g_uncert = 0.0
+                s_stat = True
+                g_stat = True
 
                 upload.species = s
                 upload.genus = g
@@ -312,6 +320,13 @@ def results_view(request, hashed_ID):
 
     confirmed_species = upload.final_identification if upload else None
 
+    #Process genus and species stats to determine success
+    if s_stat is "accepted":
+        s_acceptance = True
+
+    if g_stat is "accepted":
+        g_acceptance = True
+
     return render(
         request,
         "results.html",
@@ -323,7 +338,11 @@ def results_view(request, hashed_ID):
             "image_urls": image_urls,
             "confirm_form": confirm_form,
             "is_usda": is_usda,
-            "is_special_status": is_special_status
+            "is_special_status": is_special_status,
+            "species_stat": s_acceptance,
+            "genus_stat": g_acceptance,
+            "species_uncert": s_uncert,
+            "genus_uncert": g_uncert
         },
     )
 
