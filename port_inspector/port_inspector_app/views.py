@@ -248,7 +248,7 @@ def results_view(request, hashed_ID):
                 upload.species = s
                 upload.genus = g
                 upload.save()
-            
+
             else:
                 s, g = species_eval.evaluate_images(lat_image, dor_image, fron_image, caud_image)
                 s_uncert = 0.0
@@ -320,7 +320,7 @@ def results_view(request, hashed_ID):
 
     confirmed_species = upload.final_identification if upload else None
 
-    #Process genus and species stats to determine success
+    # Process genus and species stats to determine success
     s_acceptance = False
     if s_stat == "accepted":
         s_acceptance = True
