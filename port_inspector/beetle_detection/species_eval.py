@@ -33,7 +33,8 @@ if "runserver" in sys.argv:
             "fron" : os.path.join(os.path.dirname(os.path.abspath(__file__)), "models/spec_fron.pth"),
             "late" : os.path.join(os.path.dirname(os.path.abspath(__file__)), "models/spec_late.pth")
         }
-    species_ml = ModelLoader(species_model_paths, SPECIES_OUTPUTS)
+    species_ml = ModelLoader(
+        weights_file_paths=species_model_paths, num_classes=SPECIES_OUTPUTS, use_dropout=True)
     species_models = species_ml.get_models()
 
     # Load genus models
@@ -43,7 +44,8 @@ if "runserver" in sys.argv:
             "fron" : os.path.join(os.path.dirname(os.path.abspath(__file__)), "models/gen_fron.pth"),
             "late" : os.path.join(os.path.dirname(os.path.abspath(__file__)), "models/gen_late.pth")
         }
-    genus_ml = ModelLoader(genus_model_paths, GENUS_OUTPUTS)
+    genus_ml = ModelLoader(
+        weights_file_paths=genus_model_paths, num_classes=GENUS_OUTPUTS, use_dropout=True)
     genus_models = genus_ml.get_models()
 
 
