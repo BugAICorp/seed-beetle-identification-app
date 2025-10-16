@@ -43,10 +43,14 @@
             </div>
           </div>
         </label>
-        {{ form.frontal_upload }}
-        <div style="display: flex; gap: 5px;">
-          <label for="id_frontal_upload" class="custom-upload-bttn" id="label-id_frontal_upload">Choose File</label>
-          <span id="filename-id_frontal_upload" class="filename-text">No file selected</span>
+
+        <div class="drop-zone" id="drop-zone-id_frontal_upload">
+          <p>Drag & Drop frontal image here or</p>
+          {{ form.frontal_upload }}
+          <div style="display: flex; gap: 5px;">
+            <label for="id_frontal_upload" class="custom-upload-bttn" id="label-id_frontal_upload">Choose File</label>
+            <span id="filename-id_frontal_upload" class="filename-text">No file selected</span>
+          </div>
         </div>
         {% if form.frontal_upload.errors %}
         <div class="field-error-block">
@@ -68,11 +72,15 @@
           </div>
         </div>
       </label>
-      {{ form.dorsal_upload }}
-      <!-- Overload the original upload form and insert a custom label instead for better style control -->
-      <div style="display: flex; gap: 5px;">
-        <label for="id_dorsal_upload" class="custom-upload-bttn" id="label-id_dorsal_upload">Choose File</label>
-        <span id="filename-id_dorsal_upload" class="filename-text">No file selected</span>
+
+      <div class="drop-zone" id="drop-zone-id_dorsal_upload">
+        <p>Drag & Drop dorsal image here or</p>
+        {{ form.dorsal_upload }}
+        <!-- Overload the original upload form and insert a custom label instead for better style control -->
+        <div style="display: flex; gap: 5px;">
+          <label for="id_dorsal_upload" class="custom-upload-bttn" id="label-id_dorsal_upload">Choose File</label>
+          <span id="filename-id_dorsal_upload" class="filename-text">No file selected</span>
+        </div>
       </div>
       {% if form.dorsal_upload.errors %}
       <div class="field-error-block">
@@ -93,10 +101,14 @@
           </div>
         </div>
       </label>
-      {{ form.caudal_upload }}
-      <div style="display: flex; gap: 5px;">
-        <label for="id_caudal_upload" class="custom-upload-bttn" id="label-id_caudal_upload">Choose File</label>
-        <span id="filename-id_caudal_upload" class="filename-text">No file selected</span>
+
+      <div class="drop-zone" id="drop-zone-id_caudal_upload">
+        <p>Drag & Drop caudal image here or</p>
+        {{ form.caudal_upload }}
+        <div style="display: flex; gap: 5px;">
+          <label for="id_caudal_upload" class="custom-upload-bttn" id="label-id_caudal_upload">Choose File</label>
+          <span id="filename-id_caudal_upload" class="filename-text">No file selected</span>
+        </div>
       </div>
       {% if form.caudal_upload.errors %}
       <div class="field-error-block">
@@ -117,10 +129,14 @@
           </div>
         </div>
       </label>
-      {{ form.lateral_upload }}
-      <div style="display: flex; gap: 5px;">
-        <label for="id_lateral_upload" class="custom-upload-bttn" id="label-id_lateral_upload">Choose File</label>
-        <span id="filename-id_lateral_upload" class="filename-text">No file selected</span>
+
+      <div class="drop-zone" id="drop-zone-id_lateral_upload">
+        <p>Drag & Drop lateral image here or</p>
+        {{ form.lateral_upload }}
+        <div style="display: flex; gap: 5px;">
+          <label for="id_lateral_upload" class="custom-upload-bttn" id="label-id_lateral_upload">Choose File</label>
+          <span id="filename-id_lateral_upload" class="filename-text">No file selected</span>
+        </div>
       </div>
       {% if form.lateral_upload.errors %}
       <div class="field-error-block">
@@ -194,4 +210,36 @@ document.addEventListener('DOMContentLoaded', function () {
     });
   });
 });
+</script>
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    const dropZones = document.querySelectorAll('.drop-zone');
+
+    dropZones.forEach(zone => {
+      const fileInput = zone.querySelector('input[type="file"]');
+
+      zone.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        zone.classList.add('dragover');
+      });
+
+      zone.addEventListener('dragleave', () => {
+        zone.classList.remove('dragover');
+      });
+
+      zone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        zone.classList.remove('dragover');
+        const files = e.dataTransfer.files;
+        if (files.length > 0) {
+          // Set dropped file to the hidden input
+          fileInput.files = files;
+
+          // Trigger the same logic as when user clicks "Choose File"
+          const event = new Event('change', { bubbles: true });
+          fileInput.dispatchEvent(event);
+        }
+      });
+    });
+  });
 </script>

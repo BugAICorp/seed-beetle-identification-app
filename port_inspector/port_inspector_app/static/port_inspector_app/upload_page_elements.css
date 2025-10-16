@@ -206,3 +206,30 @@ input[type="file"] {
     margin-left: 4px;
     text-align: left;
 }
+
+.drop-zone {
+    border: 2px dashed #999;
+    border-radius: 10px;
+    padding: 10px;
+    /* reduce padding to make it smaller */
+    text-align: center;
+    background-color: #fafafa;
+    transition: background-color 0.3s;
+    width: 250px;
+    /* you can fix width */
+    height: 100px;
+    /* and height */
+    margin: 10px auto;
+    /* centers it */
+}
+
+.drop-zone.dragover {
+    background-color: #f0f8ff;
+    border-color: #007bff;
+}
+
+.drop-zone p {
+    color: #555;
+    font-size: 14px;
+    margin-bottom: 10px;
+}
