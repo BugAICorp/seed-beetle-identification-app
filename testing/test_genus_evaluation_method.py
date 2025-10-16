@@ -221,7 +221,10 @@ class TestGenusEvaluationMethod(unittest.TestCase):
         mock_transform = MagicMock(return_value = torch.rand(1, 3, 224, 224))
         evaluation.transform_input = mock_transform
 
-        result_genus, result_conf = evaluation.evaluate_image(dors=Image.new("RGB", (224, 224)))
+        result_genus, result_conf = evaluation.evaluate_image(
+            dors=Image.new("RGB", (224, 224)),
+            ood_check=True
+        )
 
         self.assertEqual(result_genus, "Acanthoscelides")
         self.assertEqual(round(result_conf, 2), 0.8)
@@ -277,7 +280,9 @@ class TestGenusEvaluationMethod(unittest.TestCase):
             late=Image.new("RGB", (224, 224)),
             dors=Image.new("RGB", (224, 224)),
             fron=Image.new("RGB", (224, 224)),
-            caud=Image.new("RGB", (224, 224)))
+            caud=Image.new("RGB", (224, 224)),
+            ood_check=True
+        )
 
         self.assertEqual(result_genus, "Callosobruchus")
         self.assertEqual(round(result_conf, 2), 0.6)

@@ -247,7 +247,9 @@ class TestEvaluationMethod(unittest.TestCase):
             late=Image.new("RGB", (224, 224)),
             dors=Image.new("RGB", (224, 224)),
             fron=Image.new("RGB", (224, 224)),
-            caud=Image.new("RGB", (224, 224)))
+            caud=Image.new("RGB", (224, 224)),
+            ood_check=True
+        )
 
         # Assert top 5 species are in correct order of confidence with correct species
         self.assertEqual(test_results[0][0], "analis")
