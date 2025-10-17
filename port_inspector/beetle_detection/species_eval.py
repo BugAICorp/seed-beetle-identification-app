@@ -120,7 +120,7 @@ def evaluate_images(late_path, dors_path, fron_path, caud_path):
     # Take top 5 species, modify confidence numbers to be a percentage, Ensure name strings are in title format
     top_5_species = []
     for i in range(5):
-        top_5_species.append((top_species[i][0].title(), top_species[i][1]*100.0))
+        top_5_species.append((top_species[i][0], top_species[i][1]*100.0))
     top_genus = top_genus[0], top_genus[1]*100.0
 
     return top_5_species, top_genus
