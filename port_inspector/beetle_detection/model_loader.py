@@ -6,7 +6,7 @@ from torchvision import models
 import torch
 import os
 import sys
-from .resnet_dropout_model import ResNet50Dropout
+from beetle_detection.resnet_dropout_model import ResNet50Dropout
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../')))
 
 class ModelLoader:

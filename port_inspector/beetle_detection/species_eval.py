@@ -126,6 +126,34 @@ def evaluate_images(late_path, dors_path, fron_path, caud_path):
     return top_5_species, top_genus
 
 
+def evaluate_mc_dropout(late_path, dors_path, fron_path, caud_path):
+    """
+    Script to evaluate via mc dropout the input images and process the results
+    for the app to display
+    """
+    # Load the provided images
+    LATE_IMG = Image.open(late_path) if late_path else None
+    DORS_IMG = Image.open(dors_path) if dors_path else None
+    FRON_IMG = Image.open(fron_path) if fron_path else None
+    CAUD_IMG = Image.open(caud_path) if caud_path else None    
+    
+    # Run the species evaluation method
+    top_species = species_evaluator.evaluate_heaviest_mc_dropout(
+        late=LATE_IMG, dors=DORS_IMG, fron=FRON_IMG, caud=CAUD_IMG
+    )
+
+    top_genus = genus_evaluator.evaluate_heaviest_mc_dropout(
+        late=LATE_IMG, dors=DORS_IMG, fron=FRON_IMG, caud=CAUD_IMG
+    )
+
+    top_genus_formatted = top_genus["genus"], top_genus["mean_score"]*100.0
+    top_5_species = []
+    for i in range(5):
+        top_5_species.append((top_species["species"][i], top_species["mean_scores"][i]*100.0))
+
+    return top_5_species, top_genus_formatted, top_species["uncertainty"], top_species["status"], top_genus["uncertainty"], top_genus["status"]
+
+
 def retrain_models():
     """
     Script for running retraining of models

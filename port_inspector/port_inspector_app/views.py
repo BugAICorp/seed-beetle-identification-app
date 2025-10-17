@@ -222,7 +222,19 @@ def results_view(request, hashed_ID):
         # Invalid id/Upload does not exist
         upload_id, upload = None, None
 
+    try:
+        is_usda = request.user.is_usda
+        is_special_status = request.user.is_special_status
+    except AttributeError:
+        is_usda = False
+        is_special_status = False
+
     # If SpecimenUpload has not been evaluated yet, evaluate and store in db
+    s_uncert = None
+    s_stat = None
+    g_uncert = None
+    g_stat = None
+
     if upload:
         if upload.genus[0] is None and upload.species[0][0] is None:
             lat_image = upload.lateral_image.image if upload.lateral_image else None
@@ -230,11 +242,23 @@ def results_view(request, hashed_ID):
             fron_image = upload.frontal_image.image if upload.frontal_image else None
             caud_image = upload.caudal_image.image if upload.caudal_image else None
 
-            s, g = species_eval.evaluate_images(lat_image, dor_image, fron_image, caud_image)
+            if is_usda or is_special_status:
+                s, g, s_uncert, s_stat, g_uncert, g_stat = species_eval.evaluate_mc_dropout(lat_image, dor_image, fron_image, caud_image)
 
-            upload.species = s
-            upload.genus = g
-            upload.save()
+                upload.species = s
+                upload.genus = g
+                upload.save()
+
+            else:
+                s, g = species_eval.evaluate_images(lat_image, dor_image, fron_image, caud_image)
+                s_uncert = 0.0
+                g_uncert = 0.0
+                s_stat = True
+                g_stat = True
+
+                upload.species = s
+                upload.genus = g
+                upload.save()
 
         # Get ML results from the db
         species_results = upload.species
@@ -296,12 +320,14 @@ def results_view(request, hashed_ID):
 
     confirmed_species = upload.final_identification if upload else None
 
-    try:
-        is_usda = request.user.is_usda
-        is_special_status = request.user.is_special_status
-    except AttributeError:
-        is_usda = False
-        is_special_status = False
+    # Process genus and species stats to determine success
+    s_acceptance = False
+    if s_stat == "accepted":
+        s_acceptance = True
+
+    g_acceptance = False
+    if g_stat == "accepted":
+        g_acceptance = True
 
     return render(
         request,
@@ -314,7 +340,11 @@ def results_view(request, hashed_ID):
             "image_urls": image_urls,
             "confirm_form": confirm_form,
             "is_usda": is_usda,
-            "is_special_status": is_special_status
+            "is_special_status": is_special_status,
+            "species_stat": s_acceptance,
+            "genus_stat": g_acceptance,
+            "species_uncert": s_uncert,
+            "genus_uncert": g_uncert
         },
     )
 
