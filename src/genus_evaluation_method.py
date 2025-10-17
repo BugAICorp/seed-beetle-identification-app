@@ -44,7 +44,7 @@ class GenusEvaluationMethod:
     def open_class_dictionary(self, filename):
         """
         Open and save the class dictionary for use in the evaluation method 
-        to convert the model's index to a string species classification
+        to convert the model's index to a string genus classification
 
         Returns: dictionary defined by file
         """
@@ -83,11 +83,15 @@ class GenusEvaluationMethod:
 
         return transformations
 
-    def evaluate_image(self, late=None, dors=None, fron=None, caud=None):
+    def evaluate_image(self, late=None, dors=None, fron=None, caud=None, ood_check = False):
         """
         Create an evaluation of the input image(s) by running each given image through
         its respective model and then run the output of the models through the evaluation method
         and return the classification
+
+        Args:
+            late, dors, fron, caud (PIL.Image, optional): Input images for each view.
+            ood_check (bool): Whether to apply OOD detection for out-of-distribution rejection.
 
         Returns: Classification of input images and confidence score. 
                 A return of None, -1 indicates an error
@@ -123,10 +127,16 @@ class GenusEvaluationMethod:
                 with torch.no_grad():
                     model_output = self.trained_models[view].to(device)(transformed_image)
 
-                # Apply OOD for out-of-distribution detection
-                # Threshold to be adjusted (If threshold is too strict (try −14) If too lenient (try −10))
-                # energy is not needed but is returned
-                is_confident, _, softmax_scores = self.apply_ood(model_output, temperature=1000, threshold=-12.0)
+                if ood_check:
+                    # Apply OOD for out-of-distribution detection
+                    # Threshold to be adjusted (If threshold is too strict (try −14) If too lenient (try −10))
+                    # energy is not needed but is returned
+                    is_confident, _, softmax_scores = self.apply_ood(
+                        model_output, temperature=1000, threshold=-12.0
+                    )
+                else:
+                    softmax_scores = torch.nn.functional.softmax(model_output[0], dim=0)
+                    is_confident = True  # Treat as in-distribution
 
                 if is_confident:
                     # Use the predicted class and softmax confidence
@@ -143,12 +153,11 @@ class GenusEvaluationMethod:
     def evaluation_handler(self, predictions, view_count):
         """
         Creates an evaluation by taking the predictions from the models and creating two
-        nested lists of each angle and their top scores and species. With these lists
+        nested lists of each angle and their top scores and genera. With these lists
         created and the view count the method correctly calls the desired evaluation
-        method and returns the predicted list.
+        method and returns a prediction tuple.
 
-        Returns: List of tuples [(species_name, confidence_score), ...]
-            sorted by confidence(index 0 being the highest).
+        Returns: tuple (genus_name, confidence_score)
             A return of None, -1 indicates an error
         """
 
@@ -262,10 +271,10 @@ class GenusEvaluationMethod:
             # If no valid genus predictions, return unknown
             return "Unknown Genus", 0.0
 
-        highest_species = max(genus_scores, key=genus_scores.get)
-        highest_score = genus_scores[highest_species]
+        highest_genus = max(genus_scores, key=genus_scores.get)
+        highest_score = genus_scores[highest_genus]
 
-        return self.genus_idx_dict.get(highest_species, "Unknown Species"), highest_score
+        return self.genus_idx_dict.get(highest_genus, "Unknown Genus"), highest_score
 
     def enable_dropout(self, view):
         """
@@ -328,7 +337,8 @@ class GenusEvaluationMethod:
             mean_probs = softmax_samples.mean(dim=0)[0]  # [num_classes]
 
             # Predictive uncertainty (entropy)
-            entropy = -(mean_probs * mean_probs.log()).sum().item()
+            mean_probs = mean_probs / mean_probs.sum()  # ensure proper normalization
+            entropy = -(mean_probs * (mean_probs + 1e-8).log()).sum().item()
 
             # Top-1 prediction
             score, genus_idx = torch.max(mean_probs, dim=0)
@@ -343,6 +353,80 @@ class GenusEvaluationMethod:
             self.trained_models[view].eval()  # reset to eval after MC dropout passes
 
         return predictions
+
+    def evaluate_heaviest_mc_dropout(self, late=None, dors=None, fron=None, caud=None,
+                                            n_samples=20, uncertainty_threshold=0.8):
+        """
+        Stepwise MC Dropout evaluation that starts with the best model (highest accuracy)
+        and moves down the list if uncertainty exceeds the threshold.
+
+        If no model passes, returns rejection info with best model's uncertainty and scores.
+        """
+        device = torch.device('cuda' if torch.cuda.is_available()
+                            else 'mps' if torch.backends.mps.is_built() else 'cpu')
+
+        inputs = {
+            "caud": (caud, self.transformations[0]),
+            "dors": (dors, self.transformations[1]),
+            "fron": (fron, self.transformations[2]),
+            "late": (late, self.transformations[3]),
+        }
+
+        # Load accuracy dictionary and rank views (highest to lowest)
+        with open(self.accuracies_filename, 'r', encoding='utf-8') as f:
+            accuracy_dict = json.load(f)
+        ranked_views = sorted(accuracy_dict.keys(), key=lambda k: accuracy_dict[k], reverse=True)
+
+        best_result = None
+        for view in ranked_views:
+            image, transform = inputs.get(view, (None, None))
+            if image is None:
+                continue
+
+            transformed_image = self.transform_input(image, transform).to(device)
+
+            # Activate dropout layers
+            self.trained_models[view].eval()
+            self.enable_dropout(view)
+
+            # Collect MC Dropout samples
+            softmax_samples = []
+            with torch.no_grad():
+                for _ in range(n_samples):
+                    logits = self.trained_models[view](transformed_image)
+                    softmax_probs = torch.nn.functional.softmax(logits, dim=1)
+                    softmax_samples.append(softmax_probs.cpu())
+
+            softmax_samples = torch.stack(softmax_samples)
+            mean_probs = softmax_samples.mean(dim=0)[0]
+            mean_probs = mean_probs / mean_probs.sum()  # ensure normalization
+            entropy = -(mean_probs * (mean_probs + 1e-8).log()).sum().item()
+
+            # Top-1 prediction
+            score, genus_idx = torch.max(mean_probs, dim=0)
+            genus_name = self.genus_idx_dict.get(genus_idx.item(), "Unknown Genus")
+
+            result = {
+                "view": view,
+                "mean_score": score.item(),
+                "genus": genus_name,
+                "uncertainty": entropy,
+            }
+
+            # Save best (first) result for fallback
+            if best_result is None:
+                best_result = result
+
+            # Threshold check
+            if entropy < uncertainty_threshold:
+                result["status"] = "accepted"
+                return result
+
+            self.trained_models[view].eval()  # reset to eval after MC dropout passes
+
+        # Fallback: reject if all models uncertain
+        best_result["status"] = "rejected"
+        return best_result
 
     def stacked_eval(self):
         """
@@ -383,5 +467,6 @@ class GenusEvaluationMethod:
         scaled_logits = logits / temperature
         softmax_probs = torch.nn.functional.softmax(scaled_logits, dim=1)
         energy_score = -temperature * torch.logsumexp(scaled_logits, dim=1)
-        is_confident = energy_score.item() > threshold  # lower = less confident
+        # lower energy = in-distribution (more confident)
+        is_confident = energy_score.item() > threshold
         return is_confident, energy_score.item(), softmax_probs[0]
