@@ -198,11 +198,42 @@ input[type="file"] {
     margin-bottom: 6px;
     width: 100%;
 }
-
 .field-error {
     color: #d9534f;
     font-size: 11px;
     font-style: italic;
     margin-left: 4px;
     text-align: left;
+}
+
+/* Loading overlay styles */
+#loading-overlay {
+    display: none; /* Hidden until triggered */
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(255, 255, 255, 0.9);
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    z-index: 9999;
+    font-family: 'Roboto Mono', monospace;
+}
+
+.loading-spinner {
+    width: 60px;
+    height: 60px;
+    border: 6px solid #ccc;
+    border-top-color: #1a73e8;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin-bottom: 20px;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
 }
