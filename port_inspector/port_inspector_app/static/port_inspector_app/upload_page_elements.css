@@ -228,9 +228,17 @@ input[type="file"] {
 }
 
 .drop-zone p {
-    color: #555;
-    font-size: 14px;
-    margin-bottom: 10px;
+    font-family: 'Roboto Mono', monospace;
+    font-size: 12px;
+    font-weight: 500;
+    color: #333;
+}
+
+.or-text {
+    display: inline-block;
+    margin-top: 8px;
+    color: #777;
+    font-size: 15px;
 }
 
 /* Loading overlay styles */
