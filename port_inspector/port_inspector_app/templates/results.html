@@ -1,18 +1,21 @@
 {% load static %}
-<link rel="stylesheet" href="{% static 'port_inspector_app/header.css' %}">
-<link rel="stylesheet" href="{% static 'port_inspector_app/results_elements.css' %}">
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Upload Results</title>
   <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{% static 'port_inspector_app/header.css' %}">
+  <link rel="stylesheet" href="{% static 'port_inspector_app/results_elements.css' %}">
 </head>
+
 <body>
   <header>
     <div class="header-left">
-      <a href="/" style="align-items: center;"><img src="{% static 'Bug_icon.png' %}" id="header-bar-icon"/><span>BruchinAI</span></a>
+      <a href="/" style="align-items: center;"><img src="{% static 'Bug_icon.png' %}"
+          id="header-bar-icon" /><span>BruchinAI</span></a>
       <a href="/history"><span>History</span></a>
       <a href="/upload"><span>Upload Photo</span></a>
     </div>
@@ -30,25 +33,35 @@
   <div class="container">
     <div class="image-section">
       {% for image in image_urls %}
-        <img src="/uploads/{{ image }}" onerror="this.src='../uploads/default_image.jpg'; this.classList.add('deleted-image');" alt="Uploaded Image">
+      <img src="{{ MEDIA_URL }}{{ image }}" onerror="this.onerror=null;
+        this.src='{% static 'default_image.jpg' %}'; this.classList.add('deleted-image');" alt="Uploaded Image">
       {% endfor %}
     </div>
 
     <div class="results-section">
       <h1>Upload #{{ upload_id }}</h1>
       <p><strong>Likely Species:</strong> <span id="likely-species">{{ likely_species }}</span></p>
-      <p><strong>Confirmed Species:</strong> <span id="likely-species">{{ confirmed_species | default:" Not Confirmed"}}</span></p>
+      <p><strong>Confirmed Species:</strong> <span id="likely-species">{{ confirmed_species | default:"Not
+          Confirmed"}}</span></p>
       {% if is_usda or is_special_status %}
-        <p><strong>Genus Uncertainty:</strong> 
-          <span class="{% if genus_stat %}confidence-high{% else %}confidence-low{% endif %}">
-          {{ genus_uncert }}
+      <p><strong>Genus Uncertainty:</strong>
+        <span class="{% if genus_stat %}confidence-high{% else %}confidence-low{% endif %}">
+          {% if genus_stat %}
+          Certain
+          {% else %}
+          Uncertain
+          {% endif %}
         </span>
-        </p>
-        <p><strong>Species Uncertainty:</strong> 
-          <span class="{% if species_stat %}confidence-high{% else %}confidence-low{% endif %}">
-          {{ species_uncert }}
+      </p>
+      <p><strong>Species Uncertainty:</strong>
+        <span class="{% if species_stat %}confidence-high{% else %}confidence-low{% endif %}">
+          {% if species_stat %}
+          Certain
+          {% else %}
+          Uncertain
+          {% endif %}
         </span>
-        </p>
+      </p>
       {% endif %}
 
       <table>
@@ -59,20 +72,24 @@
         </tr>
 
         {% if species_results %}
-          <tr>
-            <td><strong>Genus:</strong> {{ species_results.0.species_name }}</td>
-            <td class="{% if species_results.0.confidence_level >= 50 %}confidence-high{% elif species_results.0.confidence_level >= 20 %}confidence-medium{% else %}confidence-low{% endif %}">
-              {{ species_results.0.confidence_level | floatformat:"2" }}%
-            </td>
-            <td><a href="{{ species_results.0.resource_link }}" target="_blank">more here</a></td>
-          </tr>
+        <tr>
+          <td><strong>Genus:</strong> {{ species_results.0.species_name }}</td>
+          <td
+            class="{% if species_results.0.confidence_level >= 95 %}confidence-high{% elif species_results.0.confidence_level >= 80 %}confidence-med-high{% elif species_results.0.confidence_level >= 50 %}confidence-med-low{% else %}confidence-low{% endif %}">
+            {{ species_results.0.confidence_level | floatformat:"2" }}%
+          </td>
+          <td><a href="{{ species_results.0.resource_link }}" target="_blank">more here</a></td>
+        </tr>
         {% endif %}
-        <tr><td colspan="2" style="border-left-style:hidden;border-right-style:hidden;padding-bottom:1em;"></td></tr>
+        <tr>
+          <td colspan="2" style="border-left-style:hidden;border-right-style:hidden;padding-bottom:1em;"></td>
+        </tr>
 
         {% for species in species_results|slice:"1:6" %}
         <tr>
           <td><strong>Species {{ forloop.counter }}:</strong> {{ species.species_name }}</td>
-          <td class="{% if species.confidence_level >= 50 %}confidence-high{% elif species.confidence_level >= 20 %}confidence-medium{% else %}confidence-low{% endif %}">
+          <td
+            class="{% if species.confidence_level >= 95 %}confidence-high{% elif species.confidence_level >= 80 %}confidence-med-high{% elif species.confidence_level >= 50 %}confidence-med-low{% else %}confidence-low{% endif %}">
             {{ species.confidence_level | floatformat:"2" }}%
           </td>
           <td><a href="{{ species.resource_link }}" target="_blank">more here</a></td>
@@ -83,19 +100,20 @@
       <div class="action-buttons">
         <form class="confirm-form" method="POST">
           {% csrf_token %}
-            {{ confirm_form }}
-            <button type="submit" class="confirm-btn">Confirm</button>
-          </form>
-
-        {% if species_results.1.confidence_level < 20.0 %}
-        <p>WARNING: Species confidences are low. Please retake photos and try again, or consult further resources{% if is_usda %}, before notifying Admin User below{% endif %}</p>
-        {% endif %}
-        {% if is_usda or is_special_status %}
-        <form class="unknown-form" action="/notify_unknown/" method="POST">
-          {% csrf_token %}
-          <button type="submit" class="unknown-btn">Unknown Species</button>
+          {{ confirm_form }}
+          <button type="submit" class="confirm-btn">Confirm</button>
         </form>
-        {% endif %}
+
+        {% if species_results|length > 1 and species_results.1.confidence_level < 20.0 %} <p>WARNING: Species
+          confidences are low. Please retake photos and try again, or consult further resources{% if is_usda %}, before
+          notifying Admin User below{% endif %}</p>
+          {% endif %}
+          {% if is_usda or is_special_status %}
+          <form class="unknown-form" action="/notify_unknown/" method="POST">
+            {% csrf_token %}
+            <button type="submit" class="unknown-btn">Unknown Species</button>
+          </form>
+          {% endif %}
       </div>
     </div>
   </div>
@@ -103,4 +121,5 @@
     &copy; 2025 Port Inspector App
   </footer>
 </body>
+
 </html>

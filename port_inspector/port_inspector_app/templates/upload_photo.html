@@ -1,18 +1,21 @@
-{% load static %}
-<link rel="stylesheet" href="{% static 'port_inspector_app/header.css' %}">
-<link rel="stylesheet" href="{% static 'port_inspector_app/upload_page_elements.css' %}">
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
+  {% load static %}
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Upload an Image</title>
   <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{% static 'port_inspector_app/header.css' %}">
+  <link rel="stylesheet" href="{% static 'port_inspector_app/upload_page_elements.css' %}">
 </head>
+
 <body>
   <header>
     <div class="header-left">
-      <a href="/" style="align-items: center;"><img src="{% static 'Bug_icon.png' %}" id="header-bar-icon"/><span>BruchinAI</span></a>
+      <a href="/" style="align-items: center;"><img src="{% static 'Bug_icon.png' %}"
+          id="header-bar-icon" /><span>BruchinAI</span></a>
       <a href="/history"><span>History</span></a>
       <a href="/upload"><span>Upload Photo</span></a>
     </div>
@@ -32,29 +35,33 @@
     <form method="POST" enctype="multipart/form-data">
       {% csrf_token %}
 
-        <label for="id_frontal_upload" class="upload-label">
-          Frontal Image:
-          <div class="tooltip-container">
-            <div class="tooltip-icon">i</div>
-            <div class="tooltip-text">
-              The frontal aspect can be informative, although variable positioning of the antennae and mouthparts means that this aspect will improve as more data are added to train the AI model.<br><br>
-              Currently the model performs best if the image is captured with the frons (the area between the eyes) in alignment with the clypeus.
-              <img src="{% static 'frontal.png' %}" class="tooltip-image" />
-            </div>
+      <label for="id_frontal_upload" class="upload-label">
+        Frontal Image:
+        <div class="tooltip-container">
+          <div class="tooltip-icon">i</div>
+          <div class="tooltip-text">
+            The frontal aspect can be informative, although variable positioning of the antennae and mouthparts means
+            that this aspect will improve as more data are added to train the AI model.<br><br>
+            Currently the model performs best if the image is captured with the frons (the area between the eyes) in
+            alignment with the clypeus.
+            <img src="{% static 'frontal.png' %}" class="tooltip-image" />
           </div>
-        </label>
+        </div>
+      </label>
+
+      <div class="drop-zone {% if 'frontal' in failed_views %}failed{% endif %}" id="drop-zone-id_frontal_upload">
+        <p>Drag & Drop Frontal Image Here<br><span class="or-text">or</span></p>
         {{ form.frontal_upload }}
         <div style="display: flex; gap: 5px;">
           <label for="id_frontal_upload" class="custom-upload-bttn" id="label-id_frontal_upload">Choose File</label>
           <span id="filename-id_frontal_upload" class="filename-text">No file selected</span>
         </div>
-        {% if form.frontal_upload.errors %}
-        <div class="field-error-block">
-          {% for error in form.frontal_upload.errors %}
-          <p class="field-error">{{ error }}</p>
-          {% endfor %}
-        </div>
-        {% endif %}
+      </div>
+      {% if "frontal" in failed_views %}
+      <div class="field-error-block">
+        <p class="field-error">Beetle not detected in this image. Try retaking it.</p>
+      </div>
+      {% endif %}
 
 
       <label for="id_dorsal_upload" class="upload-label">
@@ -62,23 +69,28 @@
         <div class="tooltip-container">
           <div class="tooltip-icon">i</div>
           <div class="tooltip-text">
-            The dorsal habitus has been shown to have significant information in both geometric morphometrics (through the shape of both the pronotum and the elytra) and in informing the training of the AI model for identification.<br><br>
-            We are training the model with variation in the level of the head with the pygidium, however the images should be uploaded <strong>with the head at the left</strong>.
+            The dorsal habitus has been shown to have significant information in both geometric morphometrics (through
+            the shape of both the pronotum and the elytra) and in informing the training of the AI model for
+            identification.<br><br>
+            We are training the model with variation in the level of the head with the pygidium, however the images
+            should be uploaded <strong>with the head at the left</strong>.
             <img src="{% static 'dorsal.png' %}" class="tooltip-image" />
           </div>
         </div>
       </label>
-      {{ form.dorsal_upload }}
-      <!-- Overload the original upload form and insert a custom label instead for better style control -->
-      <div style="display: flex; gap: 5px;">
-        <label for="id_dorsal_upload" class="custom-upload-bttn" id="label-id_dorsal_upload">Choose File</label>
-        <span id="filename-id_dorsal_upload" class="filename-text">No file selected</span>
+
+      <div class="drop-zone {% if 'dorsal' in failed_views %}failed{% endif %}" id="drop-zone-id_dorsal_upload">
+        <p>Drag & Drop Dorsal Image Here<br><span class="or-text">or</span></p>
+        {{ form.dorsal_upload }}
+        <!-- Overload the original upload form and insert a custom label instead for better style control -->
+        <div style="display: flex; gap: 5px;">
+          <label for="id_dorsal_upload" class="custom-upload-bttn" id="label-id_dorsal_upload">Choose File</label>
+          <span id="filename-id_dorsal_upload" class="filename-text">No file selected</span>
+        </div>
       </div>
-      {% if form.dorsal_upload.errors %}
+      {% if "dorsal" in failed_views %}
       <div class="field-error-block">
-        {% for error in form.dorsal_upload.errors %}
-        <p class="field-error">{{ error }}</p>
-        {% endfor %}
+        <p class="field-error">Beetle not detected in this image. Try retaking it.</p>
       </div>
       {% endif %}
 
@@ -87,22 +99,27 @@
         <div class="tooltip-container">
           <div class="tooltip-icon">i</div>
           <div class="tooltip-text">
-            The caudal habitus has provided significant information for accurate identification in testing and training the model.<br><br>
-            While we have attempted to train the model with some variation of positioning the specimen, it will work best if the image is captured with the pygidium (the last dorsal plate of the abdomen) viewed in a single plane.
+            The caudal habitus has provided significant information for accurate identification in testing and training
+            the model.<br><br>
+            While we have attempted to train the model with some variation of positioning the specimen, it will work
+            best if the image is captured with the pygidium (the last dorsal plate of the abdomen) viewed in a single
+            plane.
             <img src="{% static 'caudal.png' %}" class="tooltip-image" />
           </div>
         </div>
       </label>
-      {{ form.caudal_upload }}
-      <div style="display: flex; gap: 5px;">
-        <label for="id_caudal_upload" class="custom-upload-bttn" id="label-id_caudal_upload">Choose File</label>
-        <span id="filename-id_caudal_upload" class="filename-text">No file selected</span>
+
+      <div class="drop-zone {% if 'caudal' in failed_views %}failed{% endif %}" id="drop-zone-id_caudal_upload">
+        <p>Drag & Drop Caudal Image Here<br><span class="or-text">or</span></p>
+        {{ form.caudal_upload }}
+        <div style="display: flex; gap: 5px;">
+          <label for="id_caudal_upload" class="custom-upload-bttn" id="label-id_caudal_upload">Choose File</label>
+          <span id="filename-id_caudal_upload" class="filename-text">No file selected</span>
+        </div>
       </div>
-      {% if form.caudal_upload.errors %}
+      {% if "caudal" in failed_views %}
       <div class="field-error-block">
-        {% for error in form.caudal_upload.errors %}
-        <p class="field-error">{{ error }}</p>
-        {% endfor %}
+        <p class="field-error">Beetle not detected in this image. Try retaking it.</p>
       </div>
       {% endif %}
 
@@ -111,42 +128,46 @@
         <div class="tooltip-container">
           <div class="tooltip-icon">i</div>
           <div class="tooltip-text">
-            The lateral aspect can be informative, although variable positioning of appendages means that this aspect will improve as more data are added to train the AI model.<br><br>
-            We are training the model with variation in the level of the head with the pygidium, however the images should be uploaded <strong>with the head at the left</strong>.
+            The lateral aspect can be informative, although variable positioning of appendages means that this aspect
+            will improve as more data are added to train the AI model.<br><br>
+            We are training the model with variation in the level of the head with the pygidium, however the images
+            should be uploaded <strong>with the head at the left</strong>.
             <img src="{% static 'lateral.png' %}" class="tooltip-image" />
           </div>
         </div>
       </label>
-      {{ form.lateral_upload }}
-      <div style="display: flex; gap: 5px;">
-        <label for="id_lateral_upload" class="custom-upload-bttn" id="label-id_lateral_upload">Choose File</label>
-        <span id="filename-id_lateral_upload" class="filename-text">No file selected</span>
+
+      <div class="drop-zone {% if 'lateral' in failed_views %}failed{% endif %}" id="drop-zone-id_lateral_upload">
+        <p>Drag & Drop Lateral Image Here<br><span class="or-text">or</span></p>
+        {{ form.lateral_upload }}
+        <div style="display: flex; gap: 5px;">
+          <label for="id_lateral_upload" class="custom-upload-bttn" id="label-id_lateral_upload">Choose File</label>
+          <span id="filename-id_lateral_upload" class="filename-text">No file selected</span>
+        </div>
       </div>
-      {% if form.lateral_upload.errors %}
+      {% if "lateral" in failed_views %}
       <div class="field-error-block">
-        {% for error in form.lateral_upload.errors %}
-        <p class="field-error">{{ error }}</p>
-        {% endfor %}
+        <p class="field-error">Beetle not detected in this image. Try retaking it.</p>
       </div>
       {% endif %}
 
       <button type="submit" class="upload-btn">Upload</button>
     </form>
 
-  {% if form.non_field_errors %}
-  <div class="form-errors">
-    <ul class="error-type-block">
-      <li class="non-field-error-block"><strong>Error:</strong></li>
-      {% for error in form.non_field_errors %}
-      <li>{{ error }}</li>
-      {% endfor %}
-    </ul>
-  </div>
-  {% endif %}
+    {% if form.non_field_errors %}
+    <div class="form-errors">
+      <ul class="error-type-block">
+        <li class="non-field-error-block"><strong>Error:</strong></li>
+        {% for error in form.non_field_errors %}
+        <li>{{ error }}</li>
+        {% endfor %}
+      </ul>
+    </div>
+    {% endif %}
 
-  <footer>
-    &copy; 2025 Port Inspector App
-  </footer>
+    <footer>
+      &copy; 2025 Port Inspector App
+    </footer>
 
     <!-- Loading overlay -->
     <div id="loading-overlay">
@@ -154,56 +175,87 @@
       <p>Processing your images... Please wait.</p>
     </div>
 
-</body>
-</html>
-<script>
-  document.addEventListener('DOMContentLoaded', function () {
-    // Function that changes file path display upon file upload/deletion
-    const fileInputs = document.querySelectorAll('input[type="file"]');
-    fileInputs.forEach(input => {
-      input.addEventListener('change', function () {
-        const fileName = input.files.length > 0 ? input.files[0].name : 'No file selected';
-        const display = document.getElementById(`filename-${input.id}`);
-        if (display) {
-          display.textContent = fileName;
-        }
-      });
-    });
-  });
-
-document.addEventListener('DOMContentLoaded', function () {
-  // Function that changes choose file button to delete mode when a file is uploaded
-  const fileInputs = document.querySelectorAll('input[type="file"]');
-  
-  fileInputs.forEach(input => {
-    const label = document.getElementById(`label-${input.id}`);
-    const display = document.getElementById(`filename-${input.id}`);
-
-    input.addEventListener('change', function () {
-      if (input.files.length > 0) {
-        display.textContent = input.files[0].name;
-        label.textContent = 'Delete';
-
-        // Change behavior to delete if clicked again
-        label.addEventListener('click', function handleDelete(e) {
-          e.preventDefault();  // Prevent default file dialog
-          input.value = '';    // Clear the input
-          display.textContent = 'No file selected';
-          label.textContent = 'Choose File';
-          
-          // Remove the handler so next click opens the dialog again
-          label.removeEventListener('click', handleDelete);
+    <script>
+      document.addEventListener('DOMContentLoaded', function () {
+        // Function that changes file path display upon file upload/deletion
+        const fileInputs = document.querySelectorAll('input[type="file"]');
+        fileInputs.forEach(input => {
+          input.addEventListener('change', function () {
+            const fileName = input.files.length > 0 ? input.files[0].name : 'No file selected';
+            const display = document.getElementById(`filename-${input.id}`);
+            if (display) {
+              display.textContent = fileName;
+            }
+          });
         });
-      } else {
-        display.textContent = 'No file selected';
-        label.textContent = 'Choose File';
-      }
-    });
-  });
-    // Show loading overlay when the form is submitted
-    const uploadForm = document.querySelector('form');
-    uploadForm.addEventListener('submit', function () {
-      document.getElementById('loading-overlay').style.display = 'flex';
-  });
-});
-</script>
+      });
+
+      document.addEventListener('DOMContentLoaded', function () {
+        // Function that changes choose file button to delete mode when a file is uploaded
+        const fileInputs = document.querySelectorAll('input[type="file"]');
+        const dropZones = document.querySelectorAll('.drop-zone');
+        const uploadForm = document.querySelector('form');
+        const overlay = document.getElementById('loading-overlay');
+        overlay.style.display = 'none'; // Ensure it's hidden on load
+
+        // File path display upon file upload/deletion logic
+        fileInputs.forEach(input => {
+          const label = document.getElementById(`label-${input.id}`);
+          const display = document.getElementById(`filename-${input.id}`);
+
+          input.addEventListener('change', function () {
+            if (input.files.length > 0) {
+              display.textContent = input.files[0].name;
+              label.textContent = 'Delete';
+
+              label.onclick = function (e) {
+                e.preventDefault();
+                input.value = '';
+                display.textContent = 'No file selected';
+                label.textContent = 'Choose File';
+                label.onclick = null; // restore default
+              };
+            } else {
+              display.textContent = 'No file selected';
+              label.textContent = 'Choose File';
+            }
+          });
+        });
+
+        // Drag-and-drop logic
+        dropZones.forEach(zone => {
+          const fileInput = zone.querySelector('input[type="file"]');
+
+          zone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            zone.classList.add('dragover');
+          });
+
+          zone.addEventListener('dragleave', () => {
+            zone.classList.remove('dragover');
+          });
+
+          zone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            zone.classList.remove('dragover');
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+              // Set dropped file to the hidden input
+              fileInput.files = files;
+
+              // Trigger the same logic as when user clicks "Choose File"
+              const event = new Event('change', { bubbles: true });
+              fileInput.dispatchEvent(event);
+            }
+          });
+        });
+
+        // Show loading overlay when the form is submitted
+        uploadForm.addEventListener('submit', function () {
+          overlay.style.display = 'flex';
+        });
+      });
+    </script>
+</body>
+
+</html>
