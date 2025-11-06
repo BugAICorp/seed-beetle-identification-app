@@ -82,10 +82,25 @@ class SpecimenUpload(models.Model):
 
     genus = models.JSONField(default=default_genus)
     species = models.JSONField(default=default_species)
+
+    genus_uncertainty = models.FloatField(default=0.0)
+    species_uncertainty = models.FloatField(default=0.0)
+
+    genus_status = models.BooleanField(default=True)
+    species_status = models.BooleanField(default=True)
+
     in_training = models.BooleanField(default=False)
     is_validated = models.BooleanField(default=False)
 
     final_identification = models.TextField()
+
+    task_id = models.CharField(max_length=255, blank=True, null=True)
+
+    task_status = models.CharField(default="COMPLETE", max_length=20)
+
+    failed_views = models.JSONField(default=list, blank=True)
+
+    redis_cleaned = models.BooleanField(default=False)
 
     def clean(self):
         # Perform validation if we already have a pk and have been saved
@@ -116,7 +131,7 @@ class SpecimenUpload(models.Model):
 class Image(models.Model):
     id = models.AutoField(primary_key=True)  # Explicit primary key
     specimen_upload = models.ForeignKey('port_inspector_app.SpecimenUpload', on_delete=models.CASCADE, related_name="images")
-    image = models.ImageField(upload_to="uploads/")
+    image = models.ImageField(upload_to="")
     uploaded_at = models.DateTimeField(auto_now_add=True)
 
     def save(self, *args, **kwargs):
@@ -197,9 +212,9 @@ class ValidClasses(models.Model):
         ordering = ['genus', 'species']
 
     def save(self, *args, **kwargs):
-        from beetle_detection import species_eval
+        from .tasks import refresh_database_task
         super().save(*args, **kwargs)
-        species_eval.refresh_database()
+        refresh_database_task.delay()
 
     def delete(self, *args, **kwargs):
         TrainingDatabase.objects.filter(species=self.species).delete()
