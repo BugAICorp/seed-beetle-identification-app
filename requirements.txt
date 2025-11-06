@@ -1,6 +1,8 @@
 --only-binary=:all:
 asgiref==3.5.2
 Django==4.1.4
+django-environ>=0.11.2
+gunicorn
 psycopg2-binary==2.9.10
 sqlparse==0.4.3
 tzdata==2022.7
@@ -12,3 +14,8 @@ torch
 optuna
 dill
 ultralytics==8.1.17  # pin to a stable YOLOv8 version
+dj-database-url
+scikit-learn
+celery==5.3.6
+redis==5.0.1
+django-celery-results>=2.5.1
