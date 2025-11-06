@@ -7,6 +7,7 @@ body {
     flex-direction: column;
     align-items: center;
 }
+
 .container {
     display: flex;
     flex-direction: row;
@@ -38,7 +39,7 @@ body {
 }
 
 img.deleted-image {
-    filter: invert(100%) ;
+    filter: invert(100%);
 }
 
 .results-section {
@@ -57,7 +58,8 @@ table {
     margin-top: 20px;
 }
 
-th, td {
+th,
+td {
     border: 1px solid #ddd;
     padding: 10px;
     text-align: left;
@@ -72,7 +74,12 @@ th {
     font-weight: bold;
 }
 
-.confidence-medium {
+.confidence-med-high {
+    color: yellowgreen;
+    font-weight: bold;
+}
+
+.confidence-med-low {
     color: orange;
     font-weight: bold;
 }
@@ -131,6 +138,7 @@ th {
 .unknown-btn:hover {
     background-color: #a71d2a;
 }
+
 footer {
     margin-top: 20px;
     font-size: 12px;
@@ -138,39 +146,52 @@ footer {
     margin-bottom: 10px;
 }
 
-@media (max-width: 600px), (max-height: 500px) {
+@media (max-width: 600px),
+(max-height: 500px) {
     h1 {
         font-size: 12px;
     }
+
     p {
         font-size: 12px;
     }
+
     th {
         font-size: 12px;
     }
+
     td {
         font-size: 12px;
     }
-    .image-section, .results-section {
+
+    .image-section,
+    .results-section {
         width: 100%;
         margin-right: 0;
     }
+
     .container {
         flex-direction: column;
         align-items: center;
         width: 95%;
     }
+
     .image-section img {
         max-width: 20%;
         height: auto;
     }
-    .confirm-btn, .unknown-btn {
+
+    .confirm-btn,
+    .unknown-btn {
         font-size: 12px;
     }
+
     .confirm-form select {
         font-size: 12px;
     }
-    .confirm-form, .unknown-form {
+
+    .confirm-form,
+    .unknown-form {
         font-size: 12px;
     }
 }
