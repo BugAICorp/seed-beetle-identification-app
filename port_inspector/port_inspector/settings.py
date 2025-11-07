@@ -180,10 +180,8 @@ SECURE_CONTENT_TYPE_NOSNIFF = True
 SECURE_BROWSER_XSS_FILTER = True
 
 # Celery Configuration
-CELERY_BROKER_URL = os.environ.get('CELERY_BROKER_URL')
-CELERY_BROKER_USE_SSL = {
-    "ssl_cert_reqs": ssl.CERT_NONE
-}
+CELERY_BROKER_URL = "redis://localhost:6379/0"
+CELERY_RESULT_BACKEND = "redis://localhost:6379/0"
 
 # Do not store task results anywhere:
 CELERY_RESULT_BACKEND = None
