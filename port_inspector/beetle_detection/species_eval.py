@@ -3,23 +3,21 @@ import json, os, sys
 
 
 # -----Run once on server start up-----
-if "runserver" in sys.argv:
-    import io
-    import ssl
-    import redis
-    import torch
-    import gc
-    from PIL import Image
-    from .model_loader import ModelLoader
-    from .evaluation_method import EvaluationMethod
-    from .genus_evaluation_method import GenusEvaluationMethod
-    from .data_converter import DjangoTrainingDatabaseConverter
-    from .app_training_program import TrainingProgram
-    from django.conf import settings
+import io
+import redis
+import torch
+import gc
+from PIL import Image
+from .model_loader import ModelLoader
+from .evaluation_method import EvaluationMethod
+from .genus_evaluation_method import GenusEvaluationMethod
+from .data_converter import DjangoTrainingDatabaseConverter
+from .app_training_program import TrainingProgram
+from django.conf import settings
 
-    BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
-    import globals
+import globals
 
 dbr = DjangoTrainingDatabaseConverter("dataset")
 
@@ -34,12 +32,11 @@ _models_loaded = False
 def get_redis_conn():
     global redis_connection
     if redis_connection is None:
-        redis_url = os.environ.get("REDIS_URL_NO_SSL")
-        if redis_url:
-            redis_connection = redis.from_url(
-                redis_url,
-                ssl_cert_reqs=ssl.CERT_NONE,
-                decode_responses=False)
+        redis_url = "redis://localhost:6379/0"
+        redis_connection = redis.from_url(
+            redis_url,
+            decode_responses=False
+        )
     return redis_connection
 
 def load_models_once():

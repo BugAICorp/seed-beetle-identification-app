@@ -1,11 +1,8 @@
 """ tasks.py """
 
-import os
-from django.core.files.base import ContentFile
 from django.core.cache import cache
 from PIL import Image as PILImage
 import redis
-import ssl
 import io
 from celery import shared_task
 from port_inspector_app.models import SpecimenUpload
@@ -16,13 +13,11 @@ redis_connection = None
 def get_redis_conn():
     global redis_connection
     if redis_connection is None:
-        redis_url = os.environ.get("REDIS_URL_NO_SSL")
-        if redis_url:
-            redis_connection = redis.from_url(
-                redis_url,
-                ssl_cert_reqs=ssl.CERT_NONE,
-                decode_responses=False
-            )
+        redis_url = "redis://localhost:6379/0"
+        redis_connection = redis.from_url(
+            redis_url,
+            decode_responses=False
+        )
     return redis_connection
 
 def crop_views_from_redis(upload_id, cropper):

@@ -21,7 +21,6 @@ from django.http import HttpResponse, JsonResponse
 from .tokens import account_activation_token, reset_account_token
 from port_inspector.celery import app
 import redis
-import ssl
 import io
 import os
 from PIL import Image as PILImage
@@ -33,18 +32,11 @@ redis_connection = None
 def get_redis_conn():
     global redis_connection
     if redis_connection is None:
-        redis_url = os.environ.get("REDIS_URL_NO_SSL")
-        print("[DEBUG] REDIS_URL_NO_SSL:", redis_url)
-        if not redis_url:
-            print("[ERROR] REDIS_URL_NO_SSL not found in environment!")
-            return None
+        redis_url = "redis://localhost:6379/0"
         redis_connection = redis.from_url(
             redis_url,
-            ssl_cert_reqs=ssl.CERT_NONE,
             decode_responses=False
         )
-    else:
-        print("[DEBUG] Reusing existing Redis connection.")
     return redis_connection
 
 def verify_email(request, user_id):
