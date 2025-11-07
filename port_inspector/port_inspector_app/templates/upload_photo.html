@@ -3,13 +3,17 @@
 
 <head>
   {% load static %}
+  {% load static %}
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Upload an Image</title>
   <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="{% static 'port_inspector_app/header.css' %}">
   <link rel="stylesheet" href="{% static 'port_inspector_app/upload_page_elements.css' %}">
+  <link rel="stylesheet" href="{% static 'port_inspector_app/header.css' %}">
+  <link rel="stylesheet" href="{% static 'port_inspector_app/upload_page_elements.css' %}">
 </head>
+
 
 <body>
   <header>
@@ -164,7 +168,20 @@
       </ul>
     </div>
     {% endif %}
+    {% if form.non_field_errors %}
+    <div class="form-errors">
+      <ul class="error-type-block">
+        <li class="non-field-error-block"><strong>Error:</strong></li>
+        {% for error in form.non_field_errors %}
+        <li>{{ error }}</li>
+        {% endfor %}
+      </ul>
+    </div>
+    {% endif %}
 
+    <footer>
+      &copy; 2025 Port Inspector App
+    </footer>
     <footer>
       &copy; 2025 Port Inspector App
     </footer>
