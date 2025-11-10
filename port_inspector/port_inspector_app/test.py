@@ -177,7 +177,10 @@ class ResultsViewTests(TestCase):
 
     def setUp(self):
         self.factory = RequestFactory()
-        self.user = User.objects.create_user(username='testuser', password='testpass')
+        self.user = User.objects.create_user(
+            email='testuser@example.com',
+            password='testpass'
+        )
 
     @patch("port_inspector_app.models.KnownSpecies.objects.filter")
     @patch("port_inspector_app.models.Genus.objects.filter")
