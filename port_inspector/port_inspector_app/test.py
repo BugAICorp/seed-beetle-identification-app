@@ -8,7 +8,6 @@ from django.core import signing
 from port_inspector_app.views import results_view, notify_unknown
 from port_inspector_app.models import SpecimenUpload, Genus, KnownSpecies, User, Image
 from django.core.files.uploadedfile import SimpleUploadedFile
-from django.contrib.messages.storage.fallback import FallbackStorage
 
 
 class UserEmailIntegrationTests(TestCase):
@@ -176,9 +175,6 @@ class SpecimenUploadIntegrationTests(TestCase):
 
 class ResultsViewTests(TestCase):
 
-    def setUp(self):
-        self.factory = RequestFactory()
-
     @patch("port_inspector_app.models.KnownSpecies.objects.filter")
     @patch("port_inspector_app.models.Genus.objects.filter")
     def test_results_view(self, mock_genus_filter, mock_species_filter):
@@ -186,7 +182,9 @@ class ResultsViewTests(TestCase):
         mock_species_filter.return_value.values_list.return_value = [("species1", "http://species1.com")]
         mock_genus_filter.return_value.values_list.return_value = [("genus1", "http://genus1.com")]
 
-        request = self.factory.get('/results/')
+        # Create a mock request object
+        request = HttpRequest()
+        request.method = 'GET'
 
         # Call the view function
         hashed_ID = signing.dumps("1", salt=settings.SALT_KEY)  # Fake hash
@@ -234,7 +232,9 @@ class ResultsViewTests(TestCase):
         mock_genus_qs.values_list.return_value = [("genus1", "http://genus1.com")]
         mock_genus_filter.return_value = mock_genus_qs
 
-        request = self.factory.get('/results/')
+        # Create a mock request object
+        request = HttpRequest()
+        request.method = 'GET'
 
         # Call the view function
         hashed_ID = signing.dumps("1", salt=settings.SALT_KEY)  # Fake hash
