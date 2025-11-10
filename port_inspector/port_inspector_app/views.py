@@ -309,7 +309,6 @@ def save_redis_images_to_disk(upload):
             print(f"[Redis/Image Error] Failed to save {key} to disk: {e}")
 
 
-@login_required(login_url='/login/')
 def results_view(request, hashed_ID):
     # Try to get the upload
     try:

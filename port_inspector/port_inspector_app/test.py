@@ -178,12 +178,6 @@ class ResultsViewTests(TestCase):
 
     def setUp(self):
         self.factory = RequestFactory()
-        self.user = User.objects.create_user(
-            email='testuser@example.com',
-            password='testpass'
-        )
-        # Log in the user through Django’s test client
-        self.client.login(email='testuser@example.com', password='testpass')
 
     @patch("port_inspector_app.models.KnownSpecies.objects.filter")
     @patch("port_inspector_app.models.Genus.objects.filter")
@@ -193,13 +187,6 @@ class ResultsViewTests(TestCase):
         mock_genus_filter.return_value.values_list.return_value = [("genus1", "http://genus1.com")]
 
         request = self.factory.get('/results/')
-        request.user = self.user
-        request.user.is_authenticated = True
-
-        # Attach a message storage to the request so messages.error() doesn't crash
-        setattr(request, 'session', self.client.session)
-        messages_storage = FallbackStorage(request)
-        setattr(request, '_messages', messages_storage)
 
         # Call the view function
         hashed_ID = signing.dumps("1", salt=settings.SALT_KEY)  # Fake hash
@@ -248,13 +235,6 @@ class ResultsViewTests(TestCase):
         mock_genus_filter.return_value = mock_genus_qs
 
         request = self.factory.get('/results/')
-        request.user = self.user
-        request.user.is_authenticated = True
-
-        # Attach a message storage to the request so messages.error() doesn't crash
-        setattr(request, 'session', self.client.session)
-        messages_storage = FallbackStorage(request)
-        setattr(request, '_messages', messages_storage)
 
         # Call the view function
         hashed_ID = signing.dumps("1", salt=settings.SALT_KEY)  # Fake hash
