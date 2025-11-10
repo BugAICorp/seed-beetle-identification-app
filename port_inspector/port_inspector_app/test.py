@@ -182,6 +182,8 @@ class ResultsViewTests(TestCase):
             email='testuser@example.com',
             password='testpass'
         )
+        # Log in the user through Django’s test client
+        self.client.login(email='testuser@example.com', password='testpass')
 
     @patch("port_inspector_app.models.KnownSpecies.objects.filter")
     @patch("port_inspector_app.models.Genus.objects.filter")
@@ -192,6 +194,7 @@ class ResultsViewTests(TestCase):
 
         request = self.factory.get('/results/')
         request.user = self.user
+        request.user.is_authenticated = True
 
         # Attach a message storage to the request so messages.error() doesn't crash
         setattr(request, 'session', self.client.session)
@@ -246,6 +249,7 @@ class ResultsViewTests(TestCase):
 
         request = self.factory.get('/results/')
         request.user = self.user
+        request.user.is_authenticated = True
 
         # Attach a message storage to the request so messages.error() doesn't crash
         setattr(request, 'session', self.client.session)
