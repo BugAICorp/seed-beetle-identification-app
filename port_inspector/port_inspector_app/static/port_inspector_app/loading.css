@@ -1,0 +1,45 @@
+body {
+    font-family: 'Roboto Mono', monospace;
+    background-color: #fafafa;
+    color: #333;
+    text-align: center;
+    margin: 0;
+    padding: 0;
+}
+
+.container {
+    margin-top: 100px;
+}
+
+.spinner {
+    border: 8px solid #f3f3f3;
+    border-top: 8px solid #3498db;
+    border-radius: 50%;
+    width: 70px;
+    height: 70px;
+    animation: spin 1s linear infinite;
+    margin: 0 auto 20px auto;
+}
+
+@keyframes spin {
+    0% {
+        transform: rotate(0deg);
+    }
+
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
+p {
+    font-size: 1.2em;
+    color: #555;
+}
+
+footer {
+    margin-top: 100px;
+    padding: 10px;
+    background-color: #fff;
+    border-top: 1px solid #eee;
+    color: #777;
+}

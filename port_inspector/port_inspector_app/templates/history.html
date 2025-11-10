@@ -1,62 +1,207 @@
 {% load static %}
-<link rel="stylesheet" href="{% static 'port_inspector_app/header.css' %}">
-<link rel="stylesheet" href="{% static 'port_inspector_app/history_elements.css' %}">
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>History</title>
     <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'port_inspector_app/header.css' %}">
+    <link rel="stylesheet" href="{% static 'port_inspector_app/history_elements.css' %}">
+
+    <!-- Status colors + spinner CSS -->
+    <style>
+        .status-text {
+            font-weight: bold;
+            display: inline-flex;
+            align-items: center;
+            /* vertically center text + spinner */
+        }
+
+        .spinner {
+            width: 12px;
+            height: 12px;
+            border: 2px solid currentColor;
+            border-top: 2px solid transparent;
+            border-radius: 50%;
+            display: inline-block;
+            animation: spin 1s linear infinite;
+            margin-left: 6px;
+            /* spacing between text and spinner */
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* Status colors */
+        .status-success {
+            color: green !important;
+        }
+
+        .status-failure {
+            color: red !important;
+        }
+
+        .status-processing {
+            color: orange !important;
+        }
+
+        .status-started {
+            color: blue !important;
+        }
+
+        .status-not-started {
+            color: gray !important;
+        }
+    </style>
 </head>
+
 <body>
     <header>
-    <div class="header-left">
-      <a href="/" style="align-items: center;"><img src="{% static 'Bug_icon.png' %}" id="header-bar-icon"/><span>BruchinAI</span></a>
-      <a href="/history"><span>History</span></a>
-      <a href="/upload"><span>Upload Photo</span></a>
-    </div>
-    <div class="header-right">
-      <a href="/profile"><span>Profile</span></a>
-      {% if not request.user.is_authenticated %}
-      <a href="/login"><span>Login</span></a>
-      {% endif %}
-      {% if request.user.is_authenticated %}
-      <a href="/logout"><span>Logout</span></a>
-      {% endif %}
-    </div>
-  </header>
+        <div class="header-left">
+            <a href="/" style="align-items: center;"><img src="{% static 'Bug_icon.png' %}"
+                    id="header-bar-icon" /><span>BruchinAI</span></a>
+            <a href="/history"><span>History</span></a>
+            <a href="/upload"><span>Upload Photo</span></a>
+        </div>
+        <div class="header-right">
+            <a href="/profile"><span>Profile</span></a>
+            {% if not request.user.is_authenticated %}
+            <a href="/login"><span>Login</span></a>
+            {% endif %}
+            {% if request.user.is_authenticated %}
+            <a href="/logout"><span>Logout</span></a>
+            {% endif %}
+        </div>
+    </header>
+
     <div class="container">
-        <h1>History
+        <h1>History</h1>
         <div class="tooltip-container">
             <div class="tooltip-icon">i</div>
-            <div class="tooltip-text">Your history will save your last {{max_uploads}} uploads. Old uploads will be deleted.</div>
+            <div class="tooltip-text">Your history will save your last {{max_uploads}} uploads. Old uploads will be
+                deleted.
+            </div>
         </div>
-        </h1>
         <table>
             <thead>
                 <tr>
                     <th>ID</th>
                     <th>Date</th>
                     <th>Time</th>
-                    <th>Identification</th>
+                    <th>Identification
+                        <div class="tooltip-container" style="display:inline-block; margin-left:5px;">
+                            <div class="tooltip-icon">i</div>
+                            <div class="tooltip-text">
+                                The predicted beetle identification based on the uploaded images. The identification
+                                will not display on the history page until it has been confirmed on the results page.
+                            </div>
+                        </div>
+                    </th>
+                    <th>Status</th>
                 </tr>
             </thead>
             <tbody>
                 {% for upload in uploads %}
                 <tr>
-                    <td><a class="table-link" href="{% url 'results' upload.1 %}" target="_blank">{{ upload.0.id }}</a></td>
+                    <td><a class="table-link" href="{% url 'results' upload.1 %}" target="_blank">{{ upload.0.id }}</a>
+                    </td>
                     <td>{{ upload.0.upload_date.date|default:"No date" }}</td>
                     <td>{{ upload.0.upload_date.time|default:"No time" }}</td>
-                    <td>{{ upload.0.final_identification }}</td>
+                    <td>{{ upload.0.final_identification|default:"Not identified" }}</td>
+                    <td>
+                        <div class="task-status" data-upload-id="{{ upload.0.id }}"
+                            data-task-status="{{ upload.0.task_status }}">
+                            <div class="status-text status-not-started">Waiting</div>
+                        </div>
+                    </td>
                 </tr>
                 {% endfor %}
             </tbody>
         </table>
     </div>
+
     <footer>
         &copy; 2025 Port Inspector App
     </footer>
-</body>
-</html>
 
+    <script>
+        function updateStatuses() {
+            document.querySelectorAll('.task-status').forEach(el => {
+                const uploadId = el.dataset.uploadId;
+                if (!uploadId) return;
+
+                fetch(`/upload_status/${uploadId}/`)
+                    .then(res => res.json())
+                    .then(data => {
+                        const textEl = el.querySelector('.status-text');
+                        if (!textEl) return;
+
+                        const status = (data.task_status || "").toUpperCase();
+
+                        if (status === "COMPLETE") {
+                            textEl.textContent = "Complete";
+                            textEl.className = "status-text status-success";
+                            el.removeAttribute('data-upload-id');
+                        }
+                        else if (status === "FAILED_CROP") {
+                            textEl.textContent = "No Beetle Detected";
+                            textEl.className = "status-text status-failure";
+                            el.removeAttribute('data-upload-id');
+                        }
+                        else if (status === "FAILED") {
+                            textEl.textContent = "Failed";
+                            textEl.className = "status-text status-failure";
+                            el.removeAttribute('data-upload-id');
+                        }
+                        else if (status === "STARTED") {
+                            textEl.textContent = "Started";
+                            textEl.className = "status-text status-started";
+                            if (!textEl.querySelector('.spinner')) {
+                                const spinner = document.createElement('span');
+                                spinner.className = 'spinner';
+                                textEl.appendChild(spinner);
+                            }
+                        }
+                        else if (status === "PROCESSING") {
+                            textEl.textContent = "Processing";
+                            textEl.className = "status-text status-processing";
+                            if (!textEl.querySelector('.spinner')) {
+                                const spinner = document.createElement('span');
+                                spinner.className = 'spinner';
+                                textEl.appendChild(spinner);
+                            }
+                        }
+                        else if (status === "PENDING") {
+                            textEl.textContent = "Pending";
+                            textEl.className = "status-text status-not-started";
+                            if (!textEl.querySelector('.spinner')) {
+                                const spinner = document.createElement('span');
+                                spinner.className = 'spinner';
+                                textEl.appendChild(spinner);
+                            }
+                        }
+                        else {
+                            textEl.textContent = "Waiting";
+                            textEl.className = "status-text status-not-started";
+                        }
+                    })
+                    .catch(err => console.error("Status check failed", uploadId, err));
+            });
+        }
+
+        setInterval(updateStatuses, 5000);
+        window.onload = updateStatuses;
+    </script>
+
+</body>
+
+</html>

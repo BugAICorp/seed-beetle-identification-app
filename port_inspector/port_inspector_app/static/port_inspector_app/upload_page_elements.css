@@ -9,6 +9,7 @@ body {
     justify-content: flex-start;
     min-height: 100vh;
 }
+
 .container {
     background-color: white;
     padding: 20px;
@@ -18,24 +19,29 @@ body {
     width: 320px;
     margin-top: 50px;
 }
+
 h1 {
     font-size: 18px;
     color: #555;
     margin-bottom: 20px;
 }
+
 form {
     display: flex;
     flex-direction: column;
     align-items: center;
 }
+
 label {
     margin-top: 20px;
     font-weight: bold;
 }
+
 input[type="file"] {
     margin-top: 5px;
     margin-bottom: 10px;
 }
+
 .upload-btn {
     font-family: 'Roboto Mono', monospace;
     background-color: #1a73e8;
@@ -48,6 +54,7 @@ input[type="file"] {
     font-weight: bold;
     margin-top: 20px;
 }
+
 .upload-btn:hover {
     font-family: 'Roboto Mono', monospace;
     background-color: #155cb0;
@@ -125,29 +132,25 @@ input[type="file"] {
     border-radius: 5px;
     margin-top: 30px;
 }
-.form-errors {
-    border: 1px solid #f00;
-    padding: 10px;
-    background-color: #ffe6e6;
-    color: #a00;
-    border-radius: 5px;
-    margin-top: 30px;
-}
+
 .form-errors ul,
 .form-errors li {
     margin: 0;
     padding: 0;
     list-style: none;
 }
+
 .non-field-error-block {
     margin-top: 50px;
     padding-top: 50px;
 }
+
 .field-error:not(:last-of-type) {
     margin-bottom: 15px;
 }
+
 .error-type-block:not(:last-of-type):has(li) {
-    margin-bottom: 15px
+    margin-bottom: 15px;
 }
 
 footer {
@@ -156,6 +159,7 @@ footer {
     color: #aaa;
     margin-bottom: 10px;
 }
+
 .custom-upload-bttn {
     display: inline-block;
     font-family: 'Roboto Mono', monospace;
@@ -170,6 +174,7 @@ footer {
     display: inline-block;
     margin-top: 3px;
 }
+
 .filename-text {
     display: inline-block;
     white-space: nowrap;
@@ -181,6 +186,7 @@ footer {
     text-overflow: ellipsis;
     max-width: 30ch;
 }
+
 input[type="file"] {
     position: absolute;
     width: 1px;
@@ -191,6 +197,7 @@ input[type="file"] {
     clip: rect(0, 0, 0, 0);
     border: 0;
 }
+
 .field-error-block {
     display: flex;
     align-items: center;
@@ -198,6 +205,7 @@ input[type="file"] {
     margin-bottom: 6px;
     width: 100%;
 }
+
 .field-error {
     color: #d9534f;
     font-size: 11px;
@@ -234,6 +242,11 @@ input[type="file"] {
     color: #333;
 }
 
+.drop-zone.failed {
+    border: 2px solid #ff4d4d;
+    background-color: #fff5f5;
+}
+
 .or-text {
     display: inline-block;
     margin-top: 8px;
@@ -243,7 +256,8 @@ input[type="file"] {
 
 /* Loading overlay styles */
 #loading-overlay {
-    display: none; /* Hidden until triggered */
+    display: none;
+    /* Hidden until triggered */
     position: fixed;
     top: 0;
     left: 0;
