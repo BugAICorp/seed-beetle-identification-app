@@ -8,6 +8,7 @@ from django.core import signing
 from port_inspector_app.views import results_view, notify_unknown
 from port_inspector_app.models import SpecimenUpload, Genus, KnownSpecies, User, Image
 from django.core.files.uploadedfile import SimpleUploadedFile
+from django.contrib.messages.storage.fallback import FallbackStorage
 
 
 class UserEmailIntegrationTests(TestCase):
@@ -186,6 +187,11 @@ class ResultsViewTests(TestCase):
         request = HttpRequest()
         request.method = 'GET'
 
+        # Add session and messages attributes so the view won't fail
+        setattr(request, "session", self.client.session)
+        messages_storage = FallbackStorage(request)
+        setattr(request, "_messages", messages_storage)
+
         # Call the view function
         hashed_ID = signing.dumps("1", salt=settings.SALT_KEY)  # Fake hash
         response = results_view(request, hashed_ID)
@@ -235,6 +241,11 @@ class ResultsViewTests(TestCase):
         # Create a mock request object
         request = HttpRequest()
         request.method = 'GET'
+
+        # Add session and messages attributes so the view won't fail
+        setattr(request, "session", self.client.session)
+        messages_storage = FallbackStorage(request)
+        setattr(request, "_messages", messages_storage)
 
         # Call the view function
         hashed_ID = signing.dumps("1", salt=settings.SALT_KEY)  # Fake hash
