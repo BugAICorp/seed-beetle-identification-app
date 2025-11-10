@@ -29,6 +29,7 @@ import time
 # Setup global redis connection
 redis_connection = None
 
+
 def get_redis_conn():
     global redis_connection
     if redis_connection is None:
@@ -38,6 +39,7 @@ def get_redis_conn():
             decode_responses=False
         )
     return redis_connection
+
 
 def verify_email(request, user_id):
     if request.method == "POST":
@@ -195,6 +197,7 @@ def logout_view(request):
     logout(request)
     return redirect("/upload/")
 
+
 @login_required(login_url='/login/')
 def upload_image(request):
     failed_param = request.GET.get("failed_views", "")
@@ -220,6 +223,7 @@ def upload_image(request):
         }
     )
 
+
 @login_required(login_url='/login/')
 def view_history(request):
     # create empty set of type SpecimenUpload
@@ -234,10 +238,11 @@ def view_history(request):
         request,
         'history.html',
         {
-            'uploads': uploads, 
+            'uploads': uploads,
             'max_uploads': settings.USER_MAX_UPLOADS,
         }
     )
+
 
 def delete_upload_from_redis(upload_id: int):
     """ Deletes all cached images for a given SpecimenUpload from Redis. """
@@ -251,6 +256,7 @@ def delete_upload_from_redis(upload_id: int):
             redis_conn.delete(key)
         except redis.RedisError as e:
             print(f"Failed to delete {key} from Redis: {e}")
+
 
 def store_upload_in_redis(upload: SpecimenUpload):
     """ Stores all images for a given SpecimenUpload in Redis. """
@@ -276,6 +282,7 @@ def store_upload_in_redis(upload: SpecimenUpload):
                 if 'img' in locals():
                     img.close()
 
+
 def save_redis_images_to_disk(upload):
     """
     Save any cropped images in Redis back to the filesystem
@@ -294,12 +301,13 @@ def save_redis_images_to_disk(upload):
                 if image_obj and hasattr(image_obj, "image"):
                     # Overwrite the existing file
                     image_obj.image.save(
-                        os.path.basename(image_obj.image.name), 
-                        ContentFile(img_bytes), 
+                        os.path.basename(image_obj.image.name),
+                        ContentFile(img_bytes),
                         save=True
                     )
         except (redis.RedisError, IOError) as e:
             print(f"[Redis/Image Error] Failed to save {key} to disk: {e}")
+
 
 @login_required(login_url='/login/')
 def results_view(request, hashed_ID):
@@ -332,10 +340,10 @@ def results_view(request, hashed_ID):
 
         if is_usda or is_special_status:
             task = run_mc_dropout_evaluation_task.delay(upload.id)
-            
+
         else:
             task = run_evaluation_task.delay(upload.id)
-    
+
         # store the Celery task ID with the upload
         print("DEBUG — Task Object:", task)
         print("DEBUG — Task ID:", getattr(task, "id", None))
@@ -351,7 +359,7 @@ def results_view(request, hashed_ID):
                 "upload_id": upload.id
             }
         )
-    
+
     # Handle running job
     if upload.task_status == "STARTED" or upload.task_status == "PROCESSING":
         return render(
@@ -362,7 +370,7 @@ def results_view(request, hashed_ID):
                 "upload_id": upload.id
             }
         )
-    
+
     if upload.task_status == "FAILED_CROP":
         if not getattr(upload, "redis_cleaned", False):
             try:
@@ -375,7 +383,7 @@ def results_view(request, hashed_ID):
         failed = getattr(upload, "failed_views", [])
         failed_param = ",".join(failed)
         return redirect(f"/upload/?failed_views={failed_param}")
-    
+
     # If task failed
     if upload.task_status == "FAILED":
         if not getattr(upload, "redis_cleaned", False):
@@ -480,6 +488,7 @@ def results_view(request, hashed_ID):
         },
     )
 
+
 def upload_status(request, upload_id):
     """
     Returns JSON indicating whether the Celery task is complete.
@@ -489,6 +498,7 @@ def upload_status(request, upload_id):
         return JsonResponse({"task_status": upload.task_status})
     except SpecimenUpload.DoesNotExist:
         return JsonResponse({"task_status": "FAILED"})
+
 
 def notify_unknown(request):
     if request.method == "POST":
@@ -552,7 +562,7 @@ def retrain_models_thread(request):
 
     if status == "running":
         return redirect("/admin/")
-    
+
     # Mark retraining as running
     cache.set("retrain_status", "running")
 

@@ -10,6 +10,7 @@ from port_inspector_app.models import SpecimenUpload
 # Setup global redis connection
 redis_connection = None
 
+
 def get_redis_conn():
     global redis_connection
     if redis_connection is None:
@@ -20,10 +21,11 @@ def get_redis_conn():
         )
     return redis_connection
 
+
 def crop_views_from_redis(upload_id, cropper):
     """
     Attempt YOLO-based beetle cropping for each available view on a SpecimenUpload.
-    
+
     Args:
         upload_id (int): SpecimenUpload id
         cropper (BeetleCropper): The YOLO cropping utility.
@@ -65,7 +67,7 @@ def crop_views_from_redis(upload_id, cropper):
         except Exception as e:
             print(f"[Crop Error] Failed to crop view {view} for upload {upload_id}: {e}")
             failed_views.append(view)
-        
+
         finally:
             img.close()
             if cropped_img is not None:
@@ -73,10 +75,11 @@ def crop_views_from_redis(upload_id, cropper):
 
     return failed_views, provided_views
 
+
 def get_view_paths(upload):
     """
     Extract filesystem paths for all four potential view images.
-    
+
     Args:
         upload (SpecimenUpload): Upload instance with linked image fields.
 
@@ -91,6 +94,7 @@ def get_view_paths(upload):
         upload.caudal_image.image.path if upload.caudal_image else None,
     )
 
+
 @shared_task(bind=True)
 def run_evaluation_task(self, upload_id):
     """
@@ -102,7 +106,7 @@ def run_evaluation_task(self, upload_id):
     cropper = BeetleCropper(threshold=0.8)
 
     failed_views, provided_views = crop_views_from_redis(upload_id, cropper)
-    
+
     if len(failed_views) == provided_views:
         SpecimenUpload.objects.filter(id=upload_id).update(
             task_status="FAILED_CROP",
@@ -127,24 +131,25 @@ def run_evaluation_task(self, upload_id):
 
         if upload_id:
             SpecimenUpload.objects.filter(id=upload_id).update(
-                species = s,
-                genus = g,
-                species_uncertainty = result["species_uncertainty"],
-                genus_uncertainty = result["genus_uncertainty"],
-                species_status = result["species_status"],
-                genus_status = result["genus_status"],
-                task_status = "COMPLETE",
+                species=s,
+                genus=g,
+                species_uncertainty=result["species_uncertainty"],
+                genus_uncertainty=result["genus_uncertainty"],
+                species_status=result["species_status"],
+                genus_status=result["genus_status"],
+                task_status="COMPLETE",
                 failed_views=failed_views
             )
 
         return result
 
-    except Exception as e:
+    except Exception:
         if upload_id:
             SpecimenUpload.objects.filter(id=upload_id).update(
                 task_status="FAILED",
             )
         raise
+
 
 @shared_task(bind=True)
 def run_mc_dropout_evaluation_task(self, upload_id):
@@ -157,7 +162,7 @@ def run_mc_dropout_evaluation_task(self, upload_id):
     cropper = BeetleCropper(threshold=0.8)
 
     failed_views, provided_views = crop_views_from_redis(upload_id, cropper)
-    
+
     if len(failed_views) == provided_views:
         SpecimenUpload.objects.filter(id=upload_id).update(
             task_status="FAILED_CROP",
@@ -181,19 +186,19 @@ def run_mc_dropout_evaluation_task(self, upload_id):
 
         if upload_id:
             SpecimenUpload.objects.filter(id=upload_id).update(
-                species = s,
-                genus = g,
-                species_uncertainty = s_uncert,
-                genus_uncertainty = g_uncert,
-                species_status = s_status,
-                genus_status = g_status,
-                task_status = "COMPLETE",
+                species=s,
+                genus=g,
+                species_uncertainty=s_uncert,
+                genus_uncertainty=g_uncert,
+                species_status=s_status,
+                genus_status=g_status,
+                task_status="COMPLETE",
                 failed_views=failed_views
             )
 
         return result
 
-    except Exception as e:
+    except Exception:
         if upload_id:
             SpecimenUpload.objects.filter(id=upload_id).update(
                 task_status="FAILED",
@@ -213,7 +218,7 @@ def retrain_model_task(self):
         retrain_models()
         cache.set("retrain_status", "complete", timeout=30)
         return "Retraining finished successfully"
-    except Exception as e:
+    except Exception:
         cache.set("retrain_status", "failed", timeout=30)
         return "Retraining failed"
 
@@ -229,6 +234,6 @@ def refresh_database_task(self):
         return "Database refresh completed successfully"
     except (IOError, ConnectionError) as e:  # Only retry on transient errors
         raise self.retry(exc=e, countdown=60)
-    except Exception as e:
+    except Exception:
         # Don't retry on other exceptions
         raise
