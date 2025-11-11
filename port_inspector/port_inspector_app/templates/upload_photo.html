@@ -9,8 +9,6 @@
   <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="{% static 'port_inspector_app/header.css' %}">
   <link rel="stylesheet" href="{% static 'port_inspector_app/upload_page_elements.css' %}">
-  <link rel="stylesheet" href="{% static 'port_inspector_app/header.css' %}">
-  <link rel="stylesheet" href="{% static 'port_inspector_app/upload_page_elements.css' %}">
 </head>
 
 
@@ -54,7 +52,8 @@
 
       <div class="drop-zone {% if 'frontal' in failed_views %}failed{% endif %}" id="drop-zone-id_frontal_upload">
         <p>Drag & Drop Frontal Image Here<br><span class="or-text">or</span></p>
-        <img class="preview-image" id="preview-id_frontal_upload" />
+        <img class="preview-image" id="preview-id_frontal_upload" 
+          {% if image_urls.frontal %} src="{{ image_urls.frontal }}" style="display:block;" {% else %} style="display:none;" {% endif %}/>
         {{ form.frontal_upload }}
       </div>
       <div class="upload-controls">
@@ -62,8 +61,11 @@
           <span id="filename-id_frontal_upload" class="filename-text">No file selected</span>
       </div>
       {% if "frontal" in failed_views %}
-      <div class="field-error-block">
-        <p class="field-error">Beetle not detected in this image. Try retaking it.</p>
+      <div class="field-error-block" id="error-id_frontal_upload">
+        <p class="field-error">
+          Beetle not detected in the frontal image.<br>
+          Try retaking it.
+        </p>
       </div>
       {% endif %}
 
@@ -85,7 +87,8 @@
 
       <div class="drop-zone {% if 'dorsal' in failed_views %}failed{% endif %}" id="drop-zone-id_dorsal_upload">
         <p>Drag & Drop Dorsal Image Here<br><span class="or-text">or</span></p>
-        <img class="preview-image" id="preview-id_dorsal_upload" />
+        <img class="preview-image" id="preview-id_dorsal_upload"
+          {% if image_urls.dorsal %} src="{{ image_urls.dorsal }}" style="display:block;" {% else %} style="display:none;" {% endif %}/>
         {{ form.dorsal_upload }}
       </div>
       <div class="upload-controls">
@@ -93,8 +96,11 @@
         <span id="filename-id_dorsal_upload" class="filename-text">No file selected</span>
       </div>
       {% if "dorsal" in failed_views %}
-      <div class="field-error-block">
-        <p class="field-error">Beetle not detected in this image. Try retaking it.</p>
+      <div class="field-error-block" id="error-id_dorsal_upload">
+        <p class="field-error">
+          Beetle not detected in the dorsal image.<br>
+          Try retaking it.
+        </p>
       </div>
       {% endif %}
 
@@ -115,7 +121,8 @@
 
       <div class="drop-zone {% if 'caudal' in failed_views %}failed{% endif %}" id="drop-zone-id_caudal_upload">
         <p>Drag & Drop Caudal Image Here<br><span class="or-text">or</span></p>
-        <img class="preview-image" id="preview-id_caudal_upload" />
+        <img class="preview-image" id="preview-id_caudal_upload"
+          {% if image_urls.caudal %} src="{{ image_urls.caudal }}" style="display:block;" {% else %} style="display:none;" {% endif %}/>
         {{ form.caudal_upload }}
       </div>
       <div class="upload-controls">
@@ -123,8 +130,11 @@
         <span id="filename-id_caudal_upload" class="filename-text">No file selected</span>
       </div>
       {% if "caudal" in failed_views %}
-      <div class="field-error-block">
-        <p class="field-error">Beetle not detected in this image. Try retaking it.</p>
+      <div class="field-error-block" id="error-id_caudal_upload">
+        <p class="field-error">
+          Beetle not detected in the caudal image.<br>
+          Try retaking it.
+        </p>
       </div>
       {% endif %}
 
@@ -144,7 +154,8 @@
 
       <div class="drop-zone {% if 'lateral' in failed_views %}failed{% endif %}" id="drop-zone-id_lateral_upload">
         <p>Drag & Drop Lateral Image Here<br><span class="or-text">or</span></p>
-        <img class="preview-image" id="preview-id_lateral_upload" />
+        <img class="preview-image" id="preview-id_lateral_upload"
+          {% if image_urls.lateral %} src="{{ image_urls.lateral }}" style="display:block;" {% else %} style="display:none;" {% endif %}/>
         {{ form.lateral_upload }}
       </div>
       <div class="upload-controls">
@@ -152,8 +163,11 @@
         <span id="filename-id_lateral_upload" class="filename-text">No file selected</span>
       </div>
       {% if "lateral" in failed_views %}
-      <div class="field-error-block">
-        <p class="field-error">Beetle not detected in this image. Try retaking it.</p>
+      <div class="field-error-block" id="error-id_lateral_upload">
+        <p class="field-error">
+          Beetle not detected in the lateral image.<br>
+          Try retaking it.
+        </p>
       </div>
       {% endif %}
 
@@ -193,117 +207,124 @@
 
     <script>
       document.addEventListener('DOMContentLoaded', function () {
-        // Function that changes file path display upon file upload/deletion
         const fileInputs = document.querySelectorAll('input[type="file"]');
-        fileInputs.forEach(input => {
-          input.addEventListener('change', function () {
-            const fileName = input.files.length > 0 ? input.files[0].name : 'No file selected';
-            const display = document.getElementById(`filename-${input.id}`);
-            if (display) {
-              display.textContent = fileName;
-            }
-          });
-        });
-      });
-
-      document.addEventListener('DOMContentLoaded', function () {
-        // Function that changes choose file button to delete mode when a file is uploaded
-        const fileInputs = document.querySelectorAll('input[type="file"]');
-        const dropZones = document.querySelectorAll('.drop-zone');
-        const uploadForm = document.querySelector('form');
         const overlay = document.getElementById('loading-overlay');
-        overlay.style.display = 'none'; // Ensure it's hidden on load
+        overlay.style.display = 'none';
 
-        // Function to hide drag and drop text on preview
         function toggleDropZoneText(input, show) {
           const zone = document.getElementById(`drop-zone-${input.id}`);
           const text = zone.querySelector('p');
-          text.style.display = show ? 'block' : 'none';
+          if (text) text.style.display = show ? 'block' : 'none';
         }
 
-        // Function to show image preview
         function showImagePreview(input) {
           const preview = document.getElementById(`preview-${input.id}`);
           if (input.files && input.files[0]) {
-            const file = input.files[0];
             const reader = new FileReader();
-
-            reader.onload = function (e) {
+            reader.onload = e => {
               preview.src = e.target.result;
               preview.style.display = 'block';
               toggleDropZoneText(input, false);
             };
-            reader.readAsDataURL(file);
-          } else {
-            preview.src = '';
-            preview.style.display = 'none';
+            reader.readAsDataURL(input.files[0]);
           }
         }
 
-        // File path display upon file upload/deletion logic
+        function hideErrorForInput(input) {
+          const zone = document.getElementById(`drop-zone-${input.id}`);
+          if (!zone) return;
+          const errorBlock = document.getElementById(`error-${input.id}`);
+          if (errorBlock) {
+            errorBlock.style.display = 'none';
+          }
+        }
+
+        function attachDelete(label, input, display) {
+          label.onclick = function (e) {
+            e.preventDefault();
+            input.value = '';
+            display.textContent = 'No file selected';
+            label.textContent = 'Choose File';
+
+            const preview = document.getElementById(`preview-${input.id}`);
+            preview.src = '';
+            preview.style.display = 'none';
+
+            const zone = document.getElementById(`drop-zone-${input.id}`);
+            if (zone) zone.classList.remove('failed');
+
+            toggleDropZoneText(input, true);
+            hideErrorForInput(input);
+
+            label.onclick = null;
+          };
+        }
+
+        // For each file input
         fileInputs.forEach(input => {
           const label = document.getElementById(`label-${input.id}`);
           const display = document.getElementById(`filename-${input.id}`);
+          const preview = document.getElementById(`preview-${input.id}`);
 
+          // If image already exists (from failed crop)
+          if (preview && preview.src && !preview.src.endsWith('/')) {
+            toggleDropZoneText(input, false);
+            label.textContent = 'Delete';
+            const fileName = preview.src.split('/').pop();
+            display.textContent = fileName;
+            attachDelete(label, input, display);
+          }
+
+          // Handle new uploads
           input.addEventListener('change', function () {
+            const zone = document.getElementById(`drop-zone-${input.id}`);
+            if (zone) zone.classList.remove('failed'); // clear red box
+            hideErrorForInput(input);
+
             if (input.files.length > 0) {
-              display.textContent = input.files[0].name;
+              const fileName = input.files[0].name;
+              display.textContent = fileName;
               label.textContent = 'Delete';
-
               showImagePreview(input);
+              toggleDropZoneText(input, false);
 
-              label.onclick = function (e) {
-                e.preventDefault();
-                input.value = '';
-                display.textContent = 'No file selected';
-                label.textContent = 'Choose File';
-                const preview = document.getElementById(`preview-${input.id}`);
-                preview.src = '';
-                preview.style.display = 'none';
-                toggleDropZoneText(input, true);
-                label.onclick = null; // restore default
-              };
+              // Reset any old handler before reattaching
+              label.onclick = null;
+              attachDelete(label, input, display);
             } else {
               display.textContent = 'No file selected';
               label.textContent = 'Choose File';
+              toggleDropZoneText(input, true);
             }
           });
         });
 
-        // Drag-and-drop logic
-        dropZones.forEach(zone => {
+        // Drag-and-drop
+        document.querySelectorAll('.drop-zone').forEach(zone => {
           const fileInput = zone.querySelector('input[type="file"]');
-
-          zone.addEventListener('dragover', (e) => {
+          zone.addEventListener('dragover', e => {
             e.preventDefault();
             zone.classList.add('dragover');
           });
-
-          zone.addEventListener('dragleave', () => {
-            zone.classList.remove('dragover');
-          });
-
-          zone.addEventListener('drop', (e) => {
+          zone.addEventListener('dragleave', () => zone.classList.remove('dragover'));
+          zone.addEventListener('drop', e => {
             e.preventDefault();
             zone.classList.remove('dragover');
             const files = e.dataTransfer.files;
             if (files.length > 0) {
-              // Set dropped file to the hidden input
               fileInput.files = files;
-
-              // Trigger the same logic as when user clicks "Choose File"
-              const event = new Event('change', { bubbles: true });
-              fileInput.dispatchEvent(event);
+              fileInput.dispatchEvent(new Event('change', { bubbles: true }));
             }
           });
         });
 
-        // Show loading overlay when the form is submitted
-        uploadForm.addEventListener('submit', function () {
+        // Show overlay on submit
+        document.querySelector('form').addEventListener('submit', () => {
           overlay.style.display = 'flex';
         });
       });
     </script>
+
 </body>
 
 </html>
