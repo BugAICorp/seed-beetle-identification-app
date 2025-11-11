@@ -56,10 +56,10 @@
         <p>Drag & Drop Frontal Image Here<br><span class="or-text">or</span></p>
         <img class="preview-image" id="preview-id_frontal_upload" />
         {{ form.frontal_upload }}
-        <div style="display: flex; gap: 5px;">
+      </div>
+      <div class="upload-controls">
           <label for="id_frontal_upload" class="custom-upload-bttn" id="label-id_frontal_upload">Choose File</label>
           <span id="filename-id_frontal_upload" class="filename-text">No file selected</span>
-        </div>
       </div>
       {% if "frontal" in failed_views %}
       <div class="field-error-block">
@@ -87,11 +87,10 @@
         <p>Drag & Drop Dorsal Image Here<br><span class="or-text">or</span></p>
         <img class="preview-image" id="preview-id_dorsal_upload" />
         {{ form.dorsal_upload }}
-        <!-- Overload the original upload form and insert a custom label instead for better style control -->
-        <div style="display: flex; gap: 5px;">
-          <label for="id_dorsal_upload" class="custom-upload-bttn" id="label-id_dorsal_upload">Choose File</label>
-          <span id="filename-id_dorsal_upload" class="filename-text">No file selected</span>
-        </div>
+      </div>
+      <div class="upload-controls">
+        <label for="id_dorsal_upload" class="custom-upload-bttn" id="label-id_dorsal_upload">Choose File</label>
+        <span id="filename-id_dorsal_upload" class="filename-text">No file selected</span>
       </div>
       {% if "dorsal" in failed_views %}
       <div class="field-error-block">
@@ -118,10 +117,10 @@
         <p>Drag & Drop Caudal Image Here<br><span class="or-text">or</span></p>
         <img class="preview-image" id="preview-id_caudal_upload" />
         {{ form.caudal_upload }}
-        <div style="display: flex; gap: 5px;">
-          <label for="id_caudal_upload" class="custom-upload-bttn" id="label-id_caudal_upload">Choose File</label>
-          <span id="filename-id_caudal_upload" class="filename-text">No file selected</span>
-        </div>
+      </div>
+      <div class="upload-controls">
+        <label for="id_caudal_upload" class="custom-upload-bttn" id="label-id_caudal_upload">Choose File</label>
+        <span id="filename-id_caudal_upload" class="filename-text">No file selected</span>
       </div>
       {% if "caudal" in failed_views %}
       <div class="field-error-block">
@@ -147,10 +146,10 @@
         <p>Drag & Drop Lateral Image Here<br><span class="or-text">or</span></p>
         <img class="preview-image" id="preview-id_lateral_upload" />
         {{ form.lateral_upload }}
-        <div style="display: flex; gap: 5px;">
-          <label for="id_lateral_upload" class="custom-upload-bttn" id="label-id_lateral_upload">Choose File</label>
-          <span id="filename-id_lateral_upload" class="filename-text">No file selected</span>
-        </div>
+      </div>
+      <div class="upload-controls">
+        <label for="id_lateral_upload" class="custom-upload-bttn" id="label-id_lateral_upload">Choose File</label>
+        <span id="filename-id_lateral_upload" class="filename-text">No file selected</span>
       </div>
       {% if "lateral" in failed_views %}
       <div class="field-error-block">
@@ -185,9 +184,6 @@
     <footer>
       &copy; 2025 Port Inspector App
     </footer>
-    <footer>
-      &copy; 2025 Port Inspector App
-    </footer>
 
     <!-- Loading overlay -->
     <div id="loading-overlay">
@@ -218,6 +214,13 @@
         const overlay = document.getElementById('loading-overlay');
         overlay.style.display = 'none'; // Ensure it's hidden on load
 
+        // Function to hide drag and drop text on preview
+        function toggleDropZoneText(input, show) {
+          const zone = document.getElementById(`drop-zone-${input.id}`);
+          const text = zone.querySelector('p');
+          text.style.display = show ? 'block' : 'none';
+        }
+
         // Function to show image preview
         function showImagePreview(input) {
           const preview = document.getElementById(`preview-${input.id}`);
@@ -228,6 +231,7 @@
             reader.onload = function (e) {
               preview.src = e.target.result;
               preview.style.display = 'block';
+              toggleDropZoneText(input, false);
             };
             reader.readAsDataURL(file);
           } else {
@@ -256,6 +260,7 @@
                 const preview = document.getElementById(`preview-${input.id}`);
                 preview.src = '';
                 preview.style.display = 'none';
+                toggleDropZoneText(input, true);
                 label.onclick = null; // restore default
               };
             } else {
