@@ -254,6 +254,18 @@ input[type="file"] {
     font-size: 15px;
 }
 
+.preview-image {
+    display: none;
+    max-width: 100%;
+    margin-top: 10px;
+    border-radius: 8px;
+    max-height: 200px;
+    object-fit: contain;
+    border: 1px solid #ddd;
+    box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
+    transition: opacity 0.3s ease;
+}
+
 /* Loading overlay styles */
 #loading-overlay {
     display: none;

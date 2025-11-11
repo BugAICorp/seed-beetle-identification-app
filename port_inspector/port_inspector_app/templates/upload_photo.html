@@ -3,7 +3,6 @@
 
 <head>
   {% load static %}
-  {% load static %}
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Upload an Image</title>
@@ -55,6 +54,7 @@
 
       <div class="drop-zone {% if 'frontal' in failed_views %}failed{% endif %}" id="drop-zone-id_frontal_upload">
         <p>Drag & Drop Frontal Image Here<br><span class="or-text">or</span></p>
+        <img class="preview-image" id="preview-id_frontal_upload" />
         {{ form.frontal_upload }}
         <div style="display: flex; gap: 5px;">
           <label for="id_frontal_upload" class="custom-upload-bttn" id="label-id_frontal_upload">Choose File</label>
@@ -85,6 +85,7 @@
 
       <div class="drop-zone {% if 'dorsal' in failed_views %}failed{% endif %}" id="drop-zone-id_dorsal_upload">
         <p>Drag & Drop Dorsal Image Here<br><span class="or-text">or</span></p>
+        <img class="preview-image" id="preview-id_dorsal_upload" />
         {{ form.dorsal_upload }}
         <!-- Overload the original upload form and insert a custom label instead for better style control -->
         <div style="display: flex; gap: 5px;">
@@ -115,6 +116,7 @@
 
       <div class="drop-zone {% if 'caudal' in failed_views %}failed{% endif %}" id="drop-zone-id_caudal_upload">
         <p>Drag & Drop Caudal Image Here<br><span class="or-text">or</span></p>
+        <img class="preview-image" id="preview-id_caudal_upload" />
         {{ form.caudal_upload }}
         <div style="display: flex; gap: 5px;">
           <label for="id_caudal_upload" class="custom-upload-bttn" id="label-id_caudal_upload">Choose File</label>
@@ -143,6 +145,7 @@
 
       <div class="drop-zone {% if 'lateral' in failed_views %}failed{% endif %}" id="drop-zone-id_lateral_upload">
         <p>Drag & Drop Lateral Image Here<br><span class="or-text">or</span></p>
+        <img class="preview-image" id="preview-id_lateral_upload" />
         {{ form.lateral_upload }}
         <div style="display: flex; gap: 5px;">
           <label for="id_lateral_upload" class="custom-upload-bttn" id="label-id_lateral_upload">Choose File</label>
@@ -215,6 +218,24 @@
         const overlay = document.getElementById('loading-overlay');
         overlay.style.display = 'none'; // Ensure it's hidden on load
 
+        // Function to show image preview
+        function showImagePreview(input) {
+          const preview = document.getElementById(`preview-${input.id}`);
+          if (input.files && input.files[0]) {
+            const file = input.files[0];
+            const reader = new FileReader();
+
+            reader.onload = function (e) {
+              preview.src = e.target.result;
+              preview.style.display = 'block';
+            };
+            reader.readAsDataURL(file);
+          } else {
+            preview.src = '';
+            preview.style.display = 'none';
+          }
+        }
+
         // File path display upon file upload/deletion logic
         fileInputs.forEach(input => {
           const label = document.getElementById(`label-${input.id}`);
@@ -225,11 +246,16 @@
               display.textContent = input.files[0].name;
               label.textContent = 'Delete';
 
+              showImagePreview(input);
+
               label.onclick = function (e) {
                 e.preventDefault();
                 input.value = '';
                 display.textContent = 'No file selected';
                 label.textContent = 'Choose File';
+                const preview = document.getElementById(`preview-${input.id}`);
+                preview.src = '';
+                preview.style.display = 'none';
                 label.onclick = null; // restore default
               };
             } else {
