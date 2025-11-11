@@ -200,9 +200,18 @@ def logout_view(request):
 
 @login_required(login_url='/login/')
 def upload_image(request):
+    upload_id = request.GET.get("upload_id")
     failed_param = request.GET.get("failed_views", "")
     failed_views = failed_param.split(",") if failed_param else []
 
+    image_urls = {
+        "frontal": None,
+        "dorsal": None,
+        "caudal": None,
+        "lateral": None,
+    }
+
+    # Handle POST (user submitting new upload)
     if request.method == "POST":
         specimen_form = SpecimenUploadForm(request.POST, request.FILES)
 
@@ -214,11 +223,27 @@ def upload_image(request):
     else:
         specimen_form = SpecimenUploadForm()
 
+    # Handle GET (display existing images for re-upload)
+    if upload_id:
+        try:
+            upload = SpecimenUpload.objects.get(id=upload_id)
+        except SpecimenUpload.DoesNotExist:
+            upload = None
+
+        if upload:
+            image_urls = {
+                "frontal": upload.frontal_image.image.url if upload.frontal_image else None,
+                "dorsal": upload.dorsal_image.image.url if upload.dorsal_image else None,
+                "caudal": upload.frontal_image.image.url if upload.frontal_image else None,
+                "lateral": upload.caudal_image.image.url if upload.caudal_image else None,
+            }
+
     return render(
         request,
         'upload_photo.html',
         {
             'form': specimen_form,
+            "image_urls": image_urls,
             "failed_views": failed_views
         }
     )
@@ -381,7 +406,7 @@ def results_view(request, hashed_ID):
 
         failed = getattr(upload, "failed_views", [])
         failed_param = ",".join(failed)
-        return redirect(f"/upload/?failed_views={failed_param}")
+        return redirect(f"/upload/?upload_id={upload.id}&failed_views={failed_param}")
 
     # If task failed
     if upload.task_status == "FAILED":
