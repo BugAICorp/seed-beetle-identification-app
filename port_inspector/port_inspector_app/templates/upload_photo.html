@@ -36,6 +36,73 @@
     <form method="POST" enctype="multipart/form-data">
       {% csrf_token %}
 
+      <label for="id_dorsal_upload" class="upload-label">
+        Dorsal Image:
+        <div class="tooltip-container">
+          <div class="tooltip-icon">i</div>
+          <div class="tooltip-text">
+            The dorsal habitus has been shown to have significant information in both geometric morphometrics (through
+            the shape of both the pronotum and the elytra) and in informing the training of the AI model for
+            identification.<br><br>
+            We are training the model with variation in the level of the head with the pygidium, however the images
+            should be uploaded <strong>with the head at the left</strong>.
+            <img src="{% static 'dorsal.png' %}" class="tooltip-image" />
+          </div>
+        </div>
+      </label>
+      
+      <div class="drop-zone {% if 'dorsal' in failed_views %}failed{% endif %}" id="drop-zone-id_dorsal_upload">
+        <p>Drag & Drop Dorsal Image Here<br><span class="or-text">or</span></p>
+        <img class="preview-image" id="preview-id_dorsal_upload" {% if image_urls.dorsal %} src="{{ image_urls.dorsal }}"
+          style="display:block;" {% else %} style="display:none;" {% endif %} />
+        {{ form.dorsal_upload }}
+      </div>
+      <div class="upload-controls">
+        <label for="id_dorsal_upload" class="custom-upload-bttn" id="label-id_dorsal_upload">Choose File</label>
+        <span id="filename-id_dorsal_upload" class="filename-text">No file selected</span>
+      </div>
+      {% if "dorsal" in failed_views %}
+      <div class="field-error-block" id="error-id_dorsal_upload">
+        <p class="field-error">
+          Beetle not detected in the dorsal image.<br>
+          Try retaking it.
+        </p>
+      </div>
+      {% endif %}
+
+      <label for="id_lateral_upload" class="upload-label">
+        Lateral Image:
+        <div class="tooltip-container">
+          <div class="tooltip-icon">i</div>
+          <div class="tooltip-text">
+            The lateral aspect can be informative, although variable positioning of appendages means that this aspect
+            will improve as more data are added to train the AI model.<br><br>
+            We are training the model with variation in the level of the head with the pygidium, however the images
+            should be uploaded <strong>with the head at the left</strong>.
+            <img src="{% static 'lateral.png' %}" class="tooltip-image" />
+          </div>
+        </div>
+      </label>
+      
+      <div class="drop-zone {% if 'lateral' in failed_views %}failed{% endif %}" id="drop-zone-id_lateral_upload">
+        <p>Drag & Drop Lateral Image Here<br><span class="or-text">or</span></p>
+        <img class="preview-image" id="preview-id_lateral_upload" {% if image_urls.lateral %} src="{{ image_urls.lateral }}"
+          style="display:block;" {% else %} style="display:none;" {% endif %} />
+        {{ form.lateral_upload }}
+      </div>
+      <div class="upload-controls">
+        <label for="id_lateral_upload" class="custom-upload-bttn" id="label-id_lateral_upload">Choose File</label>
+        <span id="filename-id_lateral_upload" class="filename-text">No file selected</span>
+      </div>
+      {% if "lateral" in failed_views %}
+      <div class="field-error-block" id="error-id_lateral_upload">
+        <p class="field-error">
+          Beetle not detected in the lateral image.<br>
+          Try retaking it.
+        </p>
+      </div>
+      {% endif %}
+
       <label for="id_frontal_upload" class="upload-label">
         Frontal Image:
         <div class="tooltip-container">
@@ -64,41 +131,6 @@
       <div class="field-error-block" id="error-id_frontal_upload">
         <p class="field-error">
           Beetle not detected in the frontal image.<br>
-          Try retaking it.
-        </p>
-      </div>
-      {% endif %}
-
-
-      <label for="id_dorsal_upload" class="upload-label">
-        Dorsal Image:
-        <div class="tooltip-container">
-          <div class="tooltip-icon">i</div>
-          <div class="tooltip-text">
-            The dorsal habitus has been shown to have significant information in both geometric morphometrics (through
-            the shape of both the pronotum and the elytra) and in informing the training of the AI model for
-            identification.<br><br>
-            We are training the model with variation in the level of the head with the pygidium, however the images
-            should be uploaded <strong>with the head at the left</strong>.
-            <img src="{% static 'dorsal.png' %}" class="tooltip-image" />
-          </div>
-        </div>
-      </label>
-
-      <div class="drop-zone {% if 'dorsal' in failed_views %}failed{% endif %}" id="drop-zone-id_dorsal_upload">
-        <p>Drag & Drop Dorsal Image Here<br><span class="or-text">or</span></p>
-        <img class="preview-image" id="preview-id_dorsal_upload"
-          {% if image_urls.dorsal %} src="{{ image_urls.dorsal }}" style="display:block;" {% else %} style="display:none;" {% endif %}/>
-        {{ form.dorsal_upload }}
-      </div>
-      <div class="upload-controls">
-        <label for="id_dorsal_upload" class="custom-upload-bttn" id="label-id_dorsal_upload">Choose File</label>
-        <span id="filename-id_dorsal_upload" class="filename-text">No file selected</span>
-      </div>
-      {% if "dorsal" in failed_views %}
-      <div class="field-error-block" id="error-id_dorsal_upload">
-        <p class="field-error">
-          Beetle not detected in the dorsal image.<br>
           Try retaking it.
         </p>
       </div>
@@ -133,39 +165,6 @@
       <div class="field-error-block" id="error-id_caudal_upload">
         <p class="field-error">
           Beetle not detected in the caudal image.<br>
-          Try retaking it.
-        </p>
-      </div>
-      {% endif %}
-
-      <label for="id_lateral_upload" class="upload-label">
-        Lateral Image:
-        <div class="tooltip-container">
-          <div class="tooltip-icon">i</div>
-          <div class="tooltip-text">
-            The lateral aspect can be informative, although variable positioning of appendages means that this aspect
-            will improve as more data are added to train the AI model.<br><br>
-            We are training the model with variation in the level of the head with the pygidium, however the images
-            should be uploaded <strong>with the head at the left</strong>.
-            <img src="{% static 'lateral.png' %}" class="tooltip-image" />
-          </div>
-        </div>
-      </label>
-
-      <div class="drop-zone {% if 'lateral' in failed_views %}failed{% endif %}" id="drop-zone-id_lateral_upload">
-        <p>Drag & Drop Lateral Image Here<br><span class="or-text">or</span></p>
-        <img class="preview-image" id="preview-id_lateral_upload"
-          {% if image_urls.lateral %} src="{{ image_urls.lateral }}" style="display:block;" {% else %} style="display:none;" {% endif %}/>
-        {{ form.lateral_upload }}
-      </div>
-      <div class="upload-controls">
-        <label for="id_lateral_upload" class="custom-upload-bttn" id="label-id_lateral_upload">Choose File</label>
-        <span id="filename-id_lateral_upload" class="filename-text">No file selected</span>
-      </div>
-      {% if "lateral" in failed_views %}
-      <div class="field-error-block" id="error-id_lateral_upload">
-        <p class="field-error">
-          Beetle not detected in the lateral image.<br>
           Try retaking it.
         </p>
       </div>
