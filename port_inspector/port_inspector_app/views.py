@@ -471,7 +471,6 @@ def results_view(request, hashed_ID):
     # Determine result message type
     warning_message = None
 
-    # Assume these fields store strings like "Certain" / "Uncertain"
     genus_certain = upload.genus_status
     species_certain = upload.species_status
     # Case 1: Genus Certain + Species Certain
