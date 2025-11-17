@@ -37,14 +37,16 @@
       <area shape="circle" coords="1812,512,200" href="/upload" alt="Link 1">
     </map>
     <div id="mission-div">
-      <p id="our-text">
-        This program is designed to help identify different seed beetle species that are <a
-          href="{% url 'about' %}">commonly intercepted</a>
-        with agricultural goods. The AI assists
-        with classifying the uploaded pictures and is trained exclusively on a set of specific seed
-        beetle species. Our model's accuracy increases with each specimen uploaded, helping us refine
-        and improve our identifications.
-      </p>
+      <div id="our-text-div">
+        <p id="our-text">
+          This program is designed to help identify different seed beetle species that are <a class="our-href"
+            href="{% url 'about' %}">commonly intercepted</a>
+          with agricultural goods. The AI assists
+          with classifying the uploaded pictures and is trained exclusively on a set of specific seed
+          beetle species. Our model's accuracy increases with each specimen uploaded, helping us refine
+          and improve our identifications.
+        </p>
+      </div>
       <img src="{% static 'little_guy.png' %}" id="mission-img" />
     </div>
   </div>
