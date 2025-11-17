@@ -8,6 +8,7 @@ from django.core import signing
 from port_inspector_app.views import results_view, notify_unknown
 from port_inspector_app.models import SpecimenUpload, Genus, KnownSpecies, User, Image
 from django.core.files.uploadedfile import SimpleUploadedFile
+from django.contrib.messages.storage.fallback import FallbackStorage
 
 
 class UserEmailIntegrationTests(TestCase):
@@ -177,7 +178,19 @@ class ResultsViewTests(TestCase):
 
     @patch("port_inspector_app.models.KnownSpecies.objects.filter")
     @patch("port_inspector_app.models.Genus.objects.filter")
-    def test_results_view(self, mock_genus_filter, mock_species_filter):
+    @patch("port_inspector_app.models.SpecimenUpload.objects.get")
+    def test_results_view(self, mock_get_upload, mock_genus_filter, mock_species_filter):
+        # Mock the upload so it exists and is COMPLETE
+        mock_upload = MagicMock()
+        mock_upload.id = 1
+        mock_upload.task_status = "COMPLETE"
+        mock_upload.species = [("species1", 95.5)]
+        mock_upload.genus = ("genus1", 99.9)
+        mock_upload.final_identification = None
+        mock_upload.species_status = mock_upload.genus_status = True
+        mock_upload.species_uncertainty = mock_upload.genus_uncertainty = 0.05
+        mock_get_upload.return_value = mock_upload
+
         # Mock the return values of the queries
         mock_species_filter.return_value.values_list.return_value = [("species1", "http://species1.com")]
         mock_genus_filter.return_value.values_list.return_value = [("genus1", "http://genus1.com")]
@@ -186,12 +199,18 @@ class ResultsViewTests(TestCase):
         request = HttpRequest()
         request.method = 'GET'
 
+        # Add session and messages attributes so the view won't fail
+        setattr(request, "session", self.client.session)
+        messages_storage = FallbackStorage(request)
+        setattr(request, "_messages", messages_storage)
+
         # Call the view function
         hashed_ID = signing.dumps("1", salt=settings.SALT_KEY)  # Fake hash
         response = results_view(request, hashed_ID)
 
         # Check that the response status code is 200
         self.assertEqual(response.status_code, 200)
+        self.assertIn("species1", response.content.decode())
 
     @patch("port_inspector_app.views.KnownSpecies.objects.filter")
     @patch("port_inspector_app.views.Genus.objects.filter")
@@ -212,8 +231,11 @@ class ResultsViewTests(TestCase):
         mock_upload = MagicMock()
         mock_upload.species = species_results
         mock_upload.genus = genus_result
+        mock_upload.task_status = "COMPLETE"
         mock_upload.id = 1
         mock_upload.final_identification = None
+        mock_upload.species_status = mock_upload.genus_status = True
+        mock_upload.species_uncertainty = mock_upload.genus_uncertainty = 0.05
 
         mock_get_upload.return_value = mock_upload
 
@@ -235,6 +257,11 @@ class ResultsViewTests(TestCase):
         # Create a mock request object
         request = HttpRequest()
         request.method = 'GET'
+
+        # Add session and messages attributes so the view won't fail
+        setattr(request, "session", self.client.session)
+        messages_storage = FallbackStorage(request)
+        setattr(request, "_messages", messages_storage)
 
         # Call the view function
         hashed_ID = signing.dumps("1", salt=settings.SALT_KEY)  # Fake hash

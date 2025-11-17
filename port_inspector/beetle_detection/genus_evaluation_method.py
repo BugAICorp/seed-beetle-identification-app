@@ -347,13 +347,13 @@ class GenusEvaluationMethod:
 
             # Threshold check
             if entropy < uncertainty_threshold:
-                result["status"] = "accepted"
+                result["status"] = True
                 return result
 
             self.trained_models[view].eval()  # reset to eval after MC dropout passes
 
         # Fallback: reject if all models uncertain
-        best_result["status"] = "rejected"
+        best_result["status"] = False
         return best_result
 
     def stacked_eval(self):
