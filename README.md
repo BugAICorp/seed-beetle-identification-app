@@ -33,17 +33,17 @@ used, the table and the expected fields should be changed to properly reflect th
 
 #### training_database_reader.py: 
 Data reader that reads sqlite3 database into a pandas dataframe. This database is structured to match the converter's format, so changes to the table for the converter must 
-also be made on the reader to ensure proper conversion.
+also be made on the reader to ensure proper conversion. The current dataset this program is set to use follow a file naming scheme of: "Genus species SpecimenUUID resolution angle.jpg"
 
 #### stack_dataset_creator.py: 
 Modifies default dataframe to be able to input into stacking model for training and evaluation. This dataset creator relies on certain parts of the image name that was input, so 
-modifications must be made to match the data input.
+modifications must be made to match the data input. The current setting is for the same format as the scheme above.
 
 #### model_loader.py: 
 Loads currently saved models in the models repository for evaluation of images.
 
 #### user_input_database.py: 
-Currently unused. Program to create database that pulls in user-submitted images in order to grow the main training database. The user's entries are handled by the 
+Currently not used. Program to create database that pulls in user-submitted images in order to grow the main training database. The user's entries are handled by the 
 app itself, so this database is no longer in use in the project, but is available as a step in between user input and proper adoption into the training database.
 
 ### Model Evaluation
@@ -84,6 +84,7 @@ Contains global variable names for simulator file name references.
 * dill
 * pylint
 * python 3.11
+* use requirements.txt to install the latest list of dependencies reliably
 
 ### Installing
 
@@ -137,9 +138,12 @@ While developing locally, set the email to print in terminal instead of actual e
 ### 1. Open account with MailerSend
 Make an account with [MailerSend](https://www.mailersend.com/), verify the domain you   
 would like to host the server on, and generate credentials for SMTP sending.
+If staying with the default SMTP, use the correct credentials in existing settings to enable use of your custom email account.
+Visit this page for help on django's email functionality and setup: https://docs.djangoproject.com/en/5.2/topics/email/
 
 ### 2. Put Credentials in Config File
-With the MailerSend credentials, fill out the `EMAIL_HOST_USER`, `EMAIL_HOST_PASSWORD` variables
+With the MailerSend credentials, fill out the `EMAIL_HOST_USER`, `EMAIL_HOST_PASSWORD` variables.
+If using SMTP, use credentials given by the email provider.
 
 ## Setup and Installation
 
@@ -177,5 +181,12 @@ Open a web browser and go to the following link:
 http://localhost:8000/
 ```
 If you are not using docker, a link will appear in the terminal to click instead.
+
+## Current recommended server setup
+The server's current implementation requires a backend and a web app with a celery worker communicating between the 
+two. A Redis setup to communicate between the two ends is the recommended solution we are currently using. The backend 
+hosts the AI models to allow the website to properly function while image evaluations happen in the background on separate 
+hardware.
+
 
 
