@@ -483,7 +483,6 @@ def results_view(request, hashed_ID):
         warning_message = "WARNING: Model is uncertain about the identification. " \
             "Please see identification resources to help identify the specimen."
 
-
     return render(
         request,
         "results.html",
