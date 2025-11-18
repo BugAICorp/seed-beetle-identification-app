@@ -124,9 +124,11 @@ def run_evaluation_task(self, upload_id):
             "top_5_species": s,
             "species_uncertainty": 0.0,
             "species_status": True,
+            "species_confidence_label": "Confident",
             "top_genus": g,
             "genus_uncertainty": 0.0,
             "genus_status": True,
+            "genus_confidence_label": "Confident"
         }
 
         if upload_id:
@@ -135,6 +137,8 @@ def run_evaluation_task(self, upload_id):
                 genus=g,
                 species_uncertainty=result["species_uncertainty"],
                 genus_uncertainty=result["genus_uncertainty"],
+                species_confidence_label = result["species_confidence_label"],
+                genus_confidence_label = result["genus_confidence_label"],
                 species_status=result["species_status"],
                 genus_status=result["genus_status"],
                 task_status="COMPLETE",
@@ -173,15 +177,17 @@ def run_mc_dropout_evaluation_task(self, upload_id):
     SpecimenUpload.objects.filter(id=upload_id).update(task_status="PROCESSING")
 
     try:
-        s, g, s_uncert, s_status, g_uncert, g_status = evaluate_mc_dropout(upload_id)
+        s, g, s_uncert, s_conf_label, s_status, g_conf_label, g_uncert, g_status = evaluate_mc_dropout(upload_id)
 
         result = {
             "top_5_species": s,
             "species_uncertainty": s_uncert,
             "species_status": s_status,
+            "species_confidence_label": s_conf_label,
             "top_genus": g,
             "genus_uncertainty": g_uncert,
             "genus_status": g_status,
+            "genus_confidence_label": g_conf_label
         }
 
         if upload_id:
@@ -190,6 +196,8 @@ def run_mc_dropout_evaluation_task(self, upload_id):
                 genus=g,
                 species_uncertainty=s_uncert,
                 genus_uncertainty=g_uncert,
+                species_confidence_label = s_conf_label,
+                genus_confidence_label = g_conf_label,
                 species_status=s_status,
                 genus_status=g_status,
                 task_status="COMPLETE",
