@@ -18,7 +18,7 @@ class GenusEvaluationMethod:
     """
 
     def __init__(self, height_filename, models_dict, eval_method,
-                 genus_filename, accuracies_filename=None):
+                 genus_filename, threshold_filename, accuracies_filename=None):
         """
         Load the trained models for usage and have the class prepared for user input.
         During testing phases, determining which evaluation method defined below will 
@@ -38,6 +38,9 @@ class GenusEvaluationMethod:
 
         #load transformations to a list for use in the program
         self.transformations = self.get_transformations()
+
+        with open(os.path.join(os.path.dirname(__file__), threshold_filename)) as f:
+            self.conf_thresholds = json.load(f)
 
     def open_class_dictionary(self, filename):
         """
@@ -282,8 +285,26 @@ class GenusEvaluationMethod:
             if isinstance(m, torch.nn.Dropout) or m.__class__.__name__.startswith('Dropout'):
                 m.train()
 
-    def evaluate_heaviest_mc_dropout(self, late=None, dors=None, fron=None, caud=None,
-                                            n_samples=20, uncertainty_threshold=0.8):
+    def confidence_label(self, entropy, view):
+        """
+        Returns a confidence label ("High", "Medium", "Low", or "Uncertain") based on the
+        entropy value for a given view. Each view has its own threshold settings, loaded
+        from the JSON threshold file during initialization.
+        """
+        thresholds = self.conf_thresholds.get(view, {})
+        high = thresholds.get("high", 0.03)
+        medium = thresholds.get("medium", 0.07)
+        low = thresholds.get("low", 0.12)
+
+        if entropy < high:
+            return "High confidence"
+        if entropy < medium:
+            return "Medium confidence"
+        if entropy < low:
+            return "Low confidence"
+        return "Uncertain"
+
+    def evaluate_heaviest_mc_dropout(self, late=None, dors=None, fron=None, caud=None, n_samples=20):
         """
         Stepwise MC Dropout evaluation that starts with the best model (highest accuracy)
         and moves down the list if uncertainty exceeds the threshold.
@@ -314,7 +335,9 @@ class GenusEvaluationMethod:
             transformed_image = self.transform_input(image, transform).to(device)
 
             # Activate dropout layers
+            # eval() first so BatchNorm layers stay fixed
             self.trained_models[view].eval()
+            # enable_dropout() re-enables dropout only
             self.enable_dropout(view)
 
             # Collect MC Dropout samples
@@ -338,7 +361,7 @@ class GenusEvaluationMethod:
                 "view": view,
                 "mean_score": score.item(),
                 "genus": genus_name,
-                "uncertainty": entropy,
+                "uncertainty": entropy
             }
 
             # Save best (first) result for fallback
@@ -346,14 +369,17 @@ class GenusEvaluationMethod:
                 best_result = result
 
             # Threshold check
-            if entropy < uncertainty_threshold:
+            confidence_label = self.confidence_label(entropy, view)
+            if confidence_label != "Uncertain":
                 result["status"] = True
+                result["confidence_label"] = confidence_label
                 return result
 
             self.trained_models[view].eval()  # reset to eval after MC dropout passes
 
         # Fallback: reject if all models uncertain
         best_result["status"] = False
+        best_result["confidence_label"] = "Uncertain"
         return best_result
 
     def stacked_eval(self):
