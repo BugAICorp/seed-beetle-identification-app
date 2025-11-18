@@ -86,6 +86,9 @@ class SpecimenUpload(models.Model):
     genus_uncertainty = models.FloatField(default=0.0)
     species_uncertainty = models.FloatField(default=0.0)
 
+    genus_confidence_label = models.CharField(default="Uncertain", max_length=30)
+    species_confidence_label = models.CharField(default="Uncertain", max_length=30)
+
     genus_status = models.BooleanField(default=True)
     species_status = models.BooleanField(default=True)
 
