@@ -88,11 +88,13 @@ def load_models_once():
 
 
     # Initialize the EvaluationMethod object with the heaviest eval method set
-    species_evaluator = EvaluationMethod(os.path.join(os.path.dirname(os.path.abspath(__file__)), "model_data/height.txt"), species_models, 1, 
-                                            os.path.join(os.path.dirname(os.path.abspath(__file__)), "model_data/spec_dict.json"), 
+    species_evaluator = EvaluationMethod(os.path.join(os.path.dirname(os.path.abspath(__file__)), "model_data/height.txt"), species_models, 1,
+                                            os.path.join(os.path.dirname(os.path.abspath(__file__)), "model_data/spec_dict.json"),
+                                            os.path.join(os.path.dirname(os.path.abspath(__file__)), "model_data/spec_conf_thresholds.json"),
                                             os.path.join(os.path.dirname(os.path.abspath(__file__)), "model_data/spec_accuracies.json"))
-    genus_evaluator = GenusEvaluationMethod(os.path.join(os.path.dirname(os.path.abspath(__file__)), "model_data/height.txt"), genus_models, 1, 
-                                            os.path.join(os.path.dirname(os.path.abspath(__file__)), "model_data/gen_dict.json"), 
+    genus_evaluator = GenusEvaluationMethod(os.path.join(os.path.dirname(os.path.abspath(__file__)), "model_data/height.txt"), genus_models, 1,
+                                            os.path.join(os.path.dirname(os.path.abspath(__file__)), "model_data/gen_dict.json"),
+                                            os.path.join(os.path.dirname(os.path.abspath(__file__)), "model_data/gen_conf_thresholds.json"),
                                             os.path.join(os.path.dirname(os.path.abspath(__file__)), "model_data/gen_accuracies.json"))
 
     print("!!! ML Models loaded in evaluation mode !!!")
@@ -217,7 +219,16 @@ def evaluate_mc_dropout(upload_id):
     for i in range(5):
         top_5_species.append((top_species["species"][i], top_species["mean_scores"][i]*100.0))
 
-    return top_5_species, top_genus_formatted, top_species["uncertainty"], top_species["status"], top_genus["uncertainty"], top_genus["status"]
+    return (
+        top_5_species,
+        top_genus_formatted,
+        top_species["uncertainty"],
+        top_species["confidence_label"],
+        top_species["status"],
+        top_genus["uncertainty"],
+        top_genus["confidence_label"],
+        top_genus["status"]
+    )
 
 
 def retrain_models():
