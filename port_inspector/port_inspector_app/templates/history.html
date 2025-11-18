@@ -107,6 +107,15 @@
                         </div>
                     </th>
                     <th>Status</th>
+                    <th>Expert Verified
+                        <div class="tooltip-container" style="display:inline-block; margin-left:5px;">
+                            <div class="tooltip-icon">i</div>
+                            <div class="tooltip-text">
+                                If verifiedby an expert, a checkmark will appear in 
+                                the image's row and the identification column will have the correct classification.
+                            </div>
+                        </div>
+                    </th>
                 </tr>
             </thead>
             <tbody>
@@ -122,6 +131,13 @@
                             data-task-status="{{ upload.0.task_status }}">
                             <div class="status-text status-not-started">Waiting</div>
                         </div>
+                    </td>
+                    <td>
+                        {% if upload.0.is_validated %}
+                            <span class="checkmark">✔</span>
+                        {% else %}
+                            <span class="x">✗</span>
+                        {% endif %}
                     </td>
                 </tr>
                 {% endfor %}
