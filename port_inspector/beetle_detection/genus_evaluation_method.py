@@ -297,11 +297,11 @@ class GenusEvaluationMethod:
         low = thresholds.get("low", 0.12)
 
         if entropy < high:
-            return "High confidence"
+            return "High Confidence"
         if entropy < medium:
-            return "Medium confidence"
+            return "Medium Confidence"
         if entropy < low:
-            return "Low confidence"
+            return "Low Confidence"
         return "Uncertain"
 
     def evaluate_heaviest_mc_dropout(self, late=None, dors=None, fron=None, caud=None, n_samples=20):

@@ -45,9 +45,9 @@
       {% if is_usda or is_special_status %}
       <p><strong>Genus Confidence:</strong>
         <span class="confidence-label
-                    {% if genus_conf_label == 'High confidence' %}confidence-high
-                    {% elif genus_conf_label == 'Medium confidence' %}confidence-med-high
-                    {% elif genus_conf_label == 'Low confidence' %}confidence-med-low
+                    {% if genus_conf_label == 'High Confidence' %}confidence-high
+                    {% elif genus_conf_label == 'Medium Confidence' %}confidence-med-high
+                    {% elif genus_conf_label == 'Low Confidence' %}confidence-med-low
                     {% else %}confidence-low{% endif %}">
           {{ genus_conf_label }}
         </span>
@@ -55,9 +55,9 @@
 
       <p><strong>Species Confidence:</strong>
         <span class="confidence-label
-                    {% if species_conf_label == 'High confidence' %}confidence-high
-                    {% elif species_conf_label == 'Medium confidence' %}confidence-med-high
-                    {% elif species_conf_label == 'Low confidence' %}confidence-med-low
+                    {% if species_conf_label == 'High Confidence' %}confidence-high
+                    {% elif species_conf_label == 'Medium Confidence' %}confidence-med-high
+                    {% elif species_conf_label == 'Low Confidence' %}confidence-med-low
                     {% else %}confidence-low{% endif %}">
           {{ species_conf_label }}
         </span>

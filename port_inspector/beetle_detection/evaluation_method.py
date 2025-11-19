@@ -321,11 +321,11 @@ class EvaluationMethod:
         low = thresholds.get("low", 0.12)
 
         if entropy < high:
-            return "High confidence"
+            return "High Confidence"
         if entropy < medium:
-            return "Medium confidence"
+            return "Medium Confidence"
         if entropy < low:
-            return "Low confidence"
+            return "Low Confidence"
         return "Uncertain"
 
 
