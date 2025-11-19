@@ -43,22 +43,23 @@
       <p><strong>Likely Species:</strong> <span id="likely-species">{{ likely_species }}</span></p>
       <p><strong>Confirmed Species:</strong> <span id="likely-species">{{ confirmed_species | default:"Not Confirmed"}}</span></p>
       {% if is_usda or is_special_status %}
-      <p><strong>Genus Uncertainty:</strong>
-        <span class="{% if genus_stat %}confidence-high{% else %}confidence-low{% endif %}">
-          {% if genus_stat %}
-          Certain
-          {% else %}
-          Uncertain
-          {% endif %}
+      <p><strong>Genus Confidence:</strong>
+        <span class="confidence-label
+                    {% if genus_conf_label == 'High confidence' %}confidence-high
+                    {% elif genus_conf_label == 'Medium confidence' %}confidence-med-high
+                    {% elif genus_conf_label == 'Low confidence' %}confidence-med-low
+                    {% else %}confidence-low{% endif %}">
+          {{ genus_conf_label }}
         </span>
       </p>
-      <p><strong>Species Uncertainty:</strong>
-        <span class="{% if species_stat %}confidence-high{% else %}confidence-low{% endif %}">
-          {% if species_stat %}
-          Certain
-          {% else %}
-          Uncertain
-          {% endif %}
+
+      <p><strong>Species Confidence:</strong>
+        <span class="confidence-label
+                    {% if species_conf_label == 'High confidence' %}confidence-high
+                    {% elif species_conf_label == 'Medium confidence' %}confidence-med-high
+                    {% elif species_conf_label == 'Low confidence' %}confidence-med-low
+                    {% else %}confidence-low{% endif %}">
+          {{ species_conf_label }}
         </span>
       </p>
       {% endif %}
