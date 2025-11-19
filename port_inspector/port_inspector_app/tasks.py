@@ -177,7 +177,7 @@ def run_mc_dropout_evaluation_task(self, upload_id):
     SpecimenUpload.objects.filter(id=upload_id).update(task_status="PROCESSING")
 
     try:
-        s, g, s_uncert, s_conf_label, s_status, g_conf_label, g_uncert, g_status = evaluate_mc_dropout(upload_id)
+        s, g, s_uncert, s_conf_label, s_status, g_uncert, g_conf_label, g_status = evaluate_mc_dropout(upload_id)
 
         result = {
             "top_5_species": s,
