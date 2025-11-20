@@ -609,3 +609,9 @@ def home_view(request):
 def about_view(request):
     valid_classes = ValidClasses.objects.all()
     return render(request, 'about.html', {'valid_classes': valid_classes})
+
+
+def contact_us_view(request):
+    if request.method == "POST":
+        user_email = request.user.email
+        
