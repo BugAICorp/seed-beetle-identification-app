@@ -627,7 +627,7 @@ def contact_us_view(request):
             email.send()
 
             return render(request, "contact_us.html", {"form": form, "status": True})
-        
+
         return render(request, "contact_us.html", {"form": form, "status": False})
 
     else:
