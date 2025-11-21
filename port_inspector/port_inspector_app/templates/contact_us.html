@@ -34,9 +34,15 @@
             {% if form.non_field_errors %}
                 {{ form.non_field_errors }}
             {% endif %}
-            <input type="message" name="message" placeholder="Message us here" required>
+            <textarea name="message" placeholder="Message us here" required></textarea>
             <button type="submit" class="button">Submit Message</button>
         </form>
+        {% if status %}
+            <span class="submission-text">
+                Message received! We'll get back to you as soon as we can. Feel free to contact 
+                us again if you have any other questions or concerns.
+            </span>
+        {% endif %}
         <footer>&copy; 2025 Port Inspector App</footer>
     </div>
 </body>

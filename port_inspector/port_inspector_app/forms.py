@@ -193,5 +193,5 @@ class ConfirmIdForm(forms.ModelForm):
         self.fields['choice'].choices = choices
 
 
-class ContactUsForm(forms.ModelForm):
+class ContactUsForm(forms.Form):
     message = forms.CharField(label='Message')

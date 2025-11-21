@@ -614,17 +614,21 @@ def about_view(request):
 @login_required(login_url='/login/')
 def contact_us_view(request):
     if request.method == "POST":
-        form = ContactUsForm()
-        user_email = request.user.email
-        send_to_email = "bruchinaiapp@gmail.com"
-        subject = f"{user_email} contacted us"
-        message = form.cleaned_data.get("message")
+        form = ContactUsForm(request.POST)
+        if form.is_valid():
+            message_text = form.cleaned_data['message']
+            user_email = request.user.email
+            send_to_email = "bruchinaiapp@gmail.com"
+            subject = f"{user_email} contacted us"
+            message = message_text
 
-        email = EmailMessage(subject, message, to=[send_to_email])
-        email.content_subtype = "html"
-        email.send()
+            email = EmailMessage(subject, message, to=[send_to_email])
+            email.content_subtype = "html"
+            email.send()
 
-        return render(request, "contact_us.html", {"form": form, "status": True})
+            return render(request, "contact_us.html", {"form": form, "status": True})
+        
+        return render(request, "contact_us.html", {"form": form, "status": False})
 
     else:
         form = ContactUsForm()
