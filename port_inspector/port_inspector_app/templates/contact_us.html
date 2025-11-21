@@ -1,0 +1,49 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Contact Us</title>
+  <link rel="stylesheet" href="{% static 'port_inspector_app/header.css' %}">
+  <link rel="stylesheet" href="{% static 'port_inspector_app/contact_us_elements.css' %}">
+  <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono&display=swap" rel="stylesheet">
+</head>
+<body>
+    <header>
+        <div class="header-left">
+            <a href="/" style="align-items: center;"><img src="{% static 'Bug_icon.png' %}"
+                    id="header-bar-icon" /><span>BruchinAI</span></a>
+            <a href="/history"><span>History</span></a>
+            <a href="/upload"><span>Upload Photo</span></a>
+        </div>
+        <div class="header-right">
+            <a href="/profile"><span>Profile</span></a>
+            {% if not request.user.is_authenticated %}
+            <a href="/login"><span>Login</span></a>
+            {% endif %}
+            {% if request.user.is_authenticated %}
+            <a href="/logout"><span>Logout</span></a>
+            {% endif %}
+        </div>
+    </header>
+    <div class="container">
+        <h1>Contact Us</h1>
+        <form method="POST">
+            {% csrf_token %}
+            {% if form.non_field_errors %}
+                {{ form.non_field_errors }}
+            {% endif %}
+            <textarea name="message" placeholder="Message us here" required></textarea>
+            <button type="submit" class="button">Submit Message</button>
+        </form>
+        {% if status %}
+            <span class="submission-text">
+                Message received! We'll get back to you as soon as we can. Feel free to contact 
+                us again if you have any other questions or concerns.
+            </span>
+        {% endif %}
+        <footer>&copy; 2025 BruchinAI App</footer>
+    </div>
+</body>
+</html>
