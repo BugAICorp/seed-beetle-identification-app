@@ -48,7 +48,8 @@ class YOLOTrainer:
             epochs=40,
             batch_size=8,
             img_size=512,
-            device=None):
+            device=None
+    ):
         """
         Initializer for the YOLOTrainer class.
 
@@ -62,7 +63,7 @@ class YOLOTrainer:
         """
         self.dataset_yaml = dataset_yaml
         self.complex_training = complex_training
-        self.epochs = epochs or (120 if complex_training else 40)
+        self.epochs = epochs
         self.batch_size = batch_size
         self.img_size = img_size
 
@@ -82,33 +83,35 @@ class YOLOTrainer:
         Runs training loop for the specified number of epochs on the YOLOv8n model.
         Uses enhanced training configuration if complex_training=True
         """
-        print(f"Starting YOLOv8 training on {self.device} | Complex mode: {self.complex_training}")
+        print(f"Starting YOLOv8 training on {self.device}:")
 
         if self.complex_training:
-            # Enhanced configuration for small biological datasets
             self.model.train(
                 data=self.dataset_yaml,
                 epochs=self.epochs,
                 batch=self.batch_size,
                 imgsz=self.img_size,
                 device=str(self.device),
-                lr0=0.0015,           # lower LR for stable fine-tuning
-                lrf=0.01,
-                optimizer="AdamW",
-                dropout=0.05,
-                cos_lr=True,
-                multi_scale=False,
+                lr0=0.0015,            # lower LR for fine-tuning stability
+                lrf=0.01,              # slow LR decay
+                optimizer="AdamW",     # better generalization for small data
+                dropout=0.05,          # prevent overfitting
+                cos_lr=True,           # smooth cosine schedule
+                multi_scale=False,     # improves scale robustness
+                cls=2.0,               # increase classification loss to reduce false positives
+                box=1.2,               # improve bounding box precision
+                dfl=1.0,               # distribution focal loss scaling
                 hsv_h=0.015,
                 hsv_s=0.7,
                 hsv_v=0.4,
-                translate=0.1,
-                scale=0.6,
-                degrees=5,
+                translate=0.1,         # moderate translation
+                scale=0.6,             # slightly more zoom-in/out
+                degrees=5,             # small rotations
                 fliplr=0.5,
-                mosaic=1.0,
-                close_mosaic=10,
+                mosaic=0.5,
+                close_mosaic=10,       # close before convergence
                 erasing=0.3,
-                patience=50,
+                patience=50,           # early stop if no improvement
                 augment=True,
                 deterministic=True,
             )
