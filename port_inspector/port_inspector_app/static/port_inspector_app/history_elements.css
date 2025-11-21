@@ -146,13 +146,13 @@ footer {
 @media (max-width: 600px),
 (max-height: 500px) {
     table th {
-        font-size: 13px;
+        font-size: 9px;
     }
 
     table td {
-        padding-top: 5px;
-        padding-bottom: 5px;
-        font-size: 11px;
+        padding-top: 2px;
+        padding-bottom: 2px;
+        font-size: 7px;
     }
 }
 
@@ -181,6 +181,16 @@ footer {
 
 .status-not-started {
     color: gray !important;
+}
+
+/* Checkmark and X colors */
+.checkmark {
+    color: green;
+    font-weight: bold;
+}
+.x {
+    color: red;
+    font-weight: bold;
 }
 
 /* Spinner (optional) */
