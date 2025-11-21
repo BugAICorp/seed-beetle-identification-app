@@ -29,7 +29,7 @@ urlpatterns = [
     path("admin/run-task/", views.retrain_models_thread, name='retrain_models_thread'),
     path("admin/mass_upload_images", views.mass_upload_images, name='mass_upload_images'),
     path("admin/", admin.site.urls),
-    path("contact_us/", views.contact_us_view, name="contact us"),
+    path("contact_us/", views.contact_us_view, name="contact_us"),
     path("upload/", views.upload_image, name="upload"),
     path("history/", views.view_history, name="history"),
     path("login/", views.login_view, name="login"),
