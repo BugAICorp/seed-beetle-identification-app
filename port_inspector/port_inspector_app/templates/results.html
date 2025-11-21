@@ -30,6 +30,15 @@
     </div>
   </header>
 
+  {% if warning_message %}
+  <div id="popup-overlay" class="popup-overlay">
+    <div class="popup-box {% if 'Error' in warning_message %}error{% endif %}">
+      <span class="close-btn" onclick="closePopup()">&times;</span>
+      <p>{{ warning_message }}</p>
+    </div>
+  </div>
+  {% endif %}
+
   <div class="container">
     <div class="image-section">
       {% for image in image_urls %}
@@ -119,6 +128,14 @@
   <footer>
     &copy; 2025 Port Inspector App
   </footer>
+  <script>
+    function closePopup() {
+      const overlay = document.getElementById("popup-overlay");
+      if (overlay) {
+        overlay.style.display = "none";
+      }
+    }
+  </script>
 </body>
 
 </html>
