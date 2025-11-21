@@ -493,6 +493,21 @@ def results_view(request, hashed_ID):
 
     confirmed_species = upload.final_identification
 
+    # Determine result message type
+    warning_message = None
+
+    genus_certain = upload.genus_status
+    species_certain = upload.species_status
+    # Case 1: Genus Certain + Species Certain
+    if genus_certain and species_certain:
+        if genus_result[0].split()[0] != formatted_species_results[1]["species_name"].split()[0]:
+            warning_message = "ERROR: The predicted genus and species do not match. " \
+                "Please see identification resources to help identify the specimen."
+    # Case 2–4: Any combination with 'Uncertain'
+    elif not (genus_certain and species_certain):
+        warning_message = "WARNING: Model is uncertain about the identification. " \
+            "Please see identification resources to help identify the specimen."
+
     return render(
         request,
         "results.html",
@@ -511,6 +526,7 @@ def results_view(request, hashed_ID):
             "genus_uncert": upload.genus_uncertainty,
             "species_conf_label": upload.species_confidence_label,
             "genus_conf_label": upload.genus_confidence_label
+            "warning_message": warning_message
         },
     )
 

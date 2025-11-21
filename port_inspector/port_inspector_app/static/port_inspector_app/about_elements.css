@@ -58,6 +58,18 @@ p {
     height: auto;
     object-fit: cover;
 }
+.text-custom-indent {
+    font-size: 1.25rem;
+    font-family: 'Roboto mono', monospace;
+    background-color: whitesmoke;
+    color: black;
+    margin: 0;
+    padding: 0% 5% 2.5% 7.5%;
+    width: 100%;
+    box-sizing: border-box;
+    align-items: center;
+    text-indent: 2em;
+}
 .text-custom {
     font-size: 1.25rem;
     font-family: 'Roboto mono', monospace;
