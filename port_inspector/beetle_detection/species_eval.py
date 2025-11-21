@@ -3,19 +3,54 @@ import json, os, sys
 
 
 # -----Run once on server start up-----
-if "runserver" in sys.argv:
-    from PIL import Image
-    from .model_loader import ModelLoader
-    from .evaluation_method import EvaluationMethod
-    from .genus_evaluation_method import GenusEvaluationMethod
-    from .eval_spec_from_gen import EvalSpeciesByGenus
-    from .data_converter import DjangoTrainingDatabaseConverter
-    from .app_training_program import TrainingProgram
-    from django.conf import settings
+import io
+import redis
+import torch
+import gc
+from PIL import Image
+from .model_loader import ModelLoader
+from .evaluation_method import EvaluationMethod
+from .genus_evaluation_method import GenusEvaluationMethod
+from .data_converter import DjangoTrainingDatabaseConverter
+from .app_training_program import TrainingProgram
+from django.conf import settings
 
-    BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
-    import globals
+import globals
+
+dbr = DjangoTrainingDatabaseConverter("dataset")
+
+# Global redis connection
+redis_connection = None
+
+# --- Lazy global references ---
+species_evaluator = None
+genus_evaluator = None
+_models_loaded = False
+
+def get_redis_conn():
+    global redis_connection
+    if redis_connection is None:
+        redis_url = "redis://localhost:6379/0"
+        redis_connection = redis.from_url(
+            redis_url,
+            decode_responses=False
+        )
+    return redis_connection
+
+def load_models_once():
+    global species_evaluator, genus_evaluator, _models_loaded
+    if _models_loaded:
+        return species_evaluator, genus_evaluator
+    
+    # limit threading inside process
+    torch.set_num_threads(1)
+    try:
+        torch.set_num_interop_threads(1)
+    except Exception:
+        pass
+
 
     # read json to see size of outputs
     spec_dict_path = os.path.join(BASE_DIR, "model_data/spec_dict.json")
@@ -28,85 +63,87 @@ if "runserver" in sys.argv:
 
     # Load species models
     species_model_paths = {
-            "caud" : os.path.join(os.path.dirname(os.path.abspath(__file__)), "models/spec_caud.pth"), 
-            "dors" : os.path.join(os.path.dirname(os.path.abspath(__file__)), "models/spec_dors.pth"),
-            "fron" : os.path.join(os.path.dirname(os.path.abspath(__file__)), "models/spec_fron.pth"),
-            "late" : os.path.join(os.path.dirname(os.path.abspath(__file__)), "models/spec_late.pth")
-        }
-    species_ml = ModelLoader(
-        weights_file_paths=species_model_paths, num_classes=SPECIES_OUTPUTS, use_dropout=True)
-    species_models = species_ml.get_models()
+        "caud" : os.path.join(os.path.dirname(os.path.abspath(__file__)), "models/spec_caud.pth"), 
+        "dors" : os.path.join(os.path.dirname(os.path.abspath(__file__)), "models/spec_dors.pth"),
+        "fron" : os.path.join(os.path.dirname(os.path.abspath(__file__)), "models/spec_fron.pth"),
+        "late" : os.path.join(os.path.dirname(os.path.abspath(__file__)), "models/spec_late.pth")
+    }
 
     # Load genus models
     genus_model_paths = {
-            "caud" : os.path.join(os.path.dirname(os.path.abspath(__file__)), "models/gen_caud.pth"), 
-            "dors" : os.path.join(os.path.dirname(os.path.abspath(__file__)), "models/gen_dors.pth"),
-            "fron" : os.path.join(os.path.dirname(os.path.abspath(__file__)), "models/gen_fron.pth"),
-            "late" : os.path.join(os.path.dirname(os.path.abspath(__file__)), "models/gen_late.pth")
-        }
+        "caud" : os.path.join(os.path.dirname(os.path.abspath(__file__)), "models/gen_caud.pth"), 
+        "dors" : os.path.join(os.path.dirname(os.path.abspath(__file__)), "models/gen_dors.pth"),
+        "fron" : os.path.join(os.path.dirname(os.path.abspath(__file__)), "models/gen_fron.pth"),
+        "late" : os.path.join(os.path.dirname(os.path.abspath(__file__)), "models/gen_late.pth")
+    }
+
+    species_ml = ModelLoader(
+        weights_file_paths=species_model_paths, num_classes=SPECIES_OUTPUTS, use_dropout=True)
+
     genus_ml = ModelLoader(
         weights_file_paths=genus_model_paths, num_classes=GENUS_OUTPUTS, use_dropout=True)
+
+    species_models = species_ml.get_models()
     genus_models = genus_ml.get_models()
 
 
     # Initialize the EvaluationMethod object with the heaviest eval method set
     species_evaluator = EvaluationMethod(os.path.join(os.path.dirname(os.path.abspath(__file__)), "model_data/height.txt"), species_models, 1, 
-                                         os.path.join(os.path.dirname(os.path.abspath(__file__)), "model_data/spec_dict.json"), 
-                                         os.path.join(os.path.dirname(os.path.abspath(__file__)), "model_data/spec_accuracies.json"))
+                                            os.path.join(os.path.dirname(os.path.abspath(__file__)), "model_data/spec_dict.json"), 
+                                            os.path.join(os.path.dirname(os.path.abspath(__file__)), "model_data/spec_accuracies.json"))
     genus_evaluator = GenusEvaluationMethod(os.path.join(os.path.dirname(os.path.abspath(__file__)), "model_data/height.txt"), genus_models, 1, 
                                             os.path.join(os.path.dirname(os.path.abspath(__file__)), "model_data/gen_dict.json"), 
                                             os.path.join(os.path.dirname(os.path.abspath(__file__)), "model_data/gen_accuracies.json"))
-    hierarchy_evaluator = EvalSpeciesByGenus(genus_models,
-                                             os.path.join(os.path.dirname(os.path.abspath(__file__)), "model_data/gen_dict.json"))
 
     print("!!! ML Models loaded in evaluation mode !!!")
+    _models_loaded = True
+    return species_evaluator, genus_evaluator
 
-    dbr = DjangoTrainingDatabaseConverter("dataset")
-    dbr.conversion()
+def evaluate_images(upload_id):
+    species_eval, genus_eval = load_models_once()
 
+    redis_conn = get_redis_conn()
+    if not redis_conn:
+        return [], 0  # Redis not configured, skip
 
-def evaluate_hierarchy(late_path, dors_path, fron_path, caud_path):
-    # Load the provided images
-    LATE_IMG = Image.open(late_path) if late_path else None
-    DORS_IMG = Image.open(dors_path) if dors_path else None
-    FRON_IMG = Image.open(fron_path) if fron_path else None
-    CAUD_IMG = Image.open(caud_path) if caud_path else None
-
-    top_genus, top_species = hierarchy_evaluator.classify_images(
-        dors=DORS_IMG,
-        late=LATE_IMG,
-        fron=FRON_IMG,
-        caud=CAUD_IMG
-    )
-
-    top_5_species = []
-    for i in range(5):
-        if i < len(top_species):
-            top_5_species.append((top_species[i][0], top_species[i][1]*100.0))
+    # Fetch images from Redis
+    view_images = {}
+    for view in ["lateral", "dorsal", "frontal", "caudal"]:
+        img_bytes = redis_conn.get(f"upload:{upload_id}:{view}")
+        if img_bytes:
+            view_images[view] = Image.open(io.BytesIO(img_bytes)).convert("RGB")
         else:
-            top_5_species.append(("No other species", 0.0))
+            view_images[view] = None
 
-    top_genus = top_genus[0], top_genus[1]*100.0
+    LATE_IMG = view_images["lateral"]
+    DORS_IMG = view_images["dorsal"]
+    FRON_IMG = view_images["frontal"]
+    CAUD_IMG = view_images["caudal"]
 
-    return top_5_species, top_genus
+    try:
+        # Run the species evaluation method
+        top_species = species_eval.evaluate_image(
+            late=LATE_IMG, dors=DORS_IMG, fron=FRON_IMG, caud=CAUD_IMG
+        )
 
+        # Run the genus evaluation method
+        top_genus = genus_eval.evaluate_image(
+            late=LATE_IMG, dors=DORS_IMG, fron=FRON_IMG, caud=CAUD_IMG
+        )
+    finally:
+        # make sure to close PIL images
+        for im in (LATE_IMG, DORS_IMG, FRON_IMG, CAUD_IMG):
+            if hasattr(im, "close"):
+                try:
+                    im.close()
+                except Exception:
+                    pass
 
-def evaluate_images(late_path, dors_path, fron_path, caud_path):
-    # Load the provided images
-    LATE_IMG = Image.open(late_path) if late_path else None
-    DORS_IMG = Image.open(dors_path) if dors_path else None
-    FRON_IMG = Image.open(fron_path) if fron_path else None
-    CAUD_IMG = Image.open(caud_path) if caud_path else None    
-    
-    # Run the species evaluation method
-    top_species = species_evaluator.evaluate_image(
-        late=LATE_IMG, dors=DORS_IMG, fron=FRON_IMG, caud=CAUD_IMG
-    )
-
-    # Run the genus evaluation method
-    top_genus = genus_evaluator.evaluate_image(
-        late=LATE_IMG, dors=DORS_IMG, fron=FRON_IMG, caud=CAUD_IMG
-    )
+        # force gc and empty cache
+        del LATE_IMG, DORS_IMG, FRON_IMG, CAUD_IMG
+        gc.collect()
+        if torch.cuda.is_available():
+            torch.cuda.empty_cache()
 
     # Print classification results
     print(f"1. Predicted Species: {top_species[0][0]}, Confidence: {top_species[0][1]:.5f}\n")
@@ -126,25 +163,54 @@ def evaluate_images(late_path, dors_path, fron_path, caud_path):
     return top_5_species, top_genus
 
 
-def evaluate_mc_dropout(late_path, dors_path, fron_path, caud_path):
+def evaluate_mc_dropout(upload_id):
     """
     Script to evaluate via mc dropout the input images and process the results
     for the app to display
     """
-    # Load the provided images
-    LATE_IMG = Image.open(late_path) if late_path else None
-    DORS_IMG = Image.open(dors_path) if dors_path else None
-    FRON_IMG = Image.open(fron_path) if fron_path else None
-    CAUD_IMG = Image.open(caud_path) if caud_path else None    
-    
-    # Run the species evaluation method
-    top_species = species_evaluator.evaluate_heaviest_mc_dropout(
-        late=LATE_IMG, dors=DORS_IMG, fron=FRON_IMG, caud=CAUD_IMG
-    )
+    species_eval, genus_eval = load_models_once()
 
-    top_genus = genus_evaluator.evaluate_heaviest_mc_dropout(
-        late=LATE_IMG, dors=DORS_IMG, fron=FRON_IMG, caud=CAUD_IMG
-    )
+    redis_conn = get_redis_conn()
+    if not redis_conn:
+        return [], 0  # Redis not configured, skip
+
+    # Fetch images from Redis
+    view_images = {}
+    for view in ["lateral", "dorsal", "frontal", "caudal"]:
+        img_bytes = redis_conn.get(f"upload:{upload_id}:{view}")
+        if img_bytes:
+            view_images[view] = Image.open(io.BytesIO(img_bytes)).convert("RGB")
+        else:
+            view_images[view] = None
+
+    LATE_IMG = view_images["lateral"]
+    DORS_IMG = view_images["dorsal"]
+    FRON_IMG = view_images["frontal"]
+    CAUD_IMG = view_images["caudal"]
+
+    try:
+        # Run the species evaluation method
+        top_species = species_eval.evaluate_heaviest_mc_dropout(
+            late=LATE_IMG, dors=DORS_IMG, fron=FRON_IMG, caud=CAUD_IMG
+        )
+
+        top_genus = genus_eval.evaluate_heaviest_mc_dropout(
+            late=LATE_IMG, dors=DORS_IMG, fron=FRON_IMG, caud=CAUD_IMG
+        )
+    finally:
+        # make sure to close PIL images
+        for im in (LATE_IMG, DORS_IMG, FRON_IMG, CAUD_IMG):
+            if hasattr(im, "close"):
+                try:
+                    im.close()
+                except Exception:
+                    pass
+
+        # force gc and empty cache
+        del LATE_IMG, DORS_IMG, FRON_IMG, CAUD_IMG
+        gc.collect()
+        if torch.cuda.is_available():
+            torch.cuda.empty_cache()
 
     top_genus_formatted = top_genus["genus"], top_genus["mean_score"]*100.0
     top_5_species = []

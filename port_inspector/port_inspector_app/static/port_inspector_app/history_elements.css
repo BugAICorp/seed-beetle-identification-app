@@ -7,6 +7,7 @@ body {
     flex-direction: column;
     align-items: center;
 }
+
 .container {
     margin-top: 20px;
     background-color: white;
@@ -17,42 +18,52 @@ body {
     max-width: 600px;
     text-align: center;
 }
+
 h1 {
     font-size: 18px;
     color: #555;
     margin-bottom: 20px;
 }
+
 table {
     width: 100%;
     border-collapse: collapse;
 }
-table th, table td {
+
+table th,
+table td {
     border: 1px solid #ddd;
     padding: 8px;
     text-align: center;
 }
+
 table th {
     background-color: #efefef;
     font-size: 14px;
 }
+
 table tr:nth-child(even) {
     background-color: #f9f9f9;
 }
+
 table tr:hover {
     background-color: #f1f1f1;
 }
+
 table td {
     padding-top: 10px;
     padding-bottom: 10px;
 }
 
 .table-link {
-    color:#0000ee;
+    color: #0000ee;
     text-decoration: none;
     font-weight: 500;
     transition: color 0.2s ease, text-decoration 0.2s ease;
+    padding: 2px 4px;
+    border-radius: 4px;
 }
-    
+
 .table-link:hover {
     color: #007bff;
     text-decoration: underline;
@@ -64,65 +75,65 @@ table td {
 }
 
 .tooltip-container {
-position: relative;
-display: inline-block;
-cursor: pointer;
-font-family: sans-serif;
-vertical-align: middle;
+    position: relative;
+    display: inline-block;
+    cursor: pointer;
+    font-family: sans-serif;
+    vertical-align: middle;
 }
 
 .tooltip-icon {
-width: 12px;
-height: 12px;
-border: 1.5px solid rgb(200, 200, 200);
-color: rgb(200, 200, 200);
-border-radius: 50%;
-display: flex;
-align-items: center;
-justify-content: center;
-font-size: 10px;
-font-weight: bold;
-line-height: 1;
-user-select: none;
+    width: 12px;
+    height: 12px;
+    border: 1.5px solid rgb(200, 200, 200);
+    color: rgb(200, 200, 200);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    font-weight: bold;
+    line-height: 1;
+    user-select: none;
 }
 
 .tooltip-text {
-visibility: hidden;
-opacity: 0;
-width: max-content;
-max-width: 240px;
-background-color: #333;
-color: #fff;
-text-align: center;
-border-radius: 5px;
-padding: 6px 10px;
-position: absolute;
-z-index: 1;
-bottom: 125%;
-left: 50%;
-transform: translateX(-50%);
-transition: opacity 0.3s ease;
-font-size: 13px;
-white-space: normal;
-word-wrap: break-word;
-font-weight: normal;
-box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    visibility: hidden;
+    opacity: 0;
+    width: max-content;
+    max-width: 240px;
+    background-color: #333;
+    color: #fff;
+    text-align: center;
+    border-radius: 5px;
+    padding: 6px 10px;
+    position: absolute;
+    z-index: 1;
+    bottom: 125%;
+    left: 50%;
+    transform: translateX(-50%);
+    transition: opacity 0.3s ease;
+    font-size: 13px;
+    white-space: normal;
+    word-wrap: break-word;
+    font-weight: normal;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
 }
 
 .tooltip-container:hover .tooltip-text {
-visibility: visible;
-opacity: 1;
+    visibility: visible;
+    opacity: 1;
 }
 
 .tooltip-text::after {
-content: '';
-position: absolute;
-top: 100%;
-left: 50%;
-transform: translateX(-50%);
-border-width: 5px;
-border-style: solid;
-border-color: #333 transparent transparent transparent;
+    content: '';
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    border-width: 5px;
+    border-style: solid;
+    border-color: #333 transparent transparent transparent;
 }
 
 footer {
@@ -132,13 +143,74 @@ footer {
     margin-bottom: 10px;
 }
 
-@media (max-width: 600px), (max-height: 500px) {
+@media (max-width: 600px),
+(max-height: 500px) {
     table th {
-        font-size: 13px;
+        font-size: 9px;
     }
+
     table td {
-        padding-top: 5px;
-        padding-bottom: 5px;
-        font-size: 11px;
+        padding-top: 2px;
+        padding-bottom: 2px;
+        font-size: 7px;
+    }
+}
+
+.status-text {
+    font-weight: bold;
+    display: inline-flex;
+    align-items: center;
+}
+
+/* Status colors */
+.status-success {
+    color: green !important;
+}
+
+.status-failure {
+    color: red !important;
+}
+
+.status-pending {
+    color: orange !important;
+}
+
+.status-started {
+    color: blue !important;
+}
+
+.status-not-started {
+    color: gray !important;
+}
+
+/* Checkmark and X colors */
+.checkmark {
+    color: green;
+    font-weight: bold;
+}
+.x {
+    color: red;
+    font-weight: bold;
+}
+
+/* Spinner (optional) */
+.spinner {
+    width: 12px;
+    height: 12px;
+    border: 2px solid currentColor;
+    border-top: 2px solid transparent;
+    border-radius: 50%;
+    display: inline-block;
+    animation: spin 1s linear infinite;
+    margin-left: 6px;
+}
+
+@keyframes spin {
+    0% {
+        transform: rotate(0deg);
+    }
+
+    100% {
+        transform: rotate(360deg);
     }
 }

@@ -3,16 +3,19 @@
 <link rel="stylesheet" href="{% static 'port_inspector_app/index_elements.css' %}">
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Home Page</title>
   <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono&display=swap" rel="stylesheet">
 </head>
+
 <body>
   <header>
     <div class="header-left">
-      <a href="/" style="align-items: center;"><img src="{% static 'Bug_icon.png' %}" id="header-bar-icon"/><span>BruchinAI</span></a>
+      <a href="/" style="align-items: center;"><img src="{% static 'Bug_icon.png' %}"
+          id="header-bar-icon" /><span>BruchinAI</span></a>
       <a href="/history"><span>History</span></a>
       <a href="/upload"><span>Upload Photo</span></a>
     </div>
@@ -28,20 +31,24 @@
   </header>
 
   <div>
-      <img src="{% static 'banner.png' %}" id="title-banner"/>
-      <img src="{% static 'use_product.png' %}" id="use-case-banner" usemap="#use-case-map"/>
-      <map name="use-case-map">
-        <area shape="circle" coords="1812,512,200" href="/upload" alt="Link 1">
-      </map>
-      <div id="mission-div">
+    <img src="{% static 'banner.png' %}" id="title-banner" />
+    <img src="{% static 'use_product.png' %}" id="use-case-banner" usemap="#use-case-map" />
+    <map name="use-case-map">
+      <area shape="circle" coords="1812,512,200" href="/upload" alt="Link 1">
+    </map>
+    <div id="mission-div">
+      <div id="our-text-div">
         <p id="our-text">
-            This program is designed to help identify different seed beetle species. Our AI assists
-            with classifying the pictures uploaded and is trained purely on a set of specified seed
-            beetle species. Our model gets more accurate with each specimen entered, helping us refine
-            and improve our accuracy and open doors to classifying more species.
+          This program is designed to help identify different seed beetle species that are <a class="our-href"
+            href="{% url 'about' %}">commonly intercepted</a>
+          with agricultural goods. The AI assists
+          with classifying the uploaded pictures and is trained exclusively on a set of specific seed
+          beetle species. Our model's accuracy increases with each specimen uploaded, helping us refine
+          and improve our identifications.
         </p>
-        <img src="{% static 'little_guy.png' %}" id="mission-img"/>
       </div>
+      <img src="{% static 'little_guy.png' %}" id="mission-img" />
+    </div>
   </div>
   <div>
     <h1>
@@ -49,9 +56,10 @@
     </h1>
     <p id="additional-resources-p">
       For resources to assist with identification by hand, you can visit this curated page.
+      (Page release pending. The link will be added during full website release)
     </p>
     <p id="additional-resources-p">
-      To learn more about this website, check out our 
+      To learn more about this website, check out our
       <a href="{% url 'about' %}">about page</a>
     </p>
   </div>
@@ -61,7 +69,8 @@
   </script>
 
   <footer>
-    &copy; 2025 Port Inspector App
+    &copy; 2025 BruchinAI App  |  <a href="{% url 'contact_us' %}">Contact Us</a>
   </footer>
 </body>
+
 </html>

@@ -305,7 +305,7 @@ class EvaluationMethod:
         for m in self.trained_models[view].modules():
             if isinstance(m, torch.nn.Dropout) or m.__class__.__name__.startswith('Dropout'):
                 m.train()
-    
+
     def evaluate_heaviest_mc_dropout(self, late=None, dors=None, fron=None, caud=None,
                                             n_samples=20, uncertainty_threshold=0.8):
         """
@@ -377,13 +377,13 @@ class EvaluationMethod:
 
             # Threshold check
             if entropy < uncertainty_threshold:
-                result["status"] = "accepted"
+                result["status"] = True
                 return result
 
             self.trained_models[view].eval()  # reset to eval after MC dropout passes
 
         # Fallback: reject if all models uncertain
-        best_result["status"] = "rejected"
+        best_result["status"] = False
         return best_result
 
     def stacked_eval(self):

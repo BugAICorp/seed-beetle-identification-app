@@ -1,10 +1,11 @@
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.conf import settings
-from beetle_detection import species_eval
+from .tasks import run_evaluation_task, run_mc_dropout_evaluation_task, retrain_model_task, refresh_database_task
 from port_inspector_app.models import Image, SpecimenUpload, User, KnownSpecies, Genus, ValidClasses
-from .forms import UserRegisterForm, SpecimenUploadForm, ConfirmIdForm, ResetPasswordForm, ResetRequestForm
+from .forms import UserRegisterForm, SpecimenUploadForm, ConfirmIdForm, ResetPasswordForm, ResetRequestForm, ContactUsForm
 from django.core import signing
 from django.core.cache import cache
+from django.core.files.base import ContentFile
 from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
@@ -12,18 +13,32 @@ from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib.auth.forms import AuthenticationForm
 from django.contrib.sites.shortcuts import get_current_site
 from django.core.mail import EmailMessage
+from django.core.exceptions import ValidationError
 from django.template.loader import render_to_string
 from django.utils.encoding import force_bytes, force_str
 from django.utils.http import urlsafe_base64_decode, urlsafe_base64_encode
 from django.http import HttpResponse, JsonResponse
 from .tokens import account_activation_token, reset_account_token
+from port_inspector.celery import app
+import redis
+import io
 import os
-import threading
+from PIL import Image as PILImage
 import time
 
+# Setup global redis connection
+redis_connection = None
 
-# Lock for training to prevent multiple programs from running simultaneously
-lock = threading.Lock()
+
+def get_redis_conn():
+    global redis_connection
+    if redis_connection is None:
+        redis_url = "redis://localhost:6379/0"
+        redis_connection = redis.from_url(
+            redis_url,
+            decode_responses=False
+        )
+    return redis_connection
 
 
 def verify_email(request, user_id):
@@ -183,14 +198,24 @@ def logout_view(request):
     return redirect("/upload/")
 
 
+@login_required(login_url='/login/')
 def upload_image(request):
+    upload_id = request.GET.get("upload_id")
+    failed_param = request.GET.get("failed_views", "")
+    failed_views = failed_param.split(",") if failed_param else []
+
+    image_urls = {
+        "frontal": None,
+        "dorsal": None,
+        "caudal": None,
+        "lateral": None,
+    }
+
+    # Handle POST (user submitting new upload)
     if request.method == "POST":
         specimen_form = SpecimenUploadForm(request.POST, request.FILES)
 
-        if not request.user.is_authenticated:
-            return redirect("/login/")
-
-        elif specimen_form.is_valid():
+        if specimen_form.is_valid():
             specimen = specimen_form.save(user=request.user)
             hashed_ID = signing.dumps(specimen.id, salt=settings.SALT_KEY)
             return redirect("results", hashed_ID=hashed_ID)  # go to a UNIQUE URL for the results
@@ -198,30 +223,128 @@ def upload_image(request):
     else:
         specimen_form = SpecimenUploadForm()
 
-    return render(request, 'upload_photo.html', {'form': specimen_form})
+    # Handle GET (display existing images for re-upload)
+    if upload_id:
+        try:
+            upload = SpecimenUpload.objects.get(id=upload_id)
+        except SpecimenUpload.DoesNotExist:
+            upload = None
+
+        if upload:
+            image_urls = {
+                "frontal": upload.frontal_image.image.url if upload.frontal_image else None,
+                "dorsal": upload.dorsal_image.image.url if upload.dorsal_image else None,
+                "caudal": upload.frontal_image.image.url if upload.frontal_image else None,
+                "lateral": upload.caudal_image.image.url if upload.caudal_image else None,
+            }
+
+    return render(
+        request,
+        'upload_photo.html',
+        {
+            'form': specimen_form,
+            "image_urls": image_urls,
+            "failed_views": failed_views
+        }
+    )
 
 
+@login_required(login_url='/login/')
 def view_history(request):
-    if request.user.is_authenticated:
-        # create empty set of type SpecimenUpload
-        specimen = SpecimenUpload.objects.filter(user=request.user).order_by('-upload_date')
-        uploads = []
-        for upload in specimen:
-            hashed_ID = signing.dumps(upload.id, salt=settings.SALT_KEY)
-            uploads.append((upload, hashed_ID))
-        return render(request, 'history.html', {'uploads': uploads, 'max_uploads': settings.USER_MAX_UPLOADS})
-    else:
-        return redirect("/login/")
+    # create empty set of type SpecimenUpload
+    specimen = SpecimenUpload.objects.filter(user=request.user).order_by('-upload_date')
+    uploads = []
+    for upload in specimen:
+        hashed_ID = signing.dumps(upload.id, salt=settings.SALT_KEY)
+
+        uploads.append((upload, hashed_ID))
+
+    return render(
+        request,
+        'history.html',
+        {
+            'uploads': uploads,
+            'max_uploads': settings.USER_MAX_UPLOADS,
+        }
+    )
+
+
+def delete_upload_from_redis(upload_id: int):
+    """ Deletes all cached images for a given SpecimenUpload from Redis. """
+    redis_conn = get_redis_conn()
+    if not redis_conn:
+        return
+
+    for view in ["lateral", "dorsal", "frontal", "caudal"]:
+        key = f"upload:{upload_id}:{view}"
+        try:
+            redis_conn.delete(key)
+        except redis.RedisError as e:
+            print(f"Failed to delete {key} from Redis: {e}")
+
+
+def store_upload_in_redis(upload: SpecimenUpload):
+    """ Stores all images for a given SpecimenUpload in Redis. """
+    redis_conn = get_redis_conn()
+    if not redis_conn:
+        return
+
+    for view in ["lateral", "dorsal", "frontal", "caudal"]:
+        img_field = getattr(upload, f"{view}_image")
+        if img_field and img_field.image:
+            try:
+                img = PILImage.open(img_field.image.path).convert("RGB")
+                buf = io.BytesIO()
+                img.save(buf, format="JPEG")
+                img_bytes = buf.getvalue()
+
+                # Key format: "upload:<id>:<view>"
+                key = f"upload:{upload.id}:{view}"
+                redis_conn.set(key, img_bytes)
+            except (redis.RedisError, IOError) as e:
+                print(f"[Redis/Image Error] Failed to store {key}: {e}")
+            finally:
+                if 'img' in locals():
+                    img.close()
+
+
+def save_redis_images_to_disk(upload):
+    """
+    Save any cropped images in Redis back to the filesystem
+    for the given SpecimenUpload.
+    """
+    redis_conn = get_redis_conn()
+    if not redis_conn:
+        return
+
+    for view in ["lateral", "dorsal", "frontal", "caudal"]:
+        key = f"upload:{upload.id}:{view}"
+        try:
+            img_bytes = redis_conn.get(key)
+            if img_bytes:
+                image_obj = getattr(upload, f"{view}_image")
+                if image_obj and hasattr(image_obj, "image"):
+                    # Overwrite the existing file
+                    image_obj.image.save(
+                        os.path.basename(image_obj.image.name),
+                        ContentFile(img_bytes),
+                        save=True
+                    )
+        except (redis.RedisError, IOError) as e:
+            print(f"[Redis/Image Error] Failed to save {key} to disk: {e}")
 
 
 def results_view(request, hashed_ID):
+    # Try to get the upload
     try:
         upload_id = signing.loads(hashed_ID, salt=settings.SALT_KEY)
         upload = SpecimenUpload.objects.get(id=upload_id)
     except (SpecimenUpload.DoesNotExist, signing.BadSignature):
         # Invalid id/Upload does not exist
-        upload_id, upload = None, None
+        messages.error(request, "The requested specimen does not exist or the link is invalid.")
+        return redirect("upload")
 
+    # Get user roles
     try:
         is_usda = request.user.is_usda
         is_special_status = request.user.is_special_status
@@ -230,45 +353,91 @@ def results_view(request, hashed_ID):
         is_special_status = False
 
     # If SpecimenUpload has not been evaluated yet, evaluate and store in db
-    s_uncert = None
-    s_stat = None
-    g_uncert = None
-    g_stat = None
+    # Handle evaluation
+    # Check if upload already has results
+    if upload.task_status == "PENDING":
 
-    if upload:
-        if upload.genus[0] is None and upload.species[0][0] is None:
-            lat_image = upload.lateral_image.image if upload.lateral_image else None
-            dor_image = upload.dorsal_image.image if upload.dorsal_image else None
-            fron_image = upload.frontal_image.image if upload.frontal_image else None
-            caud_image = upload.caudal_image.image if upload.caudal_image else None
+        try:
+            store_upload_in_redis(upload)
+        except Exception as e:
+            print(f"[Redis Warning] Failed to store upload in Redis: {e}")
 
-            if is_usda or is_special_status:
-                s, g, s_uncert, s_stat, g_uncert, g_stat = species_eval.evaluate_mc_dropout(lat_image, dor_image, fron_image, caud_image)
+        if is_usda or is_special_status:
+            task = run_mc_dropout_evaluation_task.delay(upload.id)
 
-                upload.species = s
-                upload.genus = g
-                upload.save()
+        else:
+            task = run_evaluation_task.delay(upload.id)
 
-            else:
-                s, g = species_eval.evaluate_images(lat_image, dor_image, fron_image, caud_image)
-                s_uncert = 0.0
-                g_uncert = 0.0
-                s_stat = True
-                g_stat = True
+        # store the Celery task ID with the upload
+        print("DEBUG — Task Object:", task)
+        print("DEBUG — Task ID:", getattr(task, "id", None))
+        upload.task_id = task.id
+        upload.task_status = "STARTED"
+        upload.save()
 
-                upload.species = s
-                upload.genus = g
-                upload.save()
+        return render(
+            request,
+            "loading.html",
+            {
+                "hashed_ID": hashed_ID,
+                "upload_id": upload.id
+            }
+        )
 
-        # Get ML results from the db
-        species_results = upload.species
-        genus_result = upload.genus
-    else:
-        species_results = [(None, None)]
-        genus_result = (None, None)
+    # Handle running job
+    if upload.task_status == "STARTED" or upload.task_status == "PROCESSING":
+        return render(
+            request,
+            "loading.html",
+            {
+                "hashed_ID": hashed_ID,
+                "upload_id": upload.id
+            }
+        )
+
+    if upload.task_status == "FAILED_CROP":
+        if not getattr(upload, "redis_cleaned", False):
+            try:
+                delete_upload_from_redis(upload.id)
+            except Exception as e:
+                print(f"[Redis Warning] Failed to delete upload from Redis: {e}")
+            upload.redis_cleaned = True
+            upload.save(update_fields=["redis_cleaned"])
+
+        failed = getattr(upload, "failed_views", [])
+        failed_param = ",".join(failed)
+        return redirect(f"/upload/?upload_id={upload.id}&failed_views={failed_param}")
+
+    # If task failed
+    if upload.task_status == "FAILED":
+        if not getattr(upload, "redis_cleaned", False):
+            try:
+                delete_upload_from_redis(upload.id)
+            except Exception as e:
+                print(f"[Redis Warning] Failed to delete upload from Redis: {e}")
+            upload.redis_cleaned = True
+            upload.save(update_fields=["redis_cleaned"])
+        messages.error(request, "Evaluation failed. Please try again later.")
+        return redirect("upload")
+
+    # Status == COMPLETE
+    if not getattr(upload, "redis_cleaned", False):
+        try:
+            # Save cropped images to disk first
+            save_redis_images_to_disk(upload)
+            # Then delete from Redis
+            delete_upload_from_redis(upload.id)
+        except Exception as e:
+            print(f"[Redis Warning] Failed to delete upload from Redis: {e}")
+        upload.redis_cleaned = True
+        upload.save(update_fields=["redis_cleaned"])
+
+    # Extract results from upload
+    species_results = upload.species
+    genus_result = upload.genus
 
     # Fetch species URLs from the database
-    species_names = [species[0] for species in species_results]
+    species_names = [species[0] for species in species_results if species and species[0]]
     species_data = KnownSpecies.objects.filter(species_name__in=species_names).values_list("species_name", "resource_link")
     species_dict = dict(species_data)
 
@@ -285,15 +454,19 @@ def results_view(request, hashed_ID):
             "resource_link": species_dict.get(species[0], "#"),  # Default to "#" if not found
         }
         for species in species_results
+        if species and species[0]
     ]
 
     # Species are already sorted from evaluation method
     # Include the genus at the top
-    formatted_species_results.insert(0, {
-        "species_name": genus_name,
-        "confidence_level": genus_result[1],
-        "resource_link": genus_dict.get(genus_name, "#"),
-    })
+    formatted_species_results.insert(
+        0,
+        {
+            "species_name": genus_name,
+            "confidence_level": genus_result[1],
+            "resource_link": genus_dict.get(genus_name, "#"),
+        },
+    )
 
     # Determine the most likely species (excluding genus)
     likely_species = formatted_species_results[1]["species_name"] if len(formatted_species_results) > 1 else "Unknown"
@@ -318,16 +491,22 @@ def results_view(request, hashed_ID):
     else:
         confirm_form = ConfirmIdForm(choices=confirm_choices)
 
-    confirmed_species = upload.final_identification if upload else None
+    confirmed_species = upload.final_identification
 
-    # Process genus and species stats to determine success
-    s_acceptance = False
-    if s_stat == "accepted":
-        s_acceptance = True
+    # Determine result message type
+    warning_message = None
 
-    g_acceptance = False
-    if g_stat == "accepted":
-        g_acceptance = True
+    genus_certain = upload.genus_status
+    species_certain = upload.species_status
+    # Case 1: Genus Certain + Species Certain
+    if genus_certain and species_certain:
+        if genus_result[0].split()[0] != formatted_species_results[1]["species_name"].split()[0]:
+            warning_message = "ERROR: The predicted genus and species do not match. " \
+                "Please see identification resources to help identify the specimen."
+    # Case 2–4: Any combination with 'Uncertain'
+    elif not (genus_certain and species_certain):
+        warning_message = "WARNING: Model is uncertain about the identification. " \
+            "Please see identification resources to help identify the specimen."
 
     return render(
         request,
@@ -341,19 +520,31 @@ def results_view(request, hashed_ID):
             "confirm_form": confirm_form,
             "is_usda": is_usda,
             "is_special_status": is_special_status,
-            "species_stat": s_acceptance,
-            "genus_stat": g_acceptance,
-            "species_uncert": s_uncert,
-            "genus_uncert": g_uncert
+            "species_stat": upload.species_status,
+            "genus_stat": upload.genus_status,
+            "species_uncert": upload.species_uncertainty,
+            "genus_uncert": upload.genus_uncertainty,
+            "warning_message": warning_message
         },
     )
+
+
+def upload_status(request, upload_id):
+    """
+    Returns JSON indicating whether the Celery task is complete.
+    """
+    try:
+        upload = SpecimenUpload.objects.get(id=upload_id)
+        return JsonResponse({"task_status": upload.task_status})
+    except SpecimenUpload.DoesNotExist:
+        return JsonResponse({"task_status": "FAILED"})
 
 
 def notify_unknown(request):
     if request.method == "POST":
         user = request.user
         if user.is_usda:
-            send_to_email = "usdportinspector@gmail.com"
+            send_to_email = "bruchinaiapp@gmail.com"
             results_page_url = request.META.get("HTTP_REFERER", "/history/")
             subject = "Port Inspector App - Unknown Species Uploaded"
             message = f"""
@@ -388,32 +579,35 @@ def mass_upload_images(request):
         images = request.FILES.getlist('images')
         base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '../../'))
         upload_dir = os.path.join(base_dir, "dataset")
+        os.makedirs(upload_dir, exist_ok=True)
 
         for image in images:
             with open(os.path.join(upload_dir, image.name), 'wb+') as destination:
                 for chunk in image.chunks():
                     destination.write(chunk)
 
-        species_eval.refresh_database()
+        # Enqueue the database refresh as a background task
+        refresh_database_task.delay()
 
         return redirect("/admin/")
 
 
 @staff_member_required
 def retrain_models_thread(request):
-    # Retrains if the lock is available. Takes the lock until completed preventing duplicates from running
-    def task():
-        if lock.acquire(blocking=False):
-            try:
-                cache.set("retrain_status", "running")
-                species_eval.retrain_models()
-                cache.set("retrain_status", "complete", timeout=30)
-            finally:
-                lock.release()
+    """
+    Triggers model retraining as a Celery task from the admin interface.
+    Prevents duplicate tasks by checking a cache flag.
+    """
+    status = cache.get("retrain_status")
 
-    # Only starts a thread if the lock is available
-    if not lock.locked():
-        threading.Thread(target=task).start()
+    if status == "running":
+        return redirect("/admin/")
+
+    # Mark retraining as running
+    cache.set("retrain_status", "running")
+
+    # Enqueue the Celery task
+    retrain_model_task.delay()
 
     return redirect("/admin/")
 
@@ -431,3 +625,27 @@ def home_view(request):
 def about_view(request):
     valid_classes = ValidClasses.objects.all()
     return render(request, 'about.html', {'valid_classes': valid_classes})
+
+
+@login_required(login_url='/login/')
+def contact_us_view(request):
+    if request.method == "POST":
+        form = ContactUsForm(request.POST)
+        if form.is_valid():
+            message_text = form.cleaned_data['message']
+            user_email = request.user.email
+            send_to_email = "bruchinaiapp@gmail.com"
+            subject = f"{user_email} contacted us"
+            message = message_text
+
+            email = EmailMessage(subject, message, to=[send_to_email])
+            email.content_subtype = "html"
+            email.send()
+
+            return render(request, "contact_us.html", {"form": form, "status": True})
+
+        return render(request, "contact_us.html", {"form": form, "status": False})
+
+    else:
+        form = ContactUsForm()
+        return render(request, "contact_us.html", {"form": form, "status": False})

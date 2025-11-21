@@ -136,8 +136,16 @@ class SpecimenUploadAdmin(admin.ModelAdmin):
     list_display = ('id', 'formatted_genus', 'formatted_species', 'final_identification', 'display_all_images')
     list_filter = ('final_identification', 'is_validated', 'user__is_usda', 'user__is_special_status')
     readonly_fields = ['display_all_images', 'formatted_genus', 'formatted_species']
-    fields = ('display_all_images', 'formatted_genus', 'formatted_species', 'final_identification', 'is_validated')
+    fields = ('display_all_images', 'formatted_genus', 'formatted_species', 'final_identification', 'is_validated', 'in_training')
     actions = [add_to_trainingdb]
+
+    def get_queryset(self, request):
+        """
+        Limit displayed SpecimenUpload entries in the admin list view
+        to only those with completed evaluations.
+        """
+        qs = super().get_queryset(request)
+        return qs.filter(task_status="COMPLETE")
 
     def formatted_genus(self, obj):
         """

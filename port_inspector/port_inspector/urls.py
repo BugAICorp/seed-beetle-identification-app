@@ -29,6 +29,7 @@ urlpatterns = [
     path("admin/run-task/", views.retrain_models_thread, name='retrain_models_thread'),
     path("admin/mass_upload_images", views.mass_upload_images, name='mass_upload_images'),
     path("admin/", admin.site.urls),
+    path("contact_us/", views.contact_us_view, name="contact_us"),
     path("upload/", views.upload_image, name="upload"),
     path("history/", views.view_history, name="history"),
     path("login/", views.login_view, name="login"),
@@ -44,7 +45,8 @@ urlpatterns = [
         views.verify_email_confirm,
         name="verify-email-confirm",
     ),
-    path("results/<str:hashed_ID>", views.results_view, name="results"), path("notify_unknown/", views.notify_unknown, name="notify_unknown"),
+    path("results/<path:hashed_ID>/", views.results_view, name="results"), path("notify_unknown/", views.notify_unknown, name="notify_unknown"),
+    path("upload_status/<int:upload_id>/", views.upload_status, name="upload_status"),
     path("profile/", views.profile_view, name="profile"),
     path("about/", views.about_view, name="about"),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

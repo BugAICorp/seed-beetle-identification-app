@@ -8,7 +8,6 @@ from django.forms import inlineformset_factory
 from django.forms.widgets import ClearableFileInput
 from PIL import Image
 from PIL import UnidentifiedImageError
-from beetle_detection import beetle_cropper
 import io
 
 User = get_user_model()
@@ -127,8 +126,6 @@ class SpecimenUploadForm(forms.ModelForm):
 
         # Check each of the image forms fit within our filesize limits
         field_names = ["frontal_upload", "dorsal_upload", "caudal_upload", "lateral_upload"]
-        # Create beetle cropper object
-        cropper = beetle_cropper.BeetleCropper(threshold=0.8)
 
         for name in field_names:
             field = cleaned_data.get(name)
@@ -140,26 +137,6 @@ class SpecimenUploadForm(forms.ModelForm):
                 self.add_error(name, f"File size must be less than {settings.MAX_UPLOAD_SIZE // (1024 * 1024)}MB.")
                 continue
 
-            # Try to crop beetle
-            try:
-                img = Image.open(field).convert("RGB")
-                cropped_img = cropper.crop_beetle(img)
-
-                if cropped_img is None:
-                    self.add_error(name, "No beetle detected in this image. Please upload a clearer beetle photo.")
-                    continue
-
-                # Replace upload with cropped image in memory
-                img_bytes = io.BytesIO()
-                cropped_img.save(img_bytes, format="JPEG")
-                img_bytes.seek(0)
-                cleaned_data[name] = ContentFile(img_bytes.read(), name=field.name)
-
-            except UnidentifiedImageError:
-                self.add_error(name, "Uploaded file is not a valid image.")
-            except Exception as e:
-                self.add_error(name, f"Error processing image: {e}")
-
         return cleaned_data
 
     # Override save function so that we save the image data as 'Image' objects in our table
@@ -169,6 +146,9 @@ class SpecimenUploadForm(forms.ModelForm):
 
         if user:
             specimen.user = user
+
+            # Set default task status on creation
+            specimen.task_status = "PENDING"
 
             # Enforce max upload limit
             uploads = models.SpecimenUpload.objects.filter(user=user).order_by("upload_date")
@@ -188,7 +168,6 @@ class SpecimenUploadForm(forms.ModelForm):
             def generate_image_object(data):
                 if data:
                     return models.Image.objects.create(specimen_upload=specimen, image=data)
-
                 return None
 
             specimen.frontal_image = generate_image_object(self.cleaned_data.get("frontal_upload"))
@@ -212,3 +191,7 @@ class ConfirmIdForm(forms.ModelForm):
         choices = kwargs.pop('choices', [])
         super().__init__(*args, **kwargs)
         self.fields['choice'].choices = choices
+
+
+class ContactUsForm(forms.Form):
+    message = forms.CharField(label='Message')

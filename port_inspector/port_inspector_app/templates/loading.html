@@ -1,0 +1,87 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Evaluating...</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'port_inspector_app/header.css' %}">
+    <link rel="stylesheet" href="{% static 'port_inspector_app/loading.css' %}">
+</head>
+
+<body>
+    <header>
+        <div class="header-left">
+            <a href="/" style="align-items: center;">
+                <img src="{% static 'Bug_icon.png' %}" id="header-bar-icon" />
+                <span>BruchinAI</span>
+            </a>
+            <a href="/history"><span>History</span></a>
+            <a href="/upload"><span>Upload Photo</span></a>
+        </div>
+        <div class="header-right">
+            <a href="/profile"><span>Profile</span></a>
+            {% if not request.user.is_authenticated %}
+            <a href="/login"><span>Login</span></a>
+            {% endif %}
+            {% if request.user.is_authenticated %}
+            <a href="/logout"><span>Logout</span></a>
+            {% endif %}
+        </div>
+    </header>
+
+    <div class="container">
+        <div class="spinner"></div>
+        <p>Evaluating your images... Please wait while BruchinAI processes your upload.</p>
+    </div>
+
+    <footer>
+        &copy; 2025 BruchinAI App  |  <a href="{% url 'contact_us' %}">Contact Us</a>
+    </footer>
+
+    <!-- Auto-refresh while waiting for task completion -->
+    <script>
+        const uploadId = "{{ upload_id }}";
+        const hashedID = "{{ hashed_ID|default:'' }}";
+
+        let interval = 4000;
+        const maxInterval = 15000;
+
+        if (!uploadId) {
+            console.error("Missing upload_id!");
+        }
+
+        async function checkStatus() {
+            try {
+                const res = await fetch(`/upload_status/${uploadId}/`);
+                const data = await res.json();
+
+                const status = (data.task_status || '').toUpperCase();
+
+                if (status === "COMPLETE" && hashedID) {
+                    window.location.href = `/results/${hashedID}/`;
+                    return;
+                }
+
+                if (status === "FAILED") {
+                    document.querySelector('.container p').textContent =
+                        "Processing failed. Please check your history.";
+                    return;
+                }
+
+                interval = Math.min(interval + 2000, maxInterval);
+                setTimeout(checkStatus, interval);
+            }
+            catch (err) {
+                console.error("Status check failed:", err);
+                setTimeout(checkStatus, maxInterval);
+            }
+        }
+
+        window.onload = checkStatus;
+    </script>
+</body>
+
+</html>
