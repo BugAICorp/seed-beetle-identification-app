@@ -191,3 +191,7 @@ class ConfirmIdForm(forms.ModelForm):
         choices = kwargs.pop('choices', [])
         super().__init__(*args, **kwargs)
         self.fields['choice'].choices = choices
+
+
+class ContactUsForm(forms.Form):
+    message = forms.CharField(label='Message')
