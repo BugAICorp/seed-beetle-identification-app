@@ -2,7 +2,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.conf import settings
 from .tasks import run_evaluation_task, run_mc_dropout_evaluation_task, retrain_model_task, refresh_database_task
 from port_inspector_app.models import Image, SpecimenUpload, User, KnownSpecies, Genus, ValidClasses
-from .forms import UserRegisterForm, SpecimenUploadForm, ConfirmIdForm, ResetPasswordForm, ResetRequestForm
+from .forms import UserRegisterForm, SpecimenUploadForm, ConfirmIdForm, ResetPasswordForm, ResetRequestForm, ContactUsForm
 from django.core import signing
 from django.core.cache import cache
 from django.core.files.base import ContentFile
@@ -611,7 +611,21 @@ def about_view(request):
     return render(request, 'about.html', {'valid_classes': valid_classes})
 
 
+@login_required(login_url='/login/')
 def contact_us_view(request):
     if request.method == "POST":
+        form = ContactUsForm()
         user_email = request.user.email
-        
+        send_to_email = "bruchinaiapp@gmail.com"
+        subject = f"{user_email} contacted us"
+        message = form.cleaned_data.get("message")
+
+        email = EmailMessage(subject, message, to=[send_to_email])
+        email.content_subtype = "html"
+        email.send()
+
+        return render(request, "contact_us.html", {"form": form, "status": True})
+
+    else:
+        form = ContactUsForm()
+        return render(request, "contact_us.html", {"form": form, "status": False})
