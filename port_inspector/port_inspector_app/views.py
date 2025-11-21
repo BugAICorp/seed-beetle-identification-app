@@ -525,7 +525,7 @@ def results_view(request, hashed_ID):
             "species_uncert": upload.species_uncertainty,
             "genus_uncert": upload.genus_uncertainty,
             "species_conf_label": upload.species_confidence_label,
-            "genus_conf_label": upload.genus_confidence_label
+            "genus_conf_label": upload.genus_confidence_label,
             "warning_message": warning_message
         },
     )
