@@ -31,16 +31,13 @@ def crop_views_from_redis(upload_id, cropper):
         cropper (BeetleCropper): The YOLO cropping utility.
 
     Returns:
-        tuple(list[str], int):
-            - failed_views: views where no beetle was detected or cropping failed
-            - provided_views: number of views that were actually provided
+        failed_views (list[str]): views where no beetle was detected or cropping failed
     """
     redis_conn = get_redis_conn()
     if not redis_conn:
         return [], 0  # Redis not configured, skip
 
     failed_views = []
-    provided_views = 0
 
     for view in ["lateral", "dorsal", "frontal", "caudal"]:
 
@@ -49,7 +46,6 @@ def crop_views_from_redis(upload_id, cropper):
         if not img_bytes:
             continue
 
-        provided_views += 1
         cropped_img = None
         try:
             img = PILImage.open(io.BytesIO(img_bytes)).convert("RGB")
@@ -73,7 +69,7 @@ def crop_views_from_redis(upload_id, cropper):
             if cropped_img is not None:
                 cropped_img.close()
 
-    return failed_views, provided_views
+    return failed_views
 
 
 def get_view_paths(upload):
@@ -105,9 +101,9 @@ def run_evaluation_task(self, upload_id):
 
     cropper = BeetleCropper(threshold=0.8)
 
-    failed_views, provided_views = crop_views_from_redis(upload_id, cropper)
+    failed_views = crop_views_from_redis(upload_id, cropper)
 
-    if len(failed_views) == provided_views:
+    if len(failed_views) > 0:
         SpecimenUpload.objects.filter(id=upload_id).update(
             task_status="FAILED_CROP",
             failed_views=failed_views
@@ -161,9 +157,9 @@ def run_mc_dropout_evaluation_task(self, upload_id):
 
     cropper = BeetleCropper(threshold=0.8)
 
-    failed_views, provided_views = crop_views_from_redis(upload_id, cropper)
+    failed_views = crop_views_from_redis(upload_id, cropper)
 
-    if len(failed_views) == provided_views:
+    if len(failed_views) > 0:
         SpecimenUpload.objects.filter(id=upload_id).update(
             task_status="FAILED_CROP",
             failed_views=failed_views
