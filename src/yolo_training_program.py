@@ -92,28 +92,36 @@ class YOLOTrainer:
                 batch=self.batch_size,
                 imgsz=self.img_size,
                 device=str(self.device),
-                lr0=0.0015,            # lower LR for fine-tuning stability
-                lrf=0.01,              # slow LR decay
-                optimizer="AdamW",     # better generalization for small data
-                dropout=0.05,          # prevent overfitting
-                cos_lr=True,           # smooth cosine schedule
-                multi_scale=False,     # improves scale robustness
-                cls=2.0,               # increase classification loss to reduce false positives
-                box=1.2,               # improve bounding box precision
-                dfl=1.0,               # distribution focal loss scaling
-                hsv_h=0.015,
-                hsv_s=0.7,
-                hsv_v=0.4,
-                translate=0.1,         # moderate translation
-                scale=0.6,             # slightly more zoom-in/out
-                degrees=5,             # small rotations
-                fliplr=0.5,
-                mosaic=0.5,
-                close_mosaic=10,       # close before convergence
-                erasing=0.3,
-                patience=50,           # early stop if no improvement
-                augment=True,
-                deterministic=True,
+                # Optimization settings
+                lr0=0.0015,            # Lower LR for fine-tuning stability
+                lrf=0.01,              # Final LR = Slow LR decay
+                optimizer="AdamW",     # Better generalization for small datasets
+                dropout=0.05,          # Prevent overfitting
+                # Learning rate schedule
+                cos_lr=True,           # Smooth cosine schedule
+                # Loss function weights
+                cls=2.0,               # Increase classification loss to reduce false positives
+                box=1.2,               # Improve bounding box precision
+                dfl=1.0,               # Distribution focal loss scaling
+                # Color Augmentations
+                hsv_h=0.015,           # Small hue jitter (preserves natural beetle colors)
+                hsv_s=0.7,             # Larger saturation shift for robustness
+                hsv_v=0.4,             # Moderate brightness/contrast variation
+                # Geometric Augmentations
+                translate=0.1,         # Moderate translation
+                scale=0.6,             # Moderate zoom-in/out
+                degrees=5,             # Small rotations
+                fliplr=0.5,            # 50% probability of horizontal flip
+                # Mosaic / multi-scale
+                multi_scale=False,     # Disabled, improves scale robustness
+                mosaic=0.5,            # Mosaic augmentation half the time (detection diversity)
+                close_mosaic=10,       # Close before convergence
+                # Regularization
+                erasing=0.3,           # Random erasing to help with generalization
+                # Training behavior
+                patience=50,           # Early stop if no improvement
+                augment=True,          # Enable YOLO’s built-in augmentations
+                deterministic=True,    # Ensures deterministic behavior for reproducible training
             )
         else:
             # Basic training configuration
