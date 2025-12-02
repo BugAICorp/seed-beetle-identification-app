@@ -37,7 +37,6 @@ class TrainingProgram:
         Initialize dataset, image height, and individual model training
         Args:
             class_column (str): Column header used to determine class
-            num_classes (int): Number of classes/outputs for the models
             image_column (str): Column header used to determine the image column
             augment (bool): Determines if data is augmented or not
             balance_classes (int): Determines if class balancing will be used during training.
