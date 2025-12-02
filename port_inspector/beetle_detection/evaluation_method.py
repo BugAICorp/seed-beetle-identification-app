@@ -8,6 +8,7 @@ import os
 import json
 import torch
 import dill
+import math
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../')))
 
 class EvaluationMethod:
@@ -375,8 +376,14 @@ class EvaluationMethod:
 
             softmax_samples = torch.stack(softmax_samples)
             mean_probs = softmax_samples.mean(dim=0)[0]
-            mean_probs = mean_probs / mean_probs.sum()  # ensure normalization
+            mean_probs = mean_probs / mean_probs.sum()
+
             entropy = -(mean_probs * (mean_probs + 1e-8).log()).sum().item()
+
+            # Normalize entropy
+            num_classes = mean_probs.size(0)
+            max_entropy = math.log(num_classes)
+            normalized_entropy = entropy / max_entropy
 
             # Top-k predictions
             topk = min(self.k, mean_probs.size(0))
@@ -392,7 +399,7 @@ class EvaluationMethod:
                 "view": view,
                 "mean_scores": top_scores.tolist(),
                 "species": species_names,
-                "uncertainty": entropy
+                "uncertainty": normalized_entropy
             }
 
             # Save best (first) result for fallback
@@ -400,7 +407,7 @@ class EvaluationMethod:
                 best_result = result
 
             # Threshold check
-            confidence_label = self.confidence_label(entropy, view)
+            confidence_label = self.confidence_label(normalized_entropy, view)
             if confidence_label != "Uncertain":
                 result["status"] = True
                 result["confidence_label"] = confidence_label

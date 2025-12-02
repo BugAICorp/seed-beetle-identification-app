@@ -8,6 +8,7 @@ import os
 import json
 import torch
 import dill
+import math
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../')))
 sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))
 
@@ -292,9 +293,9 @@ class GenusEvaluationMethod:
         from the JSON threshold file during initialization.
         """
         thresholds = self.conf_thresholds.get(view, {})
-        high = thresholds.get("high", 0.03)
-        medium = thresholds.get("medium", 0.07)
-        low = thresholds.get("low", 0.12)
+        high = thresholds.get("high", 0.02)
+        medium = thresholds.get("medium", 0.03)
+        low = thresholds.get("low", 0.04)
 
         if entropy < high:
             return "High Confidence"
@@ -350,8 +351,14 @@ class GenusEvaluationMethod:
 
             softmax_samples = torch.stack(softmax_samples)
             mean_probs = softmax_samples.mean(dim=0)[0]
-            mean_probs = mean_probs / mean_probs.sum()  # ensure normalization
+            mean_probs = mean_probs / mean_probs.sum()
+
             entropy = -(mean_probs * (mean_probs + 1e-8).log()).sum().item()
+
+            # Normalize entropy
+            num_classes = mean_probs.size(0)
+            max_entropy = math.log(num_classes)
+            normalized_entropy = entropy / max_entropy
 
             # Top-1 prediction
             score, genus_idx = torch.max(mean_probs, dim=0)
@@ -361,7 +368,7 @@ class GenusEvaluationMethod:
                 "view": view,
                 "mean_score": score.item(),
                 "genus": genus_name,
-                "uncertainty": entropy
+                "uncertainty": normalized_entropy
             }
 
             # Save best (first) result for fallback
@@ -369,7 +376,7 @@ class GenusEvaluationMethod:
                 best_result = result
 
             # Threshold check
-            confidence_label = self.confidence_label(entropy, view)
+            confidence_label = self.confidence_label(normalized_entropy, view)
             if confidence_label != "Uncertain":
                 result["status"] = True
                 result["confidence_label"] = confidence_label
