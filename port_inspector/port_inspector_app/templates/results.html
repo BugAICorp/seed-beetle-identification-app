@@ -104,25 +104,26 @@
         </tr>
         {% endfor %}
       </table>
-
-      <div class="action-buttons">
-        <form class="confirm-form" method="POST">
-          {% csrf_token %}
-          {{ confirm_form }}
-          <button type="submit" class="confirm-btn">Confirm</button>
-        </form>
-
-        {% if species_results|length > 1 and species_results.1.confidence_level < 20.0 %} <p>WARNING: Species
-          confidences are low. Please retake photos and try again, or consult further resources{% if is_usda %}, before
-          notifying Admin User below{% endif %}</p>
-          {% endif %}
-          {% if is_usda or is_special_status %}
-          <form class="unknown-form" action="/notify_unknown/" method="POST">
+      {% if not is_validated %}
+        <div class="action-buttons">
+          <form class="confirm-form" method="POST">
             {% csrf_token %}
-            <button type="submit" class="unknown-btn">Unknown Species</button>
+            {{ confirm_form }}
+            <button type="submit" class="confirm-btn">Confirm</button>
           </form>
-          {% endif %}
-      </div>
+
+          {% if species_results|length > 1 and species_results.1.confidence_level < 20.0 %} <p>WARNING: Species
+            confidences are low. Please retake photos and try again, or consult further resources{% if is_usda %}, before
+            notifying Admin User below{% endif %}</p>
+            {% endif %}
+            {% if is_usda or is_special_status %}
+            <form class="unknown-form" action="/notify_unknown/" method="POST">
+              {% csrf_token %}
+              <button type="submit" class="unknown-btn">Unknown Species</button>
+            </form>
+            {% endif %}
+        </div>
+      {% endif %}
     </div>
   </div>
   <footer>
