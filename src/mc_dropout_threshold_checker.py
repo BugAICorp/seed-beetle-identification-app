@@ -3,6 +3,7 @@
 from pathlib import Path
 import numpy as np
 import matplotlib.pyplot as plt
+import pandas as pd
 from sklearn.metrics import f1_score, accuracy_score
 from beetle_cropper import BeetleCropper
 from training_database_creator import TrainingDataConverter
@@ -33,7 +34,8 @@ def evaluate_thresholds(trainer, view, thresholds, n_samples=30, batch_size=32, 
     labels = np.array(base_results["all_labels"])
     uncertainties = np.array(base_results["all_uncertainties"])
 
-    results = {}
+    results = []
+    results_dict = {}
     for t in thresholds:
         mask = uncertainties < t
         if mask.sum() == 0:
@@ -43,16 +45,33 @@ def evaluate_thresholds(trainer, view, thresholds, n_samples=30, batch_size=32, 
             acc = accuracy_score(labels[mask], preds[mask])
             coverage = mask.mean()
 
-        results[t] = {"f1": f1, "accuracy": acc, "coverage": coverage}
+        results_dict[t] = {"f1": f1, "accuracy": acc, "coverage": coverage}
+
+        results.append({
+            "threshold": t,
+            "f1": f1,
+            "accuracy": acc,
+            "coverage": coverage
+        })
+
         print(f"Threshold {t:.2f} - F1: {f1:.3f}, Acc: {acc:.3f}, Coverage: {coverage:.2f}")
+    
+    # --- Save CSV ---
+    csv_dir = Path("mc_dropout_results")
+    csv_dir.mkdir(parents=True, exist_ok=True)
+
+    csv_path = csv_dir / f"mc_dropout_threshold_results_{title_prefix.lower()}_{view}.csv"
+    df = pd.DataFrame(results)
+    df.to_csv(csv_path, index=False)
+    print(f"CSV saved to {csv_path.resolve()}")
 
     # --- Plot ---
     plt.figure(figsize=(8, 6))
-    plt.plot(list(results.keys()), [v["f1"] for v in results.values()],
+    plt.plot(list(results_dict.keys()), [v["f1"] for v in results_dict.values()],
              marker="o", label="Macro F1")
-    plt.plot(list(results.keys()), [v["accuracy"] for v in results.values()],
+    plt.plot(list(results_dict.keys()), [v["accuracy"] for v in results_dict.values()],
              marker="s", label="Accuracy")
-    plt.plot(list(results.keys()), [v["coverage"] for v in results.values()],
+    plt.plot(list(results_dict.keys()), [v["coverage"] for v in results_dict.values()],
              marker="^", label="Coverage")
 
     plt.xlabel("Uncertainty Threshold")
@@ -68,7 +87,7 @@ def evaluate_thresholds(trainer, view, thresholds, n_samples=30, batch_size=32, 
     print(f"Plot saved to {out_path.resolve()}")
     plt.close()
 
-    return results
+    return results_dict
 
 if __name__ == "__main__":
     while True:
@@ -125,7 +144,7 @@ if __name__ == "__main__":
     species_tp = TrainingProgram(df, "Species", SPECIES_OUTPUTS, augment=True, balance_classes=balance_classes)
 
     # Training
-    threshold_list = np.linspace(0.0, 1.0, 11)  # 0.0 to 1.0 in 0.1 steps
+    threshold_list = np.linspace(0.0, 1.0, 101)  # 0.0 to 1.0 in 0.01 steps
     all_results = {}
     # Species CAUD
     erasure_params_caud = {
