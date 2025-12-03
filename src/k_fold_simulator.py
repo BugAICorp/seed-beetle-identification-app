@@ -150,40 +150,40 @@ if __name__ == '__main__':
         # Training
         if k_fold_caud:
             erasure_params_caud = {
-                "p": 0.3978357251429255,
-                "min": 0.04237603082954706,
-                "max": 0.3025963685284483
+                "p": 0.5450068594306283,
+                "min": 0.032231275920186486,
+                "max": 0.23975077356392424
             }
-            species_tp.k_fold_resnet(20, "caud", k_folds=5, batch=16, rotation=16,
-                                     brightness=0.04160844, lrate=0.0002188637,
-                                     erasure_params=erasure_params_caud)
+            species_tp.k_fold_resnet(20, "caud", k_folds=5, batch=16, rotation=6,
+                                     brightness=0.0672682540489113, lrate=0.0002205207835665262,
+                                     erasure_params=erasure_params_caud, max_os_ratio=1.5)
         if k_fold_dors:
             erasure_params_dors = {
-                "p": 0.5763301129483613,
-                "min": 0.06044662804540117,
-                "max": 0.18387577071515754
+                "p": 0.7757711509313643,
+                "min": 0.01008374654178916,
+                "max": 0.38794012670750844
             }
-            species_tp.k_fold_resnet(20, "dors", k_folds=5, batch=64, rotation=4,
-                                     brightness=0.2320837289, lrate=0.00042698,
-                                     erasure_params=erasure_params_dors)
+            species_tp.k_fold_resnet(20, "dors", k_folds=5, batch=16, rotation=12,
+                                     brightness=0.22216817398095146, lrate=0.0001296278789334687,
+                                     erasure_params=erasure_params_dors, max_os_ratio=2.5)
         if k_fold_fron:
             erasure_params_fron = {
-                "p": 0.265585095702728,
-                "min": 0.071779115882381,
-                "max": 0.29234187228616554
+                "p": 0.14786083200104405,
+                "min": 0.08542272176573411,
+                "max": 0.3766890143419105
             }
-            species_tp.k_fold_resnet(20, "fron", k_folds=5, batch=32, rotation=3,
-                                     brightness=0.124352955, lrate=0.0002323599,
-                                     erasure_params=erasure_params_fron)
+            species_tp.k_fold_resnet(20, "fron", k_folds=5, batch=16, rotation=7,
+                                     brightness=0.16052298566019538, lrate=0.00018151090290770348,
+                                     erasure_params=erasure_params_fron, max_os_ratio=4.0)
         if k_fold_late:
             erasure_params_late = {
-                "p": 0.5189325280363017,
-                "min": 0.03843699036307908,
-                "max": 0.11129682877722781
+                "p": 0.005799105801707227,
+                "min": 0.08818090418966613,
+                "max": 0.2566152645216
             }
-            species_tp.k_fold_resnet(20, "late", k_folds=5, batch=32, rotation=16,
-                                     brightness=0.05717608, lrate=0.00036962807,
-                                     erasure_params=erasure_params_late)
+            species_tp.k_fold_resnet(20, "late", k_folds=5, batch=64, rotation=6,
+                                     brightness=0.29977566775503983, lrate=0.00012089084719947084,
+                                     erasure_params=erasure_params_late, max_os_ratio=3.5)
 
         # Run training with dataframe
         genus_tp = TrainingProgram(df, "Genus", GENUS_OUTPUTS, augment=augment, balance_classes=balance_classes)
@@ -191,40 +191,40 @@ if __name__ == '__main__':
         # Training
         if k_fold_caud:
             erasure_params_caud = {
-                "p": 0.3127187908868738,
-                "min": 0.04046194894255532,
-                "max": 0.29175754421281885
+                "p": 0.117534992000064,
+                "min": 0.08054270560117567,
+                "max": 0.2983577819330524
             }
-            genus_tp.k_fold_resnet(20, "caud", k_folds=5, batch=16, rotation=2,
-                                   brightness=0.121347939, lrate=0.000414240154,
-                                   erasure_params=erasure_params_caud)
+            genus_tp.k_fold_resnet(20, "caud", k_folds=5, batch=16, rotation=10,
+                                   brightness=0.1462847736327197, lrate=0.00004409398823911199,
+                                   erasure_params=erasure_params_caud, max_os_ratio=5.0)
         if k_fold_dors:
             erasure_params_dors = {
-                "p": 0.08429225010786912,
-                "min": 0.05881609232667761,
-                "max": 0.29034641815208423
+                "p": 0.6279748323341047,
+                "min": 0.041921505805665914,
+                "max": 0.24388226488220693
             }
-            genus_tp.k_fold_resnet(20, "dors", k_folds=5, batch=16, rotation=13,
-                                   brightness=0.169855976, lrate=0.000179720464,
-                                   erasure_params=erasure_params_dors)
+            genus_tp.k_fold_resnet(20, "dors", k_folds=5, batch=32, rotation=6,
+                                   brightness=0.2988104061389692, lrate=0.00004736821824349854,
+                                   erasure_params=erasure_params_dors, max_os_ratio=1.0)
         if k_fold_fron:
             erasure_params_fron = {
-                "p": 0.7558902433519469,
-                "min": 0.07276752102604624,
-                "max": 0.1953562902391759
+                "p": 0.30518586009082976,
+                "min": 0.04609315007975057,
+                "max": 0.36140797065499464
             }
-            genus_tp.k_fold_resnet(20, "fron", k_folds=5, batch=16, rotation=6,
-                                   brightness=0.05464547869, lrate=0.0002265474186,
-                                   erasure_params=erasure_params_fron)
+            genus_tp.k_fold_resnet(20, "fron", k_folds=5, batch=64, rotation=14,
+                                   brightness=0.22903306674663448, lrate=0.0001380146193447115,
+                                   erasure_params=erasure_params_fron, max_os_ratio=5.0)
         if k_fold_late:
             erasure_params_late = {
-                "p": 0.3860968267885073,
-                "min": 0.09392431854817945,
-                "max": 0.2564630945836204
+                "p": 0.30535724516213314,
+                "min": 0.011359991265195598,
+                "max": 0.31162030351760406
             }
             genus_tp.k_fold_resnet(20, "late", k_folds=5, batch=32, rotation=10,
-                                   brightness=0.29610847517, lrate=0.0001860446889,
-                                   erasure_params=erasure_params_late)
+                                   brightness=0.04304050259182124, lrate=0.00001826137626671228,
+                                   erasure_params=erasure_params_late, max_os_ratio=3.0)
 
     finally:
         log_file.close()
