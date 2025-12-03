@@ -242,7 +242,7 @@ if __name__ == '__main__':
             print("\nRunning Monte Carlo Dropout uncertainty evaluation for species CAUD view...")
             results = species_tp.evaluate_uncertainty(
                 view="caud",
-                n_samples=30,
+                n_samples=20,
                 batch_size=16,
                 threshold=0.02
             )
@@ -278,7 +278,7 @@ if __name__ == '__main__':
             print("\nRunning Monte Carlo Dropout uncertainty evaluation for species DORS view...")
             results = species_tp.evaluate_uncertainty(
                 view="dors",
-                n_samples=30,
+                n_samples=20,
                 batch_size=16,
                 threshold=0.02
             )
@@ -313,7 +313,7 @@ if __name__ == '__main__':
             print("\nRunning Monte Carlo Dropout uncertainty evaluation for species FRON view...")
             results = species_tp.evaluate_uncertainty(
                 view="fron",
-                n_samples=30,
+                n_samples=20,
                 batch_size=32,
                 threshold=0.02
             )
@@ -348,7 +348,7 @@ if __name__ == '__main__':
             print("\nRunning Monte Carlo Dropout uncertainty evaluation for species LATE view...")
             results = species_tp.evaluate_uncertainty(
                 view="late",
-                n_samples=30,
+                n_samples=20,
                 batch_size=16,
                 threshold=0.02
             )
@@ -402,7 +402,7 @@ if __name__ == '__main__':
             print("\nRunning Monte Carlo Dropout uncertainty evaluation for genus CAUD view...")
             results = genus_tp.evaluate_uncertainty(
                 view="caud",
-                n_samples=30,
+                n_samples=20,
                 batch_size=16,
                 threshold=0.02
             )
@@ -437,7 +437,7 @@ if __name__ == '__main__':
             print("\nRunning Monte Carlo Dropout uncertainty evaluation for genus DORS view...")
             results = genus_tp.evaluate_uncertainty(
                 view="dors",
-                n_samples=30,
+                n_samples=20,
                 batch_size=16,
                 threshold=0.02
             )
@@ -472,7 +472,7 @@ if __name__ == '__main__':
             print("\nRunning Monte Carlo Dropout uncertainty evaluation for genus FRON view...")
             results = genus_tp.evaluate_uncertainty(
                 view="fron",
-                n_samples=30,
+                n_samples=20,
                 batch_size=32,
                 threshold=0.02
             )
@@ -507,7 +507,7 @@ if __name__ == '__main__':
             print("\nRunning Monte Carlo Dropout uncertainty evaluation for genus LATE view...")
             results = genus_tp.evaluate_uncertainty(
                 view="late",
-                n_samples=30,
+                n_samples=20,
                 batch_size=16,
                 threshold=0.02
             )
