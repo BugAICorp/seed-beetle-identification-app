@@ -235,17 +235,88 @@ def retrain_models():
     """
     Script for running retraining of models
     """
-    species_tp = TrainingProgram('species', 'image')
-    genus_tp = TrainingProgram('genus', 'image')
+    species_tp = TrainingProgram('species', 'image', augment=True, balance_classes=2)
+    genus_tp = TrainingProgram('genus', 'image', augment=True, balance_classes=2)
 
-    species_tp.train_resnet_model(20, 'late')
-    genus_tp.train_resnet_model(20, 'late')
-    species_tp.train_resnet_model(20, 'dors')
-    genus_tp.train_resnet_model(20, 'dors')
-    species_tp.train_resnet_model(20, 'fron')
-    genus_tp.train_resnet_model(20, 'fron')
-    species_tp.train_resnet_model(20, 'caud')
-    genus_tp.train_resnet_model(20, 'caud')
+    # Species LATE
+    erasure_params_late = {
+        "p": 0.005799105801707227,
+        "min": 0.08818090418966613,
+        "max": 0.2566152645216
+    }
+    species_tp.train_resnet_model(20, "late", batch=64, rotation=6,
+                                  brightness=0.29977566775503983, lrate=0.00012089084719947084,
+                                  erasure_params=erasure_params_late, max_os_ratio=3.5)
+
+    # Genus LATE
+    erasure_params_late = {
+        "p": 0.30535724516213314,
+        "min": 0.011359991265195598,
+        "max": 0.31162030351760406
+    }
+    genus_tp.train_resnet_model(20, "late", batch=32, rotation=10,
+                                brightness=0.04304050259182124, lrate=0.00001826137626671228,
+                                erasure_params=erasure_params_late, max_os_ratio=3.0)
+
+    # Species DORS
+    erasure_params_dors = {
+        "p": 0.7757711509313643,
+        "min": 0.01008374654178916,
+        "max": 0.38794012670750844
+    }
+    species_tp.train_resnet_model(20, "dors", batch=16, rotation=12,
+                                  brightness=0.22216817398095146, lrate=0.0001296278789334687,
+                                  erasure_params=erasure_params_dors, max_os_ratio=2.5)
+
+    # Genus DORS
+    erasure_params_dors = {
+        "p": 0.6279748323341047,
+        "min": 0.041921505805665914,
+        "max": 0.24388226488220693
+    }
+    genus_tp.train_resnet_model(20, "dors", batch=32, rotation=6,
+                                brightness=0.2988104061389692, lrate=0.00004736821824349854,
+                                erasure_params=erasure_params_dors, max_os_ratio=1.0)
+
+    # Species FRON
+    erasure_params_fron = {
+        "p": 0.14786083200104405,
+        "min": 0.08542272176573411,
+        "max": 0.3766890143419105
+    }
+    species_tp.train_resnet_model(20, "fron", batch=16, rotation=7,
+                                  brightness=0.16052298566019538, lrate=0.00018151090290770348,
+                                  erasure_params=erasure_params_fron, max_os_ratio=4.0)
+
+    # Genus FRON
+    erasure_params_fron = {
+        "p": 0.30518586009082976,
+        "min": 0.04609315007975057,
+        "max": 0.36140797065499464
+    }
+    genus_tp.train_resnet_model(20, "fron", batch=64, rotation=14,
+                                brightness=0.22903306674663448, lrate=0.0001380146193447115,
+                                erasure_params=erasure_params_fron, max_os_ratio=5.0)
+
+    # Species CAUD
+    erasure_params_caud = {
+        "p": 0.5450068594306283,
+        "min": 0.032231275920186486,
+        "max": 0.23975077356392424
+    }
+    species_tp.train_resnet_model(20, "caud", batch=16, rotation=6,
+                                  brightness=0.0672682540489113, lrate=0.0002205207835665262,
+                                  erasure_params=erasure_params_caud, max_os_ratio=1.5)
+
+    # Genus CAUD
+    erasure_params_caud = {
+        "p": 0.117534992000064,
+        "min": 0.08054270560117567,
+        "max": 0.2983577819330524
+    }
+    genus_tp.train_resnet_model(20, "caud", batch=16, rotation=10,
+                                brightness=0.1462847736327197, lrate=0.00004409398823911199,
+                                erasure_params=erasure_params_caud, max_os_ratio=5.0)
 
     species_model_filenames = {
         "caud" : globals.spec_caud_model,
