@@ -65,19 +65,33 @@ class TestYOLOTrainer(unittest.TestCase):
             device=str(trainer.device)
         )
 
+    @patch("yolo_training_program.os.path.exists")
+    @patch("yolo_training_program.os.path.getmtime")
+    @patch("yolo_training_program.glob.glob")
     @patch("yolo_training_program.shutil.copy")
     @patch("yolo_training_program.YOLO")
-    def test_save(self, mock_yolo, mock_copy):
+    def test_save(self, mock_yolo, mock_copy, mock_glob, mock_getmtime, mock_exists):
         """ Test save calls shutil.copy to save model weights. """
         mock_model_instance = MagicMock()
         mock_yolo.return_value = mock_model_instance
 
-        trainer = YOLOTrainer(self.dataset_yaml)
-        save_path = "my_model.pt"
-        trainer.save(save_path)
+        # Simulate one training run folder
+        mock_glob.return_value = ["runs/detect/train"]
 
-        # We only expect shutil.copy
-        mock_copy.assert_called_once_with("runs/detect/train/weights/best.pt", "src/models/yolov8n_whole_image.pt")
+        # Pretend mtime is valid
+        mock_getmtime.return_value = 12345
+
+        # Pretend best.pt exists
+        mock_exists.return_value = True
+
+        trainer = YOLOTrainer(self.dataset_yaml)
+        
+        trainer.save("src/models/yolov8n_whole_image.pt")
+
+        mock_copy.assert_called_once_with(
+            "runs/detect/train/weights/best.pt",
+            "src/models/yolov8n_whole_image.pt"
+        )
 
 if __name__ == "__main__":
     unittest.main()
