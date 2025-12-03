@@ -4,6 +4,7 @@ import sys
 import json
 import copy
 import gc
+import math
 from io import BytesIO
 import dill
 import optuna
@@ -649,6 +650,24 @@ class TrainingProgram:
     def mc_dropout_predict(self, view, inputs, n_samples=30):
         """
         Run Monte Carlo Dropout inference for uncertainty estimation.
+
+        Args:
+            view (str):
+                The dataset view/model to use (e.g., "late", "dors", "caud", "fron").
+            inputs (torch.Tensor):
+                Input batch of images with shape (N, C, H, W).
+            n_samples (int, optional):
+                Number of stochastic forward passes to perform using dropout.
+
+        Returns:
+            mean_probs (torch.Tensor):
+                The averaged class probability predictions across all MC samples.
+                Shape: (N, num_classes).
+
+            normalized_entropy (torch.Tensor):
+                Normalized Shannon entropy for each sample, representing uncertainty.
+                Values range from 0 (high confidence) to 1 (maximum uncertainty).
+                Shape: (N,).
         """
         self.models[view].to(self.device)
         self.enable_dropout(view)  # only dropout layers active
@@ -662,10 +681,15 @@ class TrainingProgram:
 
         probs = torch.cat(probs, dim=0)        # (n_samples, N, C)
         mean_probs = probs.mean(dim=0)         # (N, C)
-        entropy = -(mean_probs * torch.log(mean_probs + 1e-8)).sum(dim=1)
-        uncertainties = entropy
 
-        return mean_probs, uncertainties
+        # Raw entropy
+        entropy = -(mean_probs * torch.log(mean_probs + 1e-8)).sum(dim=1)
+        # Normalize entropy
+        num_classes = mean_probs.size(1)
+        max_entropy = math.log(num_classes)
+        normalized_entropy = entropy / max_entropy
+
+        return mean_probs, normalized_entropy
 
     def enable_dropout(self, view):
         """ Function to enable dropout layers during test-time """
@@ -698,12 +722,12 @@ class TrainingProgram:
 
         self.models[view].eval()  # reset model first
         for images, labels in test_loader:
-            mean_probs, uncertainties = self.mc_dropout_predict(view, images, n_samples=n_samples)
+            mean_probs, uncertainty = self.mc_dropout_predict(view, images, n_samples=n_samples)
             preds = mean_probs.argmax(dim=1)
 
             all_preds.extend(preds.cpu().numpy())
             all_labels.extend(labels.cpu().numpy())
-            all_uncertainties.extend(uncertainties.cpu().numpy())
+            all_uncertainties.extend(uncertainty.cpu().numpy())
 
         results = {
             "all_preds": all_preds,
