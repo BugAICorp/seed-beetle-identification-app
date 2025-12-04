@@ -2,12 +2,17 @@
     <h2 style="margin: 0; padding: 10px; border-top-left-radius: 10px; border-top-right-radius: 10px; background-color: #5865F2; color: #ffffff;">Verify Email</h2>
     <div style="margin: 0; padding: 15px; background-color: #ffffff;">
         <p>Hi {{ user.name }},</p>
-        <p>You created an account on with the Port Inspector App, you need to verify your email. Please click on the button below to verify your email.</p>
+        <p>You created an account on with the BruchinAI App, you need to verify your email. Please click on the button below to verify your email.</p>
         <a href="{{ request.scheme }}://{{ domain }}{% url 'verify-email-confirm' uidb64=uid token=token %}" style="border: 0; color: #ffffff; background-color: #5865F2; padding: 15px; font-weight: bold; text-decoration: none; border-radius: 5px;">
             Verify Email
         </a>
         <p style="margin-top: 40px;">Or you can copy the link below to your browser</p>
         <p>{{ request.scheme }}://{{ domain }}{% url 'verify-email-confirm' uidb64=uid token=token %}</p>
+        <p>If the provided link takes you to an invalid page, your account may already be verified. First, try logging in 
+            to check if your account is already verified. If the account isn't verified and login fails, try signing up again.
+            Signing up again will overwrite your previous account specifications and will allow you to get a new email verification link.
+            Please be sure to verify as soon as possible after signing up to ensure the link does not expire.
+        </p>
         <p>The BruchinAI Team</p>
     </div>
 </div>
