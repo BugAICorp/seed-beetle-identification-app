@@ -145,7 +145,7 @@ if __name__ == "__main__":
     species_tp = TrainingProgram(df, "Species", SPECIES_OUTPUTS, augment=True, balance_classes=balance_classes)
 
     # Training
-    threshold_list = np.linspace(0.5, 1, 51)  # 0.0 to 1.0 in 0.1 steps
+    threshold_list = np.linspace(0, 1, 101)  # 0.0 to 1.0 in 0.01 steps
     all_results = {}
     # Species CAUD
     erasure_params_caud = {
