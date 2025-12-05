@@ -718,21 +718,24 @@ class TrainingProgram:
         test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False)
 
 
-        all_preds, all_labels, all_uncertainties = [], [], []
+        all_preds, all_labels, all_confidences, all_uncertainties = [], [], [], []
 
         self.models[view].eval()  # reset model first
         for images, labels in test_loader:
             mean_probs, uncertainty = self.mc_dropout_predict(view, images, n_samples=n_samples)
             preds = mean_probs.argmax(dim=1)
+            confidences = mean_probs.max(dim=1).values
 
             all_preds.extend(preds.cpu().numpy())
             all_labels.extend(labels.cpu().numpy())
             all_uncertainties.extend(uncertainty.cpu().numpy())
+            all_confidences.extend(confidences.cpu().numpy())
 
         results = {
             "all_preds": all_preds,
             "all_labels": all_labels,
-            "all_uncertainties": all_uncertainties
+            "all_uncertainties": all_uncertainties,
+            "all_confidences": all_confidences,
         }
 
         # Optionally filter by threshold
