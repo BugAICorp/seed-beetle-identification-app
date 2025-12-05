@@ -208,7 +208,7 @@ if __name__ == "__main__":
         print("\nWould you like to preform a threshold sweep, calculate MC predictions, or both?")
         print("\t0 = Threshold Sweep\n" \
             "\t1 = Calculate MC Predictions\n" \
-            "\t2 = Both\n")
+            "\t2 = Both")
         user_input = int(input("Enter the number of your choice: "))
         if user_input == 0:
             experiment = 0
