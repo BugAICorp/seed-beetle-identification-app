@@ -728,14 +728,14 @@ class TrainingProgram:
 
             all_preds.extend(preds.cpu().numpy())
             all_labels.extend(labels.cpu().numpy())
-            all_uncertainties.extend(uncertainty.cpu().numpy())
             all_confidences.extend(confidences.cpu().numpy())
+            all_uncertainties.extend(uncertainty.cpu().numpy())
 
         results = {
             "all_preds": all_preds,
             "all_labels": all_labels,
-            "all_uncertainties": all_uncertainties,
             "all_confidences": all_confidences,
+            "all_uncertainties": all_uncertainties
         }
 
         # Optionally filter by threshold
