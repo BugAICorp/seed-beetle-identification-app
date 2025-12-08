@@ -692,10 +692,12 @@ class TrainingProgram:
         return mean_probs, normalized_entropy
 
     def enable_dropout(self, view):
-        """ Function to enable dropout layers during test-time """
+        """ Enable dropout while keeping batchnorm frozen. """
         for m in self.models[view].modules():
-            if m.__class__.__name__.startswith('Dropout'):
-                m.train()
+            if isinstance(m, torch.nn.Dropout) or m.__class__.__name__.startswith('Dropout'):
+                m.train()       # stochastic dropout
+            elif isinstance(m, torch.nn.BatchNorm2d):
+                m.eval()        # freeze batchnorm
 
     def evaluate_uncertainty(self, view, n_samples=30, batch_size=32, threshold=None):
         """
