@@ -228,6 +228,8 @@ class TrainingProgram:
         Return the loss function based on balancing strategy.
         Uses class-weighted loss if specified.
         """
+        smoothing = 0.1 # May need to tune this
+
         if self.balance_classes in [1, 3]:
             train_y = np.array(train_y)
 
@@ -243,9 +245,9 @@ class TrainingProgram:
             full_class_weights[classes_in_split] = class_weights
 
             class_weights = torch.tensor(full_class_weights, dtype=torch.float).to(self.device)
-            return torch.nn.CrossEntropyLoss(weight=class_weights)
+            return torch.nn.CrossEntropyLoss(weight=class_weights, label_smoothing=smoothing)
 
-        return torch.nn.CrossEntropyLoss()
+        return torch.nn.CrossEntropyLoss(label_smoothing=smoothing)
 
     def get_train_loader(self, train_dataset, train_y, batch_size, max_os_ratio: float = 3.0):
         """
