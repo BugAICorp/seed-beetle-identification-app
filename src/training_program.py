@@ -284,14 +284,15 @@ class TrainingProgram:
 
         return DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
 
-    def training_evaluation_resnet(self, num_epochs, train_loader, test_loader, view, train_y, lrate=0.001):
+    def training_evaluation_resnet(
+            self, num_epochs, train_loader, test_loader, view, train_y, weight_decay, lrate=0.001):
         """
         Code for training algorithm and evaluating model
         """
         # Model Training
         # define loss function, optimization function, and image transformation
         criterion = self.get_loss_function(train_y)
-        optimizer = torch.optim.Adam(self.models[view].parameters(), lr=lrate)
+        optimizer = torch.optim.Adam(self.models[view].parameters(), lr=lrate, weight_decay=weight_decay)
 
         best_epoch = 0
         best_macro_f1 = 0.0
@@ -360,8 +361,8 @@ class TrainingProgram:
             self.model_accuracies[view] = best_macro_f1
             print(f"Best Macro F1: {100 * best_macro_f1:.2f}% — model loaded.")
 
-    def train_resnet_model(self, num_epochs, view, batch, rotation=5, brightness=0.1, lrate=0.001,
-                           erasure_params=None, max_os_ratio: float = 3.0):
+    def train_resnet_model(self, num_epochs, view, batch, rotation=5, brightness=0.1, weight_decay=0.1,
+                           lrate=0.001, erasure_params=None, max_os_ratio: float = 3.0):
         """
         Trains resnet model with subset of specified image views
         and save model to respective save file.
@@ -398,10 +399,13 @@ class TrainingProgram:
         training_loader = self.get_train_loader(train_dataset, train_y, batch, max_os_ratio=max_os_ratio)
         testing_loader = DataLoader(test_dataset, batch_size=batch, shuffle=False)
 
-        self.training_evaluation_resnet(num_epochs, training_loader, testing_loader, view, train_y=train_y, lrate=lrate)
+        self.training_evaluation_resnet(
+            num_epochs, training_loader, testing_loader, view,
+            train_y=train_y, weight_decay=weight_decay, lrate=lrate
+        )
 
-    def k_fold_resnet(self, num_epochs, view, k_folds=5, batch=32, rotation=5, brightness=0.1, lrate=0.001,
-                      erasure_params=None, max_os_ratio: float = 3.0):
+    def k_fold_resnet(self, num_epochs, view, k_folds=5, batch=32, rotation=5, brightness=0.1, weight_decay=0.1,
+                      lrate=0.001, erasure_params=None, max_os_ratio: float = 3.0):
         """
         Trains the model(determined by view) using Stratified K-Fold Cross Validation.
         """
@@ -464,7 +468,10 @@ class TrainingProgram:
             self.model_accuracies[view] = 0.0
             self.models[view] = self.load_model()
 
-            self.training_evaluation_resnet(num_epochs, train_loader, val_loader, view, train_y=train_y, lrate=lrate)
+            self.training_evaluation_resnet(
+                num_epochs, train_loader, val_loader, view,
+                train_y=train_y, weight_decay=weight_decay, lrate=lrate
+            )
 
             fold_f1 = self.model_accuracies.get(view, 0.0)
             all_fold_f1s.append(fold_f1)
@@ -473,7 +480,7 @@ class TrainingProgram:
         print(f"\nAverage Macro F1 over {k_folds} folds: {average_macro_f1:.2f}%")
 
     def hyperparameter_training_evaluation(
-            self, num_epochs, train_loader, test_loader, view, train_y, lr, optimizer_type):
+            self, num_epochs, train_loader, test_loader, view, train_y, lr, weight_decay, optimizer_type):
         """
         Code for training algorithm and evaluating model, adjusted for hyperparameter tuning.
         Trains and evaluate the model for a given view using specified hyperparameters.
@@ -484,6 +491,7 @@ class TrainingProgram:
             test_loader (DataLoader): DataLoader providing testing/validation batches.
             view (str): Identifier for the model/view to train and evaluate.
             lr (float): Learning rate for the optimizer.
+            weight_decay (float): 
             optimizer_type (str): Optimizer type to use, either 'adam' or 'sgd'.
 
         Returns:
@@ -497,9 +505,9 @@ class TrainingProgram:
 
         # Determine optimizer to be used
         if optimizer_type == "adam":
-            optimizer = torch.optim.Adam(model.parameters(), lr=lr)
+            optimizer = torch.optim.Adam(model.parameters(), lr=lr, weight_decay=weight_decay)
         elif optimizer_type == "sgd":
-            optimizer = torch.optim.SGD(model.parameters(), lr=lr, momentum=0.9)
+            optimizer = torch.optim.SGD(model.parameters(), lr=lr, momentum=0.9, weight_decay=weight_decay)
         else:
             raise ValueError(f"Unsupported optimizer: {optimizer_type}")
 
@@ -553,6 +561,7 @@ class TrainingProgram:
         erasing_scale_min = trial.suggest_float('erasing_scale_min', 0.01, 0.1)
         erasing_scale_max = trial.suggest_float('erasing_scale_max', 0.1, 0.4)
         max_os_ratio = trial.suggest_float('max_os_ratio', 1.0, 5.0, step=0.5)
+        weight_decay = trial.suggest_float("weight_decay", 1e-6, 1e-2, log=True)
 
         if erasing_scale_min >= erasing_scale_max:
             return 0.0  # Invalid trial
@@ -611,6 +620,7 @@ class TrainingProgram:
                 view=view,
                 train_y=train_y,
                 lr=lr,
+                weight_decay=weight_decay,
                 optimizer_type="adam"
             )
             all_f1_scores.append(f1)
