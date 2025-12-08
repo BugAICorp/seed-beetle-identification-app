@@ -56,14 +56,14 @@ def evaluate_thresholds(trainer, view, thresholds, n_samples=30, batch_size=32, 
         })
 
         print(f"Threshold {t:.2f} - F1: {f1:.3f}, Acc: {acc:.3f}, Coverage: {coverage:.2f}")
-    
+
     # --- Save CSV ---
     csv_dir = Path("mc_dropout_results")
     csv_dir.mkdir(parents=True, exist_ok=True)
 
     csv_path = csv_dir / f"mc_dropout_threshold_results_{title_prefix.lower()}_{view}.csv"
-    df = pd.DataFrame(results)
-    df.to_csv(csv_path, index=False)
+    threshold_df = pd.DataFrame(results)
+    threshold_df.to_csv(csv_path, index=False)
     print(f"CSV saved to {csv_path.resolve()}")
 
     # --- Plot ---
@@ -122,7 +122,7 @@ def evaluate_mc_predictions(trainer, view, n_samples=30, batch_size=32, title_pr
     output_dir = Path("mc_dropout_results")
     output_dir.mkdir(parents=True, exist_ok=True)
 
-    df = pd.DataFrame({
+    predictions_df = pd.DataFrame({
         "labels": labels,
         "predicted_class": preds,
         "correct": correctness,
@@ -132,7 +132,7 @@ def evaluate_mc_predictions(trainer, view, n_samples=30, batch_size=32, title_pr
     })
 
     sample_csv_path = output_dir / f"mc_dropout_predictions_{title_prefix.lower()}_{view}.csv"
-    df.to_csv(sample_csv_path, index=False)
+    predictions_df.to_csv(sample_csv_path, index=False)
     print(f"Per-sample MC-Dropout CSV saved to {sample_csv_path.resolve()}")
 
     # Compute correlations with correctness
@@ -268,12 +268,12 @@ if __name__ == "__main__":
                                 erasure_params=erasure_params_caud, max_os_ratio=1.5)
 
     # Species CAUD MC Dropout
-    if experiment == 0 or experiment == 2:
+    if experiment in (0, 2):
         print("\nRunning Monte Carlo Dropout uncertainty evaluation for species CAUD view...")
         all_results["species_caud"] = evaluate_thresholds(
             species_tp, view="caud", thresholds=threshold_list, n_samples=20, batch_size=16, title_prefix="Species"
         )
-    if experiment == 1 or experiment == 2:
+    if experiment in (1, 2):
         print("\nRunning Monte Carlo Dropout prediction calculation for CAUD view...")
         _ = evaluate_mc_predictions(
             species_tp, view="caud", n_samples=20, batch_size=16, title_prefix="Species"
@@ -291,12 +291,12 @@ if __name__ == "__main__":
                                 erasure_params=erasure_params_dors, max_os_ratio=2.5)
 
     # Species DORS MC Dropout
-    if experiment == 0 or experiment == 2:
+    if experiment in (0, 2):
         print("\nRunning Monte Carlo Dropout uncertainty evaluation for species DORS view...")
         all_results["species_dors"] = evaluate_thresholds(
             species_tp, view="dors", thresholds=threshold_list, n_samples=20, batch_size=16, title_prefix="Species"
         )
-    if experiment == 1 or experiment == 2:
+    if experiment in (1, 2):
         print("\nRunning Monte Carlo Dropout prediction calculation for DORS view...")
         _ = evaluate_mc_predictions(
             species_tp, view="dors", n_samples=20, batch_size=16, title_prefix="Species"
@@ -313,12 +313,12 @@ if __name__ == "__main__":
                                 erasure_params=erasure_params_fron, max_os_ratio=4.0)
 
     # Species FRON MC Dropout
-    if experiment == 0 or experiment == 2:
+    if experiment in (0, 2):
         print("\nRunning Monte Carlo Dropout uncertainty evaluation for species FRON view...")
         all_results["species_fron"] = evaluate_thresholds(
             species_tp, view="fron", thresholds=threshold_list, n_samples=20, batch_size=16, title_prefix="Species"
         )
-    if experiment == 1 or experiment == 2:
+    if experiment in (1, 2):
         print("\nRunning Monte Carlo Dropout prediction calculation for FRON view...")
         _ = evaluate_mc_predictions(
             species_tp, view="fron", n_samples=20, batch_size=16, title_prefix="Species"
@@ -335,12 +335,12 @@ if __name__ == "__main__":
                                 erasure_params=erasure_params_late, max_os_ratio=3.5)
 
     # Species LATE MC Dropout
-    if experiment == 0 or experiment == 2:
+    if experiment in (0, 2):
         print("\nRunning Monte Carlo Dropout uncertainty evaluation for species LATE view...")
         all_results["species_late"] = evaluate_thresholds(
             species_tp, view="late", thresholds=threshold_list, n_samples=20, batch_size=64, title_prefix="Species"
         )
-    if experiment == 1 or experiment == 2:
+    if experiment in (1, 2):
         print("\nRunning Monte Carlo Dropout prediction calculation for LATE view...")
         _ = evaluate_mc_predictions(
             species_tp, view="late", n_samples=20, batch_size=16, title_prefix="Species"
@@ -360,12 +360,12 @@ if __name__ == "__main__":
                             brightness=0.1462847736327197, weight_decay=0.0001, lrate=0.00004409398823911199,
                             erasure_params=erasure_params_caud, max_os_ratio=5.0)
     # Genus CAUD MC Dropout
-    if experiment == 0 or experiment == 2:
+    if experiment in (0, 2):
         print("\nRunning Monte Carlo Dropout uncertainty evaluation for genus CAUD view...")
         all_results["genus_caud"] = evaluate_thresholds(
             genus_tp, view="caud", thresholds=threshold_list, n_samples=20, batch_size=16, title_prefix="Genus"
         )
-    if experiment == 1 or experiment == 2:
+    if experiment in (1, 2):
         print("\nRunning Monte Carlo Dropout prediction calculation for CAUD view...")
         _ = evaluate_mc_predictions(
             genus_tp, view="caud", n_samples=20, batch_size=16, title_prefix="Genus"
@@ -382,12 +382,12 @@ if __name__ == "__main__":
                             erasure_params=erasure_params_dors, max_os_ratio=1.0)
 
     # Genus DORS MC Dropout
-    if experiment == 0 or experiment == 2:
+    if experiment in (0, 2):
         print("\nRunning Monte Carlo Dropout uncertainty evaluation for genus DORS view...")
         all_results["genus_dors"] = evaluate_thresholds(
             genus_tp, view="dors", thresholds=threshold_list, n_samples=20, batch_size=32, title_prefix="Genus"
         )
-    if experiment == 1 or experiment == 2:
+    if experiment in (1, 2):
         print("\nRunning Monte Carlo Dropout prediction calculation for DORS view...")
         _ = evaluate_mc_predictions(
             genus_tp, view="dors", n_samples=20, batch_size=16, title_prefix="Genus"
@@ -404,12 +404,12 @@ if __name__ == "__main__":
                             erasure_params=erasure_params_fron, max_os_ratio=5.0)
 
     # Genus FRON MC Dropout
-    if experiment == 0 or experiment == 2:
+    if experiment in (0, 2):
         print("\nRunning Monte Carlo Dropout uncertainty evaluation for genus FRON view...")
         all_results["genus_fron"] = evaluate_thresholds(
             genus_tp, view="fron", thresholds=threshold_list, n_samples=20, batch_size=64, title_prefix="Genus"
         )
-    if experiment == 1 or experiment == 2:
+    if experiment in (1, 2):
         print("\nRunning Monte Carlo Dropout prediction calculation for FRON view...")
         _ = evaluate_mc_predictions(
             genus_tp, view="fron", n_samples=20, batch_size=16, title_prefix="Genus"
@@ -426,12 +426,12 @@ if __name__ == "__main__":
                             erasure_params=erasure_params_late, max_os_ratio=3.0)
 
     # Genus LATE MC Dropout
-    if experiment == 0 or experiment == 2:
+    if experiment in (0, 2):
         print("\nRunning Monte Carlo Dropout uncertainty evaluation for genus LATE view...")
         all_results["genus_late"] = evaluate_thresholds(
             genus_tp, view="late", thresholds=threshold_list, n_samples=20, batch_size=32, title_prefix="Genus"
         )
-    if experiment == 1 or experiment == 2:
+    if experiment in (1, 2):
         print("\nRunning Monte Carlo Dropout prediction calculation for LATE view...")
         _ = evaluate_mc_predictions(
             genus_tp, view="late", n_samples=20, batch_size=16, title_prefix="Genus"
