@@ -363,7 +363,7 @@ class TrainingProgram:
             self.model_accuracies[view] = best_macro_f1
             print(f"Best Macro F1: {100 * best_macro_f1:.2f}% — model loaded.")
 
-    def train_resnet_model(self, num_epochs, view, batch, rotation=5, brightness=0.1, weight_decay=0.1,
+    def train_resnet_model(self, num_epochs, view, batch, rotation=5, brightness=0.1, weight_decay=0.0001,
                            lrate=0.001, erasure_params=None, max_os_ratio: float = 3.0):
         """
         Trains resnet model with subset of specified image views
@@ -406,7 +406,7 @@ class TrainingProgram:
             train_y=train_y, weight_decay=weight_decay, lrate=lrate
         )
 
-    def k_fold_resnet(self, num_epochs, view, k_folds=5, batch=32, rotation=5, brightness=0.1, weight_decay=0.1,
+    def k_fold_resnet(self, num_epochs, view, k_folds=5, batch=32, rotation=5, brightness=0.1, weight_decay=0.0001,
                       lrate=0.001, erasure_params=None, max_os_ratio: float = 3.0):
         """
         Trains the model(determined by view) using Stratified K-Fold Cross Validation.
