@@ -1,11 +1,11 @@
 """ compute_mc_threshold_bins.py """
 
-import pandas as pd
-from pathlib import Path
-from sklearn.cluster import KMeans
-import numpy as np
 import json
 import re
+from pathlib import Path
+import pandas as pd
+from sklearn.cluster import KMeans
+import numpy as np
 
 
 def compute_kmeans_bins(thresholds, n_bins=4):
@@ -44,6 +44,12 @@ def parse_filename(filename):
 
 
 def main():
+    """
+    Reads in the MC Dropout Treshold results from the 8 models and computes the
+    confidence bins using the compute_kmeans_bins function(High Confidence,
+    Medium Confidence, Low Confidence, and Uncertain). It then saves these
+    computed bins to json files based on the taxonomic level(Genus or Species).
+    """
     input_dir = Path("mc_dropout_results")
     output_dir = Path("port_inspector/beetle_detection/model_data")
     output_dir.mkdir(exist_ok=True)
