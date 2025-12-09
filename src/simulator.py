@@ -235,8 +235,8 @@ if __name__ == '__main__':
             "max": 0.23975077356392424
         }
         species_tp.train_resnet_model(20, "caud", batch=16, rotation=6,
-                                    brightness=0.0672682540489113, weight_decay=0.0001, lrate=0.0002205207835665262,
-                                    erasure_params=erasure_params_caud, max_os_ratio=1.5)
+                                    brightness=0.0672682540489113, weight_decay=0.0001, smoothing=0.1,
+                                    lrate=0.0002205207835665262, erasure_params=erasure_params_caud, max_os_ratio=1.5)
 
         if uncertainty_eval:
             print("\nRunning Monte Carlo Dropout uncertainty evaluation for species CAUD view...")
@@ -271,8 +271,8 @@ if __name__ == '__main__':
             "max": 0.38794012670750844
         }
         species_tp.train_resnet_model(20, "dors", batch=16, rotation=12,
-                                    brightness=0.22216817398095146, weight_decay=0.0001, lrate=0.0001296278789334687,
-                                    erasure_params=erasure_params_dors, max_os_ratio=2.5)
+                                    brightness=0.22216817398095146, weight_decay=0.0001, smoothing=0.1,
+                                    lrate=0.0001296278789334687, erasure_params=erasure_params_dors, max_os_ratio=2.5)
 
         if uncertainty_eval:
             print("\nRunning Monte Carlo Dropout uncertainty evaluation for species DORS view...")
@@ -306,8 +306,8 @@ if __name__ == '__main__':
             "max": 0.3766890143419105
         }
         species_tp.train_resnet_model(20, "fron", batch=16, rotation=7,
-                                    brightness=0.16052298566019538, weight_decay=0.0001, lrate=0.00018151090290770348,
-                                    erasure_params=erasure_params_fron, max_os_ratio=4.0)
+                                    brightness=0.16052298566019538, weight_decay=0.0001, smoothing=0.1,
+                                    lrate=0.00018151090290770348, erasure_params=erasure_params_fron, max_os_ratio=4.0)
 
         if uncertainty_eval:
             print("\nRunning Monte Carlo Dropout uncertainty evaluation for species FRON view...")
@@ -341,8 +341,8 @@ if __name__ == '__main__':
             "max": 0.2566152645216
         }
         species_tp.train_resnet_model(20, "late", batch=64, rotation=6,
-                                    brightness=0.29977566775503983, weight_decay=0.0001, lrate=0.00012089084719947084,
-                                    erasure_params=erasure_params_late, max_os_ratio=3.5)
+                                    brightness=0.29977566775503983, weight_decay=0.0001, smoothing=0.1,
+                                    lrate=0.00012089084719947084, erasure_params=erasure_params_late, max_os_ratio=3.5)
 
         if uncertainty_eval:
             print("\nRunning Monte Carlo Dropout uncertainty evaluation for species LATE view...")
@@ -395,8 +395,8 @@ if __name__ == '__main__':
             "max": 0.2983577819330524
         }
         genus_tp.train_resnet_model(20, "caud", batch=16, rotation=10,
-                                brightness=0.1462847736327197, weight_decay=0.0001, lrate=0.00004409398823911199,
-                                erasure_params=erasure_params_caud, max_os_ratio=5.0)
+                                brightness=0.1462847736327197, weight_decay=0.0001, smoothing=0.1,
+                                lrate=0.00004409398823911199, erasure_params=erasure_params_caud, max_os_ratio=5.0)
 
         if uncertainty_eval:
             print("\nRunning Monte Carlo Dropout uncertainty evaluation for genus CAUD view...")
@@ -430,8 +430,8 @@ if __name__ == '__main__':
             "max": 0.24388226488220693
         }
         genus_tp.train_resnet_model(20, "dors", batch=32, rotation=6,
-                                brightness=0.2988104061389692, weight_decay=0.0001, lrate=0.00004736821824349854,
-                                erasure_params=erasure_params_dors, max_os_ratio=1.0)
+                                brightness=0.2988104061389692, weight_decay=0.0001, smoothing=0.1,
+                                lrate=0.00004736821824349854, erasure_params=erasure_params_dors, max_os_ratio=1.0)
 
         if uncertainty_eval:
             print("\nRunning Monte Carlo Dropout uncertainty evaluation for genus DORS view...")
@@ -465,8 +465,8 @@ if __name__ == '__main__':
             "max": 0.36140797065499464
         }
         genus_tp.train_resnet_model(20, "fron", batch=64, rotation=14,
-                                brightness=0.22903306674663448, weight_decay=0.0001, lrate=0.0001380146193447115,
-                                erasure_params=erasure_params_fron, max_os_ratio=5.0)
+                                brightness=0.22903306674663448, weight_decay=0.0001, smoothing=0.1,
+                                lrate=0.0001380146193447115, erasure_params=erasure_params_fron, max_os_ratio=5.0)
 
         if uncertainty_eval:
             print("\nRunning Monte Carlo Dropout uncertainty evaluation for genus FRON view...")
@@ -500,8 +500,8 @@ if __name__ == '__main__':
             "max": 0.31162030351760406
         }
         genus_tp.train_resnet_model(20, "late", batch=32, rotation=10,
-                                brightness=0.04304050259182124, weight_decay=0.0001, lrate=0.00001826137626671228,
-                                erasure_params=erasure_params_late, max_os_ratio=3.0)
+                                brightness=0.04304050259182124, weight_decay=0.0001, smoothing=0.1,
+                                lrate=0.00001826137626671228, erasure_params=erasure_params_late, max_os_ratio=3.0)
 
         if uncertainty_eval:
             print("\nRunning Monte Carlo Dropout uncertainty evaluation for genus LATE view...")
