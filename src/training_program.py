@@ -223,12 +223,11 @@ class TrainingProgram:
 
         return [train_x, test_x, train_y, test_y]
 
-    def get_loss_function(self, train_y):
+    def get_loss_function(self, train_y, smoothing=0.1):
         """
         Return the loss function based on balancing strategy.
         Uses class-weighted loss if specified.
         """
-        smoothing = 0.1 # May need to tune this
 
         if self.balance_classes in [1, 3]:
             train_y = np.array(train_y)
@@ -287,13 +286,13 @@ class TrainingProgram:
         return DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
 
     def training_evaluation_resnet(
-            self, num_epochs, train_loader, test_loader, view, train_y, weight_decay, lrate=0.001):
+            self, num_epochs, train_loader, test_loader, view, train_y, weight_decay, smoothing, lrate=0.001):
         """
         Code for training algorithm and evaluating model
         """
         # Model Training
         # define loss function, optimization function, and image transformation
-        criterion = self.get_loss_function(train_y)
+        criterion = self.get_loss_function(train_y, smoothing=smoothing)
         optimizer = torch.optim.Adam(self.models[view].parameters(), lr=lrate, weight_decay=weight_decay)
 
         best_epoch = 0
@@ -364,7 +363,7 @@ class TrainingProgram:
             print(f"Best Macro F1: {100 * best_macro_f1:.2f}% — model loaded.")
 
     def train_resnet_model(self, num_epochs, view, batch, rotation=5, brightness=0.1, weight_decay=0.0001,
-                           lrate=0.001, erasure_params=None, max_os_ratio: float = 3.0):
+                           smoothing=0.1, lrate=0.001, erasure_params=None, max_os_ratio: float = 3.0):
         """
         Trains resnet model with subset of specified image views
         and save model to respective save file.
@@ -403,11 +402,11 @@ class TrainingProgram:
 
         self.training_evaluation_resnet(
             num_epochs, training_loader, testing_loader, view,
-            train_y=train_y, weight_decay=weight_decay, lrate=lrate
+            train_y=train_y, weight_decay=weight_decay, smoothing=smoothing, lrate=lrate
         )
 
     def k_fold_resnet(self, num_epochs, view, k_folds=5, batch=32, rotation=5, brightness=0.1, weight_decay=0.0001,
-                      lrate=0.001, erasure_params=None, max_os_ratio: float = 3.0):
+                      smoothing=0.1, lrate=0.001, erasure_params=None, max_os_ratio: float = 3.0):
         """
         Trains the model(determined by view) using Stratified K-Fold Cross Validation.
         """
@@ -472,7 +471,7 @@ class TrainingProgram:
 
             self.training_evaluation_resnet(
                 num_epochs, train_loader, val_loader, view,
-                train_y=train_y, weight_decay=weight_decay, lrate=lrate
+                train_y=train_y, weight_decay=weight_decay, smoothing=smoothing, lrate=lrate
             )
 
             fold_f1 = self.model_accuracies.get(view, 0.0)
@@ -482,7 +481,7 @@ class TrainingProgram:
         print(f"\nAverage Macro F1 over {k_folds} folds: {average_macro_f1:.2f}%")
 
     def hyperparameter_training_evaluation(
-            self, num_epochs, train_loader, test_loader, view, train_y, lr, weight_decay, optimizer_type):
+            self, num_epochs, train_loader, test_loader, view, train_y, lr, weight_decay, smoothing, optimizer_type):
         """
         Code for training algorithm and evaluating model, adjusted for hyperparameter tuning.
         Trains and evaluate the model for a given view using specified hyperparameters.
@@ -493,7 +492,10 @@ class TrainingProgram:
             test_loader (DataLoader): DataLoader providing testing/validation batches.
             view (str): Identifier for the model/view to train and evaluate.
             lr (float): Learning rate for the optimizer.
-            weight_decay (float): 
+            weight_decay (float): L2 regularization coefficient used by the optimizer to reduce
+                overfitting and overconfidence.
+            smoothing (float): Label smoothing factor applied in the loss function to soften the
+                target distribution and improve calibration.
             optimizer_type (str): Optimizer type to use, either 'adam' or 'sgd'.
 
         Returns:
@@ -503,7 +505,7 @@ class TrainingProgram:
             ValueError: If `optimizer_type` is not supported.
         """
         model = self.models[view]
-        criterion = self.get_loss_function(train_y)
+        criterion = self.get_loss_function(train_y, smoothing=smoothing)
 
         # Determine optimizer to be used
         if optimizer_type == "adam":
@@ -564,6 +566,7 @@ class TrainingProgram:
         erasing_scale_max = trial.suggest_float('erasing_scale_max', 0.1, 0.4)
         max_os_ratio = trial.suggest_float('max_os_ratio', 1.0, 5.0, step=0.5)
         weight_decay = trial.suggest_float("weight_decay", 1e-6, 1e-2, log=True)
+        smoothing = trial.suggest_float("label_smoothing", 0.0, 0.2)
 
         if erasing_scale_min >= erasing_scale_max:
             return 0.0  # Invalid trial
@@ -623,6 +626,7 @@ class TrainingProgram:
                 train_y=train_y,
                 lr=lr,
                 weight_decay=weight_decay,
+                smoothing=smoothing,
                 optimizer_type="adam"
             )
             all_f1_scores.append(f1)
