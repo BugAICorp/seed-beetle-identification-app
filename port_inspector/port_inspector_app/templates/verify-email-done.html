@@ -1,4 +1,5 @@
-<form method="post" action="{% url 'verify-email-done' %}">
+<link href="https://fonts.googleapis.com/css2?family=Roboto+Mono&display=swap" rel="stylesheet">
+<form method="post" action="{% url 'verify-email-done' %}" style="font-size: 16; font-family: 'Roboto mono', monospace;">
 	{% csrf_token %}
 	<h3>An email has been sent with instructions to verify your email. Make sure to check your spam folder!</h3>
   </form>

@@ -473,10 +473,10 @@ def results_view(request, hashed_ID):
 
     image_urls = ["", "", "", ""]
     if upload:
-        image_urls[0] = upload.frontal_image.image if upload.frontal_image is not None else "default_image.jpg"
-        image_urls[1] = upload.dorsal_image.image if upload.dorsal_image is not None else "default_image.jpg"
-        image_urls[2] = upload.caudal_image.image if upload.caudal_image is not None else "default_image.jpg"
-        image_urls[3] = upload.lateral_image.image if upload.lateral_image is not None else "default_image.jpg"
+        image_urls[0] = upload.dorsal_image.image if upload.dorsal_image is not None else "default_image.jpg"
+        image_urls[1] = upload.lateral_image.image if upload.lateral_image is not None else "default_image.jpg"
+        image_urls[2] = upload.frontal_image.image if upload.frontal_image is not None else "default_image.jpg"
+        image_urls[3] = upload.caudal_image.image if upload.caudal_image is not None else "default_image.jpg"
 
     confirm_choices = [(name, name) for name in species_names] + [("Other", "Other")]
 
