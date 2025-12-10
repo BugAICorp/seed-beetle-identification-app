@@ -75,17 +75,17 @@ def verify_email_confirm(request, uidb64, token):
     except (TypeError, ValueError, OverflowError, User.DoesNotExist):
         user = None
 
+    context = {}
     if user is not None and account_activation_token.check_token(user, token):
         user.is_email_verified = True
         user.is_active = True
         if user.email.lower().strip().endswith("@usda.gov"):
             user.is_usda = True
         user.save()
-        messages.success(request, "Your email has been verified.")
-        return redirect("/login/")
+        context = {"message": "Your account has been verified!", "show": True}
     else:
-        messages.warning(request, "The link is invalid.")
-    return render(request, "verify-email-confirm.html")
+        context = {"message": "This link is invalid. Please check the email that provided this link for further instructions.", "show": False}
+    return render(request, "verify-email-confirm.html", context)
 
 
 def signup_view(request):
@@ -473,10 +473,10 @@ def results_view(request, hashed_ID):
 
     image_urls = ["", "", "", ""]
     if upload:
-        image_urls[0] = upload.frontal_image.image if upload.frontal_image is not None else "default_image.jpg"
-        image_urls[1] = upload.dorsal_image.image if upload.dorsal_image is not None else "default_image.jpg"
-        image_urls[2] = upload.caudal_image.image if upload.caudal_image is not None else "default_image.jpg"
-        image_urls[3] = upload.lateral_image.image if upload.lateral_image is not None else "default_image.jpg"
+        image_urls[0] = upload.dorsal_image.image if upload.dorsal_image is not None else "default_image.jpg"
+        image_urls[1] = upload.lateral_image.image if upload.lateral_image is not None else "default_image.jpg"
+        image_urls[2] = upload.frontal_image.image if upload.frontal_image is not None else "default_image.jpg"
+        image_urls[3] = upload.caudal_image.image if upload.caudal_image is not None else "default_image.jpg"
 
     confirm_choices = [(name, name) for name in species_names] + [("Other", "Other")]
 
