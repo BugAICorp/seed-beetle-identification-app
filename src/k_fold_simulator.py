@@ -69,7 +69,7 @@ if __name__ == '__main__':
                 if not k_fold_dors and not k_fold_late and not k_fold_caud and not k_fold_fron:
                     print("No Training Requested")
                     sys.exit(0)
-        
+
         while True:
             print("\nWhich model architecture would you like to use?")
             user_input = int(input("Enter 1 for ResNet18, and 2 for ResNet50: "))

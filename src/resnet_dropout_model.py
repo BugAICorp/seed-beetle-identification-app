@@ -126,6 +126,15 @@ class ResNet18Dropout(torch.nn.Module):
         )
 
     def forward(self, x):
+        """
+        Forward pass of the model.
+
+        Args:
+            x (torch.Tensor): Input tensor of shape (N, 3, H, W).
+
+        Returns:
+            torch.Tensor: Output logits of shape (N, num_classes).
+        """
         x = self.features(x)
         x = self.classifier(x)
         return x
