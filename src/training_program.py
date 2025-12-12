@@ -20,7 +20,7 @@ from torch.utils.data import DataLoader, Dataset, WeightedRandomSampler
 from torchvision import transforms, models
 from transformation_classes import HistogramEqualization
 from data_augmenter import DataAugmenter
-from resnet_dropout_model import ResNet50Dropout
+from resnet_dropout_model import ResNet50Dropout, ResNet18Dropout
 import globals
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../')))
@@ -31,7 +31,7 @@ class TrainingProgram:
     Reads 4 subsets of pandas database from DatabaseReader, and trains and saves 4 models
     according to their respective image angles.
     """
-    def __init__(self, dataframe, class_column, num_classes,
+    def __init__(self, dataframe, class_column, num_classes, architecture,
                  image_column='Image', augment=False, balance_classes=0):
         """
         Initialize dataset, image height, and individual model training
@@ -50,6 +50,7 @@ class TrainingProgram:
         self.dataframe = dataframe
         self.height = 300
         self.num_classes = num_classes
+        self.architecture = architecture
         # Dataframe variables
         self.image_column = image_column
         self.class_column = class_column
@@ -70,10 +71,10 @@ class TrainingProgram:
             else 'mps' if torch.backends.mps.is_built()
             else 'cpu')
         self.models = {
-            "caud" : self.load_model(),
-            "dors" : self.load_model(),
-            "fron" : self.load_model(),
-            "late" : self.load_model()
+            "caud" : self.load_model(self.architecture),
+            "dors" : self.load_model(self.architecture),
+            "fron" : self.load_model(self.architecture),
+            "late" : self.load_model(self.architecture)
         }
         # Dictionary variables
         self.class_index_dictionary = {}
@@ -461,7 +462,7 @@ class TrainingProgram:
 
             # Reinitialize model before each fold
             self.model_accuracies[view] = 0.0
-            self.models[view] = self.load_model()
+            self.models[view] = self.load_model(self.architecture)
 
             self.training_evaluation_resnet(num_epochs, train_loader, val_loader, view, train_y=train_y, lrate=lrate)
 
@@ -602,7 +603,7 @@ class TrainingProgram:
                 train_dataset, np.array(train_y), batch_size, max_os_ratio=max_os_ratio)
             val_loader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False)
 
-            self.models[view] = self.load_model()
+            self.models[view] = self.load_model(self.architecture)
             f1 = self.hyperparameter_training_evaluation(
                 num_epochs=num_epochs,
                 train_loader=train_loader,
@@ -914,14 +915,31 @@ class TrainingProgram:
             plt.show()
         plt.close()
 
-    def load_model(self):
+    def load_model(self, architecture):
         """
-        Loads ResNet50 model with dropout for MC Dropout uncertainty to be trained and saved
-        Return: ResNet model
+        Loads ResNet50 or ResNet18 model with dropout for MC Dropout uncertainty to be trained and saved
+        Args:
+            architecture (str): Desired Model Architecture ("resnet50" or "resnet18")
+        Returns:
+            ResNet model
         """
-        # Load ResNet50 model with dropout layers and pretrained weights (weights=True)
-        model = ResNet50Dropout(num_classes=self.num_classes, dropout_p=0.5, weights=True)
-        model = model.to(self.device)
+        # Load ResNet models with dropout layers and pretrained weights (weights=True)
+        if architecture == "resnet18":
+            model = ResNet18Dropout(
+                num_classes=self.num_classes,
+                dropout_p=0.3,
+                weights=True
+            )
+            model = model.to(self.device)
+        elif architecture == "resnet50":
+            model = ResNet50Dropout(
+                num_classes=self.num_classes,
+                dropout_p=0.5,
+                weights=True
+            )
+            model = model.to(self.device)
+        else:
+            raise ValueError(f"Unknown architecture '{architecture}'. Use 'resnet18' or 'resnet50'.")
         return model
 
     def save_models(self, model_filenames = None, height_filename = None,
