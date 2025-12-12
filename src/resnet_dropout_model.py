@@ -69,3 +69,63 @@ class ResNet50Dropout(torch.nn.Module):
         x = self.features(x)
         x = self.classifier(x)
         return x
+
+class ResNet18Dropout(torch.nn.Module):
+    """
+    ResNet18 model with added dropout layers for Monte Carlo Dropout.
+
+    Dropout layers are inserted:
+        - after layer3
+        - after layer4
+        - before the final fully-connected classifier
+
+    This mirrors ResNet50Dropout design but adapted to the ResNet18 architecture.
+    """
+
+    def __init__(self, num_classes, dropout_p=0.3, weights=True):
+        """
+        Constructor for ResNet18Dropout class.
+
+        Args:
+            num_classes (int): Number of output classes for classification.
+            dropout_p (float, optional): Dropout probability (default=0.5).
+            weights (bool):
+                - True: Use ImageNet pretrained weights
+                - False: Initialize with random weights
+        """
+        super().__init__()
+
+        # Load pretrained base model
+        if weights:
+            base_model = models.resnet18(weights=models.ResNet18_Weights.IMAGENET1K_V1)
+        else:
+            base_model = models.resnet18(weights=None)
+
+        # Backbone with added dropout
+        self.features = torch.nn.Sequential(
+            base_model.conv1,
+            base_model.bn1,
+            base_model.relu,
+            base_model.maxpool,
+            base_model.layer1,
+            base_model.layer2,
+            base_model.layer3,
+            torch.nn.Dropout(p=dropout_p),     # Dropout after layer3
+            base_model.layer4,
+            torch.nn.Dropout(p=dropout_p),     # Dropout after layer4
+            base_model.avgpool,
+        )
+
+        # Classifier
+        num_features = base_model.fc.in_features
+
+        self.classifier = torch.nn.Sequential(
+            torch.nn.Flatten(),
+            torch.nn.Dropout(p=dropout_p),     # Dropout before FC
+            torch.nn.Linear(num_features, num_classes),
+        )
+
+    def forward(self, x):
+        x = self.features(x)
+        x = self.classifier(x)
+        return x
