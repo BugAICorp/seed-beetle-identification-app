@@ -42,6 +42,17 @@ def evaluate_images(species_eval,
 
 if __name__ == '__main__':
     while True:
+        print("\nWhich model architecture would you like to use?")
+        user_input = int(input("Enter 1 for ResNet18, and 2 for ResNet50: "))
+        if user_input == 1:
+            architecture = "resnet18"
+            break
+        if user_input == 2:
+            architecture = "resnet50"
+            break
+        print("Invalid Input. Please enter 1 or 2.")
+
+    while True:
         print("\nWould you like to use the models trained with an \"other\" class?")
         user_input = int(input("Enter 1 for YES, and 2 for NO: "))
         # if yes, set model paths to the "other" paths
@@ -109,14 +120,18 @@ if __name__ == '__main__':
         }
 
     # Load Genus Evaluator
-    genus_ml = ModelLoader(genus_model_paths, GENUS_OUTPUTS)
+    genus_ml = ModelLoader(
+        genus_model_paths, architecture=architecture, num_classes=GENUS_OUTPUTS, use_dropout=True
+    )
     genus_models = genus_ml.get_models()
 
     genus_evaluator = GenusEvaluationMethod(globals.img_height, genus_models, 1,
                                             gen_class_dictionary, gen_accuracy_list)
 
     # Load Species Evaluator
-    species_ml = ModelLoader(species_model_paths, SPECIES_OUTPUTS)
+    species_ml = ModelLoader(
+        species_model_paths, architecture=architecture, num_classes=SPECIES_OUTPUTS, use_dropout=True
+    )
     species_models = species_ml.get_models()
 
     species_evaluator = EvaluationMethod(globals.img_height, species_models, 1,
