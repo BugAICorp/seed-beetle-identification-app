@@ -72,10 +72,10 @@ class TrainingProgram:
             else 'mps' if torch.backends.mps.is_built()
             else 'cpu')
         self.models = {
-            "caud" : self.load_model(self.architecture),
-            "dors" : self.load_model(self.architecture),
-            "fron" : self.load_model(self.architecture),
-            "late" : self.load_model(self.architecture)
+            "caud" : self.load_model(),
+            "dors" : self.load_model(),
+            "fron" : self.load_model(),
+            "late" : self.load_model()
         }
         # Dictionary variables
         self.class_index_dictionary = {}
@@ -463,7 +463,7 @@ class TrainingProgram:
 
             # Reinitialize model before each fold
             self.model_accuracies[view] = 0.0
-            self.models[view] = self.load_model(self.architecture)
+            self.models[view] = self.load_model()
 
             self.training_evaluation_resnet(num_epochs, train_loader, val_loader, view, train_y=train_y, lrate=lrate)
 
@@ -604,7 +604,7 @@ class TrainingProgram:
                 train_dataset, np.array(train_y), batch_size, max_os_ratio=max_os_ratio)
             val_loader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False)
 
-            self.models[view] = self.load_model(self.architecture)
+            self.models[view] = self.load_model()
             f1 = self.hyperparameter_training_evaluation(
                 num_epochs=num_epochs,
                 train_loader=train_loader,
@@ -916,23 +916,23 @@ class TrainingProgram:
             plt.show()
         plt.close()
 
-    def load_model(self, architecture):
+    def load_model(self):
         """
-        Loads ResNet50 or ResNet18 model with dropout for MC Dropout uncertainty to be trained and saved
-        Args:
-            architecture (str): Desired Model Architecture ("resnet50" or "resnet18")
+        Loads ResNet50 or ResNet18(depending on self.architecture) model with dropout for
+        MC Dropout uncertainty to be trained and saved.
+
         Returns:
             ResNet model
         """
         # Load ResNet models with dropout layers and pretrained weights (weights=True)
-        if architecture == "resnet18":
+        if self.architecture == "resnet18":
             model = ResNet18Dropout(
                 num_classes=self.num_classes,
                 dropout_p=0.3,
                 weights=True
             )
             model = model.to(self.device)
-        elif architecture == "resnet50":
+        elif self.architecture == "resnet50":
             model = ResNet50Dropout(
                 num_classes=self.num_classes,
                 dropout_p=0.5,
@@ -940,7 +940,7 @@ class TrainingProgram:
             )
             model = model.to(self.device)
         else:
-            raise ValueError(f"Unknown architecture '{architecture}'. Use 'resnet18' or 'resnet50'.")
+            raise ValueError(f"Unknown architecture '{self.architecture}'. Use 'resnet18' or 'resnet50'.")
         return model
 
     def save_models(self, model_filenames = None, height_filename = None,
