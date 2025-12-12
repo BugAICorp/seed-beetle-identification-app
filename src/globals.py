@@ -117,3 +117,14 @@ yolo_model = "src/models/yolov8n_whole_image.pt"
 
 # Cropped Dataset
 cropped_dataset = "cropped_dataset"
+
+# Hyperparameters
+genus_caud_hypers = "src/hyperparameters/gen_caud_hyperparameters.json"
+genus_dors_hypers = "src/hyperparameters/gen_dors_hyperparameters.json"
+genus_fron_hypers = "src/hyperparameters/gen_fron_hyperparameters.json"
+genus_late_hypers = "src/hyperparameters/gen_late_hyperparameters.json"
+
+species_caud_hypers = "src/hyperparameters/spec_caud_hyperparameters.json"
+species_dors_hypers = "src/hyperparameters/spec_dors_hyperparameters.json"
+species_fron_hypers = "src/hyperparameters/spec_fron_hyperparameters.json"
+species_late_hypers = "src/hyperparameters/spec_late_hyperparameters.json"
