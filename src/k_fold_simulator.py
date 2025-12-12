@@ -69,6 +69,17 @@ if __name__ == '__main__':
                 if not k_fold_dors and not k_fold_late and not k_fold_caud and not k_fold_fron:
                     print("No Training Requested")
                     sys.exit(0)
+        
+        while True:
+            print("\nWhich model architecture would you like to use?")
+            user_input = int(input("Enter 1 for ResNet18, and 2 for ResNet50: "))
+            if user_input == 1:
+                architecture = "resnet18"
+                break
+            if user_input == 2:
+                architecture = "resnet50"
+                break
+            print("Invalid Input. Please enter 1 or 2.")
 
         while True:
             print("\nWould you like to train with an \"other\" class?")
@@ -145,7 +156,9 @@ if __name__ == '__main__':
         GENUS_OUTPUTS = dbr.get_num_genus()
 
         # Run training with dataframe
-        species_tp = TrainingProgram(df, "Species", SPECIES_OUTPUTS, augment=augment, balance_classes=balance_classes)
+        species_tp = TrainingProgram(
+            df, "Species", SPECIES_OUTPUTS, architecture=architecture, augment=augment, balance_classes=balance_classes
+        )
 
         # Training
         if k_fold_caud:
@@ -186,7 +199,9 @@ if __name__ == '__main__':
                                      erasure_params=erasure_params_late, max_os_ratio=3.5)
 
         # Run training with dataframe
-        genus_tp = TrainingProgram(df, "Genus", GENUS_OUTPUTS, augment=augment, balance_classes=balance_classes)
+        genus_tp = TrainingProgram(
+            df, "Genus", GENUS_OUTPUTS, architecture=architecture, augment=augment, balance_classes=balance_classes
+        )
 
         # Training
         if k_fold_caud:

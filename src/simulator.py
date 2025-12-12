@@ -54,6 +54,17 @@ if __name__ == '__main__':
                 sys.exit(0)
 
     while True:
+        print("\nWhich model architecture would you like to use?")
+        user_input = int(input("Enter 1 for ResNet18, and 2 for ResNet50: "))
+        if user_input == 1:
+            architecture = "resnet18"
+            break
+        if user_input == 2:
+            architecture = "resnet50"
+            break
+        print("Invalid Input. Please enter 1 or 2.")
+
+    while True:
         print("\nWould you like to train with an \"other\" class?")
         user_input = int(input("Enter 1 for YES, and 2 for NO: "))
         # if yes, set model paths to the "other" paths
@@ -225,7 +236,9 @@ if __name__ == '__main__':
     GENUS_OUTPUTS = dbr.get_num_genus()
 
     # Run training with dataframe
-    species_tp = TrainingProgram(df, "Species", SPECIES_OUTPUTS, augment = augment, balance_classes=balance_classes)
+    species_tp = TrainingProgram(
+        df, "Species", SPECIES_OUTPUTS, architecture=architecture, augment=augment, balance_classes=balance_classes
+    )
 
     # Training
     if train_caud:
@@ -385,7 +398,9 @@ if __name__ == '__main__':
         overwrite)
 
     # Run training with dataframe
-    genus_tp = TrainingProgram(df, "Genus", GENUS_OUTPUTS, augment = augment, balance_classes=balance_classes)
+    genus_tp = TrainingProgram(
+        df, "Genus", GENUS_OUTPUTS, architecture=architecture, augment=augment, balance_classes=balance_classes
+    )
 
     # Training
     if train_caud:
