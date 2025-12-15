@@ -62,7 +62,7 @@ def crop_views_from_redis(upload_id, cropper):
             img_bytes = io.BytesIO()
             cropped_img.save(img_bytes, format="JPEG")
             img_bytes.seek(0)
-            redis_conn.set(key, img_bytes.read(), ex=3600) # auto-delete after 1 hour(TTL)
+            redis_conn.set(key, img_bytes.read(), ex=3600)  # auto-delete after 1 hour(TTL)
 
         except Exception as e:
             print(f"[Crop Error] Failed to crop view {view} for upload {upload_id}: {e}")
