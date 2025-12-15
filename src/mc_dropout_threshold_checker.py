@@ -10,6 +10,7 @@ from training_database_creator import TrainingDataConverter
 from training_database_reader import DatabaseReader
 from training_program import TrainingProgram
 import globals
+from import_hyperparams import import_params
 
 class Tee:
     """
@@ -151,14 +152,8 @@ if __name__ == "__main__":
         threshold_list = np.linspace(0.5, 1, 51)  # 0.0 to 1.0 in 0.1 steps
         all_results = {}
         # Species CAUD
-        erasure_params_caud = {
-            "p": 0.5450068594306283,
-            "min": 0.032231275920186486,
-            "max": 0.23975077356392424
-        }
-        species_tp.train_resnet_model(20, "caud", batch=16, rotation=6,
-                                    brightness=0.0672682540489113, lrate=0.0002205207835665262,
-                                    erasure_params=erasure_params_caud, max_os_ratio=1.5)
+        hyperparameters = import_params(globals.species_caud_hypers)
+        species_tp.train_resnet_model(**hyperparameters)
 
         # Species CAUD MC Dropout
         print("\nRunning Monte Carlo Dropout uncertainty evaluation for species CAUD view...")
@@ -167,14 +162,8 @@ if __name__ == "__main__":
         )
 
         # Species DORS
-        erasure_params_dors = {
-            "p": 0.7757711509313643,
-            "min": 0.01008374654178916,
-            "max": 0.38794012670750844
-        }
-        species_tp.train_resnet_model(20, "dors", batch=16, rotation=12,
-                                    brightness=0.22216817398095146, lrate=0.0001296278789334687,
-                                    erasure_params=erasure_params_dors, max_os_ratio=2.5)
+        hyperparameters = import_params(globals.species_dors_hypers)
+        species_tp.train_resnet_model(**hyperparameters)
 
         # Species DORS MC Dropout
         print("\nRunning Monte Carlo Dropout uncertainty evaluation for species DORS view...")
@@ -183,14 +172,8 @@ if __name__ == "__main__":
         )
 
         # Species FRON
-        erasure_params_fron = {
-            "p": 0.14786083200104405,
-            "min": 0.08542272176573411,
-            "max": 0.3766890143419105
-        }
-        species_tp.train_resnet_model(20, "fron", batch=16, rotation=7,
-                                    brightness=0.16052298566019538, lrate=0.00018151090290770348,
-                                    erasure_params=erasure_params_fron, max_os_ratio=4.0)
+        hyperparameters = import_params(globals.species_fron_hypers)
+        species_tp.train_resnet_model(**hyperparameters)
 
         # Species FRON MC Dropout
         print("\nRunning Monte Carlo Dropout uncertainty evaluation for species FRON view...")
@@ -199,14 +182,8 @@ if __name__ == "__main__":
         )
 
         # Species LATE
-        erasure_params_late = {
-            "p": 0.005799105801707227,
-            "min": 0.08818090418966613,
-            "max": 0.2566152645216
-        }
-        species_tp.train_resnet_model(20, "late", batch=64, rotation=6,
-                                    brightness=0.29977566775503983, lrate=0.00012089084719947084,
-                                    erasure_params=erasure_params_late, max_os_ratio=3.5)
+        hyperparameters = import_params(globals.species_late_hypers)
+        species_tp.train_resnet_model(**hyperparameters)
 
         # Species LATE MC Dropout
         print("\nRunning Monte Carlo Dropout uncertainty evaluation for species LATE view...")
@@ -219,14 +196,8 @@ if __name__ == "__main__":
 
         # Training
         # Genus CAUD
-        erasure_params_caud = {
-            "p": 0.117534992000064,
-            "min": 0.08054270560117567,
-            "max": 0.2983577819330524
-        }
-        genus_tp.train_resnet_model(20, "caud", batch=16, rotation=10,
-                                brightness=0.1462847736327197, lrate=0.00004409398823911199,
-                                erasure_params=erasure_params_caud, max_os_ratio=5.0)
+        hyperparameters = import_params(globals.genus_caud_hypers)
+        genus_tp.train_resnet_model(**hyperparameters)
         # Genus CAUD MC Dropout
         print("\nRunning Monte Carlo Dropout uncertainty evaluation for genus CAUD view...")
         all_results["genus_caud"] = evaluate_thresholds(
@@ -234,14 +205,8 @@ if __name__ == "__main__":
         )
 
         # Genus DORS
-        erasure_params_dors = {
-            "p": 0.6279748323341047,
-            "min": 0.041921505805665914,
-            "max": 0.24388226488220693
-        }
-        genus_tp.train_resnet_model(20, "dors", batch=32, rotation=6,
-                                brightness=0.2988104061389692, lrate=0.00004736821824349854,
-                                erasure_params=erasure_params_dors, max_os_ratio=1.0)
+        hyperparameters = import_params(globals.genus_dors_hypers)
+        genus_tp.train_resnet_model(**hyperparameters)
 
         # Genus DORS MC Dropout
         print("\nRunning Monte Carlo Dropout uncertainty evaluation for genus DORS view...")
@@ -250,14 +215,8 @@ if __name__ == "__main__":
         )
 
         # Genus FRON
-        erasure_params_fron = {
-            "p": 0.30518586009082976,
-            "min": 0.04609315007975057,
-            "max": 0.36140797065499464
-        }
-        genus_tp.train_resnet_model(20, "fron", batch=64, rotation=14,
-                                brightness=0.22903306674663448, lrate=0.0001380146193447115,
-                                erasure_params=erasure_params_fron, max_os_ratio=5.0)
+        hyperparameters = import_params(globals.genus_fron_hypers)
+        genus_tp.train_resnet_model(**hyperparameters)
 
         # Genus FRON MC Dropout
         print("\nRunning Monte Carlo Dropout uncertainty evaluation for genus FRON view...")
@@ -266,14 +225,8 @@ if __name__ == "__main__":
         )
 
         # Genus LATE
-        erasure_params_late = {
-            "p": 0.30535724516213314,
-            "min": 0.011359991265195598,
-            "max": 0.31162030351760406
-        }
-        genus_tp.train_resnet_model(20, "late", batch=32, rotation=10,
-                                brightness=0.04304050259182124, lrate=0.00001826137626671228,
-                                erasure_params=erasure_params_late, max_os_ratio=3.0)
+        hyperparameters = import_params(globals.genus_late_hypers)
+        genus_tp.train_resnet_model(**hyperparameters)
 
         # Genus LATE MC Dropout
         print("\nRunning Monte Carlo Dropout uncertainty evaluation for genus LATE view...")
