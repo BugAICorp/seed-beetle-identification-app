@@ -4,6 +4,8 @@
     "batch": 64,
     "rotation": 14,
     "brightness": 0.22903306674663448,
+    "weight_decay": 0.0001,
+    "smoothing": 0.1,
     "lrate": 0.0001380146193447115,
     "erasure_params": {
         "p": 0.30518586009082976,
