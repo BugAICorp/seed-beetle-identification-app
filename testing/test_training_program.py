@@ -49,7 +49,7 @@ class TestTrainingProgram(unittest.TestCase):
         })
 
         # Initialize the TrainingProgram instance
-        self.training_program = TrainingProgram(self.mock_dataframe, "Species", 15)
+        self.training_program = TrainingProgram(self.mock_dataframe, "Species", 15, "resnet50")
 
         # Mock the get_subset method to use the mock DataFrame
         self.training_program.get_subset = MagicMock(side_effect=self.mock_get_subset)
