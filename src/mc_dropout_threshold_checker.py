@@ -185,6 +185,17 @@ def evaluate_mc_predictions(trainer, view, n_samples=30, batch_size=32, title_pr
 
 if __name__ == "__main__":
     while True:
+        print("\nWhich model architecture would you like to use?")
+        user_input = int(input("Enter 1 for ResNet18, and 2 for ResNet50: "))
+        if user_input == 1:
+            architecture = "resnet18"
+            break
+        if user_input == 2:
+            architecture = "resnet50"
+            break
+        print("Invalid Input. Please enter 1 or 2.")
+
+    while True:
         print("\nWould you like to use class balancing techniques while training?")
         print("\t0 = No Balancing\n" \
             "\t1 = Class-Weighted Loss Function\n" \
@@ -253,7 +264,9 @@ if __name__ == "__main__":
     GENUS_OUTPUTS = dbr.get_num_genus()
 
     # Run training with dataframe
-    species_tp = TrainingProgram(df, "Species", SPECIES_OUTPUTS, augment=True, balance_classes=balance_classes)
+    species_tp = TrainingProgram(
+        df, "Species", SPECIES_OUTPUTS, architecture=architecture, augment=True, balance_classes=balance_classes
+    )
 
     # Training
     threshold_list = np.linspace(0, 1, 101)  # 0.0 to 1.0 in 0.1 steps
@@ -323,7 +336,9 @@ if __name__ == "__main__":
         )
 
     # Run training with dataframe
-    genus_tp = TrainingProgram(df, "Genus", GENUS_OUTPUTS, augment=True, balance_classes=balance_classes)
+    genus_tp = TrainingProgram(
+        df, "Genus", GENUS_OUTPUTS, architecture=architecture, augment=True, balance_classes=balance_classes
+    )
 
     # Training
     # Genus CAUD

@@ -153,7 +153,7 @@ if __name__ == '__main__':
             "fron": spec_fron_model,
             "late": spec_late_model
         }
-        species_ml = ModelLoader(species_model_filenames, SPECIES_OUTPUTS)
+        species_ml = ModelLoader(species_model_filenames, architecture="resnet50", num_classes=SPECIES_OUTPUTS)
         species_models = species_ml.get_models()
         run_gradcam(species_models, "species", cropped_images, transformations)
 
@@ -165,6 +165,6 @@ if __name__ == '__main__':
             "fron": gen_fron_model,
             "late": gen_late_model
         }
-        genus_ml = ModelLoader(genus_model_filenames, GENUS_OUTPUTS)
+        genus_ml = ModelLoader(genus_model_filenames, architecture="resnet50", num_classes=GENUS_OUTPUTS)
         genus_models = genus_ml.get_models()
         run_gradcam(genus_models, "genus", cropped_images, transformations)
