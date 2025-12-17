@@ -3,24 +3,26 @@
 import json
 from torchvision import models
 import torch
-from resnet_dropout_model import ResNet50Dropout
+from resnet_dropout_model import ResNet50Dropout, ResNet18Dropout
 
 class ModelLoader:
     """
     Initializes and loads four models with the designated pretrained weights for
     the different image angles.
     """
-    def __init__(self, weights_file_paths, num_classes = 15, use_dropout=False, test = False):
+    def __init__(self, weights_file_paths, architecture, num_classes = 15, use_dropout=False, test = False):
         """
         Initializes the TrainedModels class.
 
         Args:
             weights_file_paths (dict): A dictionary mapping model keys to their weight file paths.
+            architecture (str): Desired Model Architecture ("resnet50" or "resnet18").
             num_classes (int): Number of output classes (default=15).
-            use_dropout (bool): If True, initializes ResNet50Dropout instead of standard ResNet50.
+            use_dropout (bool): If True, initializes ResNet model with dropout instead of standard ResNet.
             test (bool, optional): If True, skips model initialization for testing purposes.
         """
         self.weights_file_paths = weights_file_paths
+        self.architecture = architecture
         self.num_classes = num_classes
         self.use_dropout = use_dropout
 
@@ -42,7 +44,7 @@ class ModelLoader:
 
     def model_initializer(self):
         """
-        Initializes ResNet50 models for each key in self.models and replaces the fully connected
+        Initializes ResNet18/50 models for each key in self.models and replaces the fully connected
         layer to output x classes(determined by self.num_classes).
         Lastly, loads pretrained weights into the initialized model with load_model_weights(key).
 
@@ -51,13 +53,32 @@ class ModelLoader:
         """
         for key in self.models:
             if self.use_dropout:
-                # Initialize with dropout layers for uncertainty estimation
-                self.models[key] = ResNet50Dropout(num_classes=self.num_classes, weights=False)
+                # Initialize ResNet(18 or 50) with dropout layers for uncertainty estimation
+                if self.architecture == "resnet18":
+                    self.models[key] = ResNet18Dropout(
+                        num_classes=self.num_classes,
+                        dropout_p=0.3,
+                        weights=False
+                    )
+                elif self.architecture == "resnet50":
+                    self.models[key] = ResNet50Dropout(
+                        num_classes=self.num_classes,
+                        dropout_p=0.5,
+                        weights=False
+                    )
+                else:
+                    raise ValueError(f"Unknown architecture '{self.architecture}'. Use 'resnet18' or 'resnet50'.")
 
             else:
-                # Standard ResNet50
+                # Standard ResNet18 or ResNet50
                 # Initialize a fresh model with weights = None, so there are no weights
-                self.models[key] = models.resnet50(weights=None)
+                if self.architecture == "resnet18":
+                    self.models[key] = models.resnet18(weights=None)
+                elif self.architecture == "resnet50":
+                    self.models[key] = models.resnet50(weights=None)
+                else:
+                    raise ValueError(f"Unknown architecture '{self.architecture}'. Use 'resnet18' or 'resnet50'.")
+
                 num_features = self.models[key].fc.in_features
                 self.models[key].fc = torch.nn.Linear(num_features, self.num_classes)
 

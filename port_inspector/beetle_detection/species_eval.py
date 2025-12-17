@@ -78,10 +78,18 @@ def load_models_once():
     }
 
     species_ml = ModelLoader(
-        weights_file_paths=species_model_paths, num_classes=SPECIES_OUTPUTS, use_dropout=True)
+        weights_file_paths=species_model_paths,
+        architecture="resnet50",
+        num_classes=SPECIES_OUTPUTS,
+        use_dropout=True
+    )
 
     genus_ml = ModelLoader(
-        weights_file_paths=genus_model_paths, num_classes=GENUS_OUTPUTS, use_dropout=True)
+        weights_file_paths=genus_model_paths,
+        architecture="resnet50",
+        num_classes=GENUS_OUTPUTS,
+        use_dropout=True
+    )
 
     species_models = species_ml.get_models()
     genus_models = genus_ml.get_models()
@@ -224,8 +232,8 @@ def retrain_models():
     """
     Script for running retraining of models
     """
-    species_tp = TrainingProgram('species', 'image', augment=True, balance_classes=2)
-    genus_tp = TrainingProgram('genus', 'image', augment=True, balance_classes=2)
+    species_tp = TrainingProgram('species', 'resnet50', 'image', augment=True, balance_classes=2)
+    genus_tp = TrainingProgram('genus', 'resnet50', 'image', augment=True, balance_classes=2)
 
     # Species LATE
     erasure_params_late = {

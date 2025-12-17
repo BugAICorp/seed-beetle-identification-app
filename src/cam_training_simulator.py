@@ -270,7 +270,7 @@ if __name__ == '__main__':
                 "late" : gen_late_model
             }
 
-        genus_ml = ModelLoader(genus_model_paths, GENUS_OUTPUTS)
+        genus_ml = ModelLoader(genus_model_paths, architecture="resnet50", num_classes=GENUS_OUTPUTS)
         genus_models = genus_ml.get_models()
 
         print(genus_models.keys)
@@ -307,7 +307,7 @@ if __name__ == '__main__':
                 "fron" : spec_fron_model,
                 "late" : spec_late_model
             }
-        species_ml = ModelLoader(species_model_paths, SPECIES_OUTPUTS)
+        species_ml = ModelLoader(species_model_paths, architecture="resnet50", num_classes=SPECIES_OUTPUTS)
         species_models = species_ml.get_models()
 
         print(species_models.keys)
