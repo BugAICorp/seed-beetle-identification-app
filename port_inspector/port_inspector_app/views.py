@@ -480,16 +480,19 @@ def results_view(request, hashed_ID):
 
     confirm_choices = [(name, name) for name in species_names] + [("Other", "Other")]
 
+    confirmation_message = None
+
     # Confirm species form
     if request.method == "POST":
-        confirm_form = ConfirmIdForm(request.POST, choices=confirm_choices)
+        confirm_form = ConfirmIdForm(request.POST, instance=upload, choices=confirm_choices)
         if confirm_form.is_valid():
             upload.final_identification = confirm_form.cleaned_data['choice']
             upload.save()  # Save new data to the database
-            # TODO add some form of confirmation here
             print("IDENTIFIED AS: ", upload.final_identification)
+            confirmation_message = "Your identification changes have been made"
+
     else:
-        confirm_form = ConfirmIdForm(choices=confirm_choices)
+        confirm_form = ConfirmIdForm(instance=upload, choices=confirm_choices)
 
     confirmed_species = upload.final_identification
 
@@ -525,7 +528,8 @@ def results_view(request, hashed_ID):
             "species_uncert": upload.species_uncertainty,
             "genus_uncert": upload.genus_uncertainty,
             "warning_message": warning_message,
-            "is_validated": upload.is_validated
+            "is_validated": upload.is_validated,
+            "confirmation_message": confirmation_message
         },
     )
 
