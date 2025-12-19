@@ -31,7 +31,7 @@ def crop_views_from_redis(upload_id, cropper):
         cropper (BeetleCropper): The YOLO cropping utility.
 
     Returns:
-        failed_views (list[str]): views where no beetle was detected or cropping failed
+        failed_views (list[str]): list of the views where no beetle was detected or the cropping failed
     """
     redis_conn = get_redis_conn()
     if not redis_conn:
@@ -99,7 +99,7 @@ def run_evaluation_task(self, upload_id):
     from beetle_detection.beetle_cropper import BeetleCropper
     from beetle_detection.species_eval import evaluate_images
 
-    cropper = BeetleCropper(threshold=0.8)
+    cropper = BeetleCropper(threshold=0.4)
 
     failed_views = crop_views_from_redis(upload_id, cropper)
 
@@ -155,7 +155,7 @@ def run_mc_dropout_evaluation_task(self, upload_id):
     from beetle_detection.beetle_cropper import BeetleCropper
     from beetle_detection.species_eval import evaluate_mc_dropout
 
-    cropper = BeetleCropper(threshold=0.8)
+    cropper = BeetleCropper(threshold=0.4)
 
     failed_views = crop_views_from_redis(upload_id, cropper)
 

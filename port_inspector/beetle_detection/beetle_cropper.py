@@ -44,7 +44,7 @@ class BeetleCropper:
     Uses a YOLOv8 model to crop beetles from images in a directory or a single image.
     """
 
-    def __init__(self, threshold=0.8):
+    def __init__(self, threshold=0.4):
         """
         Initialize the YOLO model.
 
