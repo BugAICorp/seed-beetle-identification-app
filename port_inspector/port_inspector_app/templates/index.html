@@ -32,7 +32,15 @@
 
   <div>
     <img src="{% static 'banner.png' %}" id="title-banner" />
-    <img src="{% static 'use_product.png' %}" id="use-case-banner" usemap="#use-case-map" />
+    <div class="map-wrapper">
+      <img src="{% static 'use_product.png' %}" id="use-case-banner" usemap="#use-case-map" />
+
+      <div class="tooltip-container hotspot">
+        <div class="tooltip-text">
+          <img src="{% static 'bruchinai_tooltips.jpg' %}" class="tooltip-image">
+        </div>
+      </div>
+    </div>
     <map name="use-case-map">
       <area shape="circle" coords="1812,512,200" href="/upload" alt="Link 1">
     </map>
