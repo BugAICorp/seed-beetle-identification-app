@@ -489,7 +489,7 @@ def results_view(request, hashed_ID):
             upload.final_identification = confirm_form.cleaned_data['choice']
             upload.save()  # Save new data to the database
             print("IDENTIFIED AS: ", upload.final_identification)
-            confirmation_message = "Your identification changes have been made"
+            confirmation_message = "Your identification changes have been made!"
 
     else:
         confirm_form = ConfirmIdForm(instance=upload, choices=confirm_choices)
@@ -504,7 +504,7 @@ def results_view(request, hashed_ID):
     # Case 1: Genus Certain + Species Certain
     if genus_certain and species_certain:
         if genus_result[0].split()[0] != formatted_species_results[1]["species_name"].split()[0]:
-            warning_message = "ERROR: The predicted genus and species do not match. " \
+            warning_message = "WARNING: The predicted genus and species do not match. " \
                 "Please see identification resources to help identify the specimen."
     # Case 2–4: Any combination with 'Uncertain'
     elif not (genus_certain and species_certain):
