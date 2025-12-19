@@ -22,7 +22,7 @@ class TestModelLoader(unittest.TestCase):
         """ Test that load_model_weights correctly loads weights into the model. """
         # Create a testing instance of the ModelLoader object with test mode enabled
         weights_file_paths = {"caud": "mock_weights.pth"}
-        testing_instance = ModelLoader(weights_file_paths, 15, test=True)
+        testing_instance = ModelLoader(weights_file_paths, "resnet50", 15, test=True)
         testing_instance.models["caud"] = MagicMock()
         testing_instance.device = torch.device("cpu")
 
@@ -44,7 +44,7 @@ class TestModelLoader(unittest.TestCase):
         """ Test that load_model_weights handles FileNotFoundError correctly. """
         # testing instance setup
         weights_file_paths = {"caud": "non_existent_weights.pth"}
-        testing_instance = ModelLoader(weights_file_paths, 15, test=True)
+        testing_instance = ModelLoader(weights_file_paths, "resnet50", 15, test=True)
         testing_instance.models["caud"] = MagicMock()
         testing_instance.device = torch.device("cpu")
 
@@ -64,7 +64,7 @@ class TestModelLoader(unittest.TestCase):
             "fron": "mock_weights.pth",
             "late": "mock_weights.pth"
         }
-        testing_instance = ModelLoader(weights_file_paths, 15, test=True)
+        testing_instance = ModelLoader(weights_file_paths, "resnet50", 15, test=True)
 
         # Mock the models to be ResNet instances
         for key in weights_file_paths:
@@ -100,7 +100,7 @@ class TestModelLoader(unittest.TestCase):
         mock_state_dict = MagicMock()
         mock_torch_load.return_value = mock_state_dict
 
-        loader = ModelLoader({}, 3, test=True)
+        loader = ModelLoader({}, "resnet50", 3, test=True)
 
         with patch("torch.nn.Module.load_state_dict", return_value=None):
             model = load_stack_model("Genus", df, "genus_dict.json")

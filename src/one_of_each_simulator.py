@@ -86,14 +86,14 @@ if __name__ == '__main__':
         }
 
     # Load Genus Evaluator
-    genus_ml = ModelLoader(genus_model_paths, GENUS_OUTPUTS)
+    genus_ml = ModelLoader(genus_model_paths, architecture="resnet50", num_classes=GENUS_OUTPUTS)
     genus_models = genus_ml.get_models()
 
     genus_evaluator = GenusEvaluationMethod(globals.img_height, genus_models, 1,
                                             globals.gen_class_dictionary, globals.gen_accuracy_list)
 
     # Load Species Evaluator
-    species_ml = ModelLoader(species_model_paths, SPECIES_OUTPUTS)
+    species_ml = ModelLoader(species_model_paths, architecture="resnet50", num_classes=SPECIES_OUTPUTS)
     species_models = species_ml.get_models()
 
     species_evaluator = EvaluationMethod(globals.img_height, species_models, 1,

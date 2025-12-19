@@ -68,10 +68,10 @@ if __name__ == '__main__':
     }
 
     # Load the Models
-    species_ml = ModelLoader(species_model_filenames, SPECIES_OUTPUTS)
+    species_ml = ModelLoader(species_model_filenames, architecture="resnet50", num_classes=SPECIES_OUTPUTS)
     species_models = species_ml.get_models()
 
-    genus_ml = ModelLoader(genus_model_filenames, GENUS_OUTPUTS)
+    genus_ml = ModelLoader(genus_model_filenames, architecture="resnet50", num_classes=GENUS_OUTPUTS)
     genus_models = genus_ml.get_models()
 
     # Get the transformations

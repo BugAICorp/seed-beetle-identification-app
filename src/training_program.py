@@ -20,7 +20,7 @@ from torch.utils.data import DataLoader, Dataset, WeightedRandomSampler
 from torchvision import transforms, models
 from transformation_classes import HistogramEqualization
 from data_augmenter import DataAugmenter
-from resnet_dropout_model import ResNet50Dropout
+from resnet_dropout_model import ResNet50Dropout, ResNet18Dropout
 import globals
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../')))
@@ -31,7 +31,7 @@ class TrainingProgram:
     Reads 4 subsets of pandas database from DatabaseReader, and trains and saves 4 models
     according to their respective image angles.
     """
-    def __init__(self, dataframe, class_column, num_classes,
+    def __init__(self, dataframe, class_column, num_classes, architecture,
                  image_column='Image', augment=False, balance_classes=0):
         """
         Initialize dataset, image height, and individual model training
@@ -39,6 +39,7 @@ class TrainingProgram:
             dataframe (pd.DataFrame): Original dataset with image blobs
             class_column (str): Column header used to determine class
             num_classes (int): Number of classes/outputs for the models
+            architecture (str): Desired Model Architecture ("resnet50" or "resnet18")
             image_column (str): Column header used to determine the image column
             augment (bool): Determines if data is augmented or not
             balance_classes (int): Determines if class balancing will be used during training.
@@ -50,6 +51,7 @@ class TrainingProgram:
         self.dataframe = dataframe
         self.height = 300
         self.num_classes = num_classes
+        self.architecture = architecture
         # Dataframe variables
         self.image_column = image_column
         self.class_column = class_column
@@ -916,12 +918,29 @@ class TrainingProgram:
 
     def load_model(self):
         """
-        Loads ResNet50 model with dropout for MC Dropout uncertainty to be trained and saved
-        Return: ResNet model
+        Loads ResNet50 or ResNet18(depending on self.architecture) model with dropout for
+        MC Dropout uncertainty to be trained and saved.
+
+        Returns:
+            ResNet model
         """
-        # Load ResNet50 model with dropout layers and pretrained weights (weights=True)
-        model = ResNet50Dropout(num_classes=self.num_classes, dropout_p=0.5, weights=True)
-        model = model.to(self.device)
+        # Load ResNet models with dropout layers and pretrained weights (weights=True)
+        if self.architecture == "resnet18":
+            model = ResNet18Dropout(
+                num_classes=self.num_classes,
+                dropout_p=0.3,
+                weights=True
+            )
+            model = model.to(self.device)
+        elif self.architecture == "resnet50":
+            model = ResNet50Dropout(
+                num_classes=self.num_classes,
+                dropout_p=0.5,
+                weights=True
+            )
+            model = model.to(self.device)
+        else:
+            raise ValueError(f"Unknown architecture '{self.architecture}'. Use 'resnet18' or 'resnet50'.")
         return model
 
     def save_models(self, model_filenames = None, height_filename = None,

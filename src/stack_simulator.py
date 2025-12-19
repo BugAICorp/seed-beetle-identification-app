@@ -23,7 +23,7 @@ if __name__ == '__main__':
             "fron" : "src/models/gen_fron.pth",
             "late" : "src/models/gen_late.pth"
         }
-    genus_ml = ModelLoader(genus_model_paths, GENUS_OUTPUTS)
+    genus_ml = ModelLoader(genus_model_paths, architecture="resnet50", num_classes=GENUS_OUTPUTS)
 
     genus_model_list = genus_ml.get_models()
 
@@ -43,7 +43,7 @@ if __name__ == '__main__':
             "fron" : "src/models/spec_fron.pth",
             "late" : "src/models/spec_late.pth"
         }
-    species_ml = ModelLoader(species_model_paths, SPECIES_OUTPUTS)
+    species_ml = ModelLoader(species_model_paths, architecture="resnet50", num_classes=SPECIES_OUTPUTS)
 
     species_model_list = species_ml.get_models()
 

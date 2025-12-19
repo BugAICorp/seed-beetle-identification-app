@@ -1,9 +1,7 @@
-<div class="container">
-    {% if messages %}
-        {% for message in messages %}
-            <div class="alert">
-                {{ message }}
-            </div>
-        {% endfor %}
+<link href="https://fonts.googleapis.com/css2?family=Roboto+Mono&display=swap" rel="stylesheet">
+<div class="container" style="font-size: 16; font-family: 'Roboto mono', monospace;">
+    {{ message }}
+    {% if show %}
+        <a href="{% url 'login' %}">login here</a>
     {% endif %}
 </div>

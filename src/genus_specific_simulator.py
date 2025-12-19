@@ -71,7 +71,7 @@ if __name__ == '__main__':
         }
 
     GENUS_OUTPUTS = dbr.get_num_genus()
-    genus_ml = ModelLoader(genus_model_paths, GENUS_OUTPUTS)
+    genus_ml = ModelLoader(genus_model_paths, architecture="resnet50", num_classes=GENUS_OUTPUTS)
     genus_models = genus_ml.get_models()
 
     pic_evaluator = EvalSpeciesByGenus(genus_models, globals.gen_class_dictionary)
