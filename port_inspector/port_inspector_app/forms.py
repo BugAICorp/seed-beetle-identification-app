@@ -192,6 +192,11 @@ class ConfirmIdForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         self.fields['choice'].choices = choices
 
+        if self.instance.pk and self.instance.final_identification:
+            self.fields['choice'].label = "Change Identification"
+        else:
+            self.fields['choice'].label = "Confirm Identification"
+
 
 class ContactUsForm(forms.Form):
     message = forms.CharField(label='Message')
