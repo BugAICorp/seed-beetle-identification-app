@@ -483,7 +483,17 @@ class TrainingProgram:
         print(f"\nAverage Macro F1 over {k_folds} folds: {average_macro_f1:.2f}%")
 
     def hyperparameter_training_evaluation(
-            self, num_epochs, train_loader, test_loader, view, train_y, lr, weight_decay, smoothing, optimizer_type):
+            self,
+            num_epochs,
+            train_loader,
+            test_loader,
+            view, train_y,
+            lr,
+            weight_decay,
+            smoothing,
+            optimizer_type,
+            early_stopping_patience=3
+        ):
         """
         Code for training algorithm and evaluating model, adjusted for hyperparameter tuning.
         Trains and evaluate the model for a given view using specified hyperparameters.
@@ -517,8 +527,11 @@ class TrainingProgram:
         else:
             raise ValueError(f"Unsupported optimizer: {optimizer_type}")
 
+        best_f1 = -float("inf")
+        epochs_no_improve = 0
         # Run training algorithm
-        for _ in range(num_epochs):
+        for epoch in range(num_epochs):
+            # Train
             model.train()
             for inputs, labels in train_loader:
                 inputs, labels = inputs.to(self.device), labels.to(self.device)
@@ -528,21 +541,35 @@ class TrainingProgram:
                 loss.backward()
                 optimizer.step()
 
-        # Evaluate model at the end rather than at each epoch due to hyperparameter tuning
-        model.eval()
-        predictions, true_labels = [], []
-        with torch.no_grad():
-            for inputs, labels in test_loader:
-                inputs, labels = inputs.to(self.device), labels.to(self.device)
-                outputs = model(inputs)
-                _, preds = torch.max(outputs, 1)
-                predictions.extend(preds.cpu().numpy())
-                true_labels.extend(labels.cpu().numpy())
+            # Validate
+            model.eval()
+            predictions, true_labels = [], []
+            with torch.no_grad():
+                for inputs, labels in test_loader:
+                    inputs, labels = inputs.to(self.device), labels.to(self.device)
+                    outputs = model(inputs)
+                    _, preds = torch.max(outputs, 1)
+                    predictions.extend(preds.cpu().numpy())
+                    true_labels.extend(labels.cpu().numpy())
 
-        f1 = f1_score(true_labels, predictions, average="macro")
-        return f1
+            f1 = f1_score(true_labels, predictions, average="macro")
 
-    def objective(self, trial, view, num_epochs=10, k_folds=3):
+            if np.isnan(f1):
+                return 0.0
+
+            # Early Stopping (delta = 1e-3)
+            if f1 > best_f1 + 1e-3:
+                best_f1 = f1
+                epochs_no_improve = 0
+            else:
+                epochs_no_improve += 1
+
+            if epochs_no_improve >= early_stopping_patience:
+                break
+
+        return best_f1
+
+    def objective(self, trial, view, num_epochs=15, k_folds=3):
         """
         Objective function for Optuna hyperparameter tuning.
 
