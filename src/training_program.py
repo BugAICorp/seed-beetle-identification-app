@@ -492,6 +492,8 @@ class TrainingProgram:
             weight_decay,
             smoothing,
             optimizer_type,
+            trial=None,
+            fold_idx=0,
             early_stopping_patience=3
         ):
         """
@@ -556,6 +558,14 @@ class TrainingProgram:
 
             if np.isnan(f1):
                 return 0.0
+
+            if trial is not None and fold_idx > 0:
+                # Use a composite step so folds don't overwrite each other
+                step = fold_idx * num_epochs + epoch
+                trial.report(best_f1, step)
+
+                if trial.should_prune():
+                    raise optuna.TrialPruned()
 
             # Early Stopping (delta = 1e-3)
             if f1 > best_f1 + 1e-3:
@@ -670,7 +680,9 @@ class TrainingProgram:
                 lr=lr,
                 weight_decay=weight_decay,
                 smoothing=smoothing,
-                optimizer_type="adam"
+                optimizer_type="adam",
+                trial=trial,
+                fold_idx=len(all_f1_scores)
             )
             all_f1_scores.append(f1)
             # Clear model and loaders
@@ -698,7 +710,17 @@ class TrainingProgram:
         Returns:
             dict: Best hyperparameters found by the study.
         """
-        study = optuna.create_study(direction="maximize")
+
+        pruner = optuna.pruners.MedianPruner(
+            n_startup_trials=5,
+            n_warmup_steps=3
+        )
+
+        study = optuna.create_study(
+            direction="maximize",
+            pruner=pruner
+        )
+
         study.optimize(lambda trial: self.objective(trial, view), n_trials=n_trials)
 
         print(f"Best trial for view {view}:")
