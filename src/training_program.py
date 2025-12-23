@@ -569,6 +569,7 @@ class TrainingProgram:
         max_os_ratio = trial.suggest_float('max_os_ratio', 1.0, 5.0, step=0.5)
         weight_decay = trial.suggest_float("weight_decay", 1e-6, 1e-2, log=True)
         smoothing = trial.suggest_float("label_smoothing", 0.0, 0.2)
+        num_augments_per_image = trial.suggest_int("num_augments_per_image", 1, 4)
 
         if erasing_scale_min >= erasing_scale_max:
             return 0.0  # Invalid trial
@@ -607,7 +608,7 @@ class TrainingProgram:
                     class_column="Species",
                     threshold=100  # or some threshold appropriate for rarity
                 )
-                augmented_df = augmenter.augment_rare_classes(num_augments_per_image=5)
+                augmented_df = augmenter.augment_rare_classes(num_augments_per_image=num_augments_per_image)
 
                 # Extract augmented train data
                 train_x = augmented_df[self.image_column].values
