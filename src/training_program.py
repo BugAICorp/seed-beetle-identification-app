@@ -559,16 +559,29 @@ class TrainingProgram:
         Returns:
             float: Average macro F1 score across the k folds.
         """
+        # --- OPTIMIZATION / TRAINING DYNAMICS ---
+        #   These control how the network learns and converges
         lr = trial.suggest_float("lr", 1e-5, 1e-2, log=True)
         batch_size = trial.suggest_categorical("batch_size", [16, 32, 64])
+        weight_decay = trial.suggest_float("weight_decay", 1e-6, 1e-2, log=True)
+
+        # --- CLASS IMBALANCE and CALIBRATION ---
+        #    These affect confidence, robustness, and minority classes
+        smoothing = trial.suggest_float("label_smoothing", 0.0, 0.2)
+        max_os_ratio = trial.suggest_float('max_os_ratio', 1.0, 5.0, step=0.5)
+
+        # --- DATA AUGMENTATION: GEOMETRIC and PHOTOMETRIC ---
+        #    Encourage invariance to pose and lighting
         rotation = trial.suggest_int("rotation", 0, 20)
         brightness = trial.suggest_float("brightness", 0.0, 0.3)
+
+        # --- DATA AUGMENTATION: OCCLUSION / ROBUSTNESS ---
+        #    Force model to rely on global features, not shortcuts
         erasing_p = trial.suggest_float('erasing_p', 0.0, 0.8)
         erasing_scale_min = trial.suggest_float('erasing_scale_min', 0.01, 0.1)
         erasing_scale_max = trial.suggest_float('erasing_scale_max', 0.1, 0.4)
-        max_os_ratio = trial.suggest_float('max_os_ratio', 1.0, 5.0, step=0.5)
-        weight_decay = trial.suggest_float("weight_decay", 1e-6, 1e-2, log=True)
-        smoothing = trial.suggest_float("label_smoothing", 0.0, 0.2)
+
+        # --- DATASET-LEVEL AUGMENTATION ---
         num_augments_per_image = trial.suggest_int("num_augments_per_image", 1, 4)
 
         if erasing_scale_min >= erasing_scale_max:
