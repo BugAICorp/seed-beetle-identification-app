@@ -530,6 +530,7 @@ class TrainingProgram:
             raise ValueError(f"Unsupported optimizer: {optimizer_type}")
 
         best_f1 = -float("inf")
+        best_epoch = 0
         epochs_no_improve = 0
         # Run training algorithm
         for epoch in range(num_epochs):
@@ -559,10 +560,10 @@ class TrainingProgram:
             if np.isnan(f1):
                 return 0.0
 
-            if trial is not None and fold_idx > 0:
+            if trial is not None:
                 # Use a composite step so folds don't overwrite each other
                 step = fold_idx * num_epochs + epoch
-                trial.report(best_f1, step)
+                trial.report(f1, step)
 
                 if trial.should_prune():
                     raise optuna.TrialPruned()
@@ -570,6 +571,7 @@ class TrainingProgram:
             # Early Stopping (delta = 1e-3)
             if f1 > best_f1 + 1e-3:
                 best_f1 = f1
+                best_epoch = epoch
                 epochs_no_improve = 0
             else:
                 epochs_no_improve += 1
@@ -577,7 +579,7 @@ class TrainingProgram:
             if epochs_no_improve >= early_stopping_patience:
                 break
 
-        return best_f1
+        return best_f1, best_epoch
 
     def objective(self, trial, view, num_epochs=15, k_folds=3):
         """
@@ -641,6 +643,7 @@ class TrainingProgram:
         skf = StratifiedKFold(n_splits=k_folds, shuffle=True, random_state=21)
 
         all_f1_scores = []
+        all_best_epochs = []
 
         for train_idx, val_idx in skf.split(images, labels):
             train_x = [images[i] for i in train_idx]
@@ -671,7 +674,7 @@ class TrainingProgram:
             val_loader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False)
 
             self.models[view] = self.load_model()
-            f1 = self.hyperparameter_training_evaluation(
+            f1, best_epoch = self.hyperparameter_training_evaluation(
                 num_epochs=num_epochs,
                 train_loader=train_loader,
                 test_loader=val_loader,
@@ -685,6 +688,7 @@ class TrainingProgram:
                 fold_idx=len(all_f1_scores)
             )
             all_f1_scores.append(f1)
+            all_best_epochs.append(best_epoch)
             # Clear model and loaders
             del train_loader, val_loader
             del self.models[view]
@@ -693,6 +697,8 @@ class TrainingProgram:
             gc.collect()
 
         avg_f1 = np.mean(all_f1_scores)
+        avg_best_epoch = np.mean(all_best_epochs)
+        trial.set_user_attr("avg_best_epoch", avg_best_epoch)
         return avg_f1
 
     def run_optuna_study(self, view, n_trials=20):
@@ -723,9 +729,11 @@ class TrainingProgram:
 
         study.optimize(lambda trial: self.objective(trial, view), n_trials=n_trials)
 
+        best_trial = study.best_trial
         print(f"Best trial for view {view}:")
-        print(f"F1 Score: {100 * study.best_value:.2f}%")
-        print("Best hyperparameters:", study.best_params)
+        print(f"F1 Score: {100 * best_trial.value:.2f}%")
+        print(f"Avg Best Epoch: {best_trial.user_attrs['avg_best_epoch']:.2f}")
+        print("Best hyperparameters:", best_trial.params)
         return study.best_params
 
     def mc_dropout_predict(self, view, inputs, n_samples=30):
