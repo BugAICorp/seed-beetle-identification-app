@@ -416,10 +416,23 @@ class TrainingProgram:
             train_y=train_y, weight_decay=weight_decay, smoothing=smoothing, lrate=lrate
         )
 
-    def k_fold_resnet(self, num_epochs, view, k_folds=5, batch=32, rotation=5, brightness=0.1, weight_decay=0.0001,
-                      smoothing=0.1, lrate=0.001, erasure_params=None, max_os_ratio: float = 3.0):
+    def k_fold_resnet(
+            self,
+            num_epochs,
+            view,
+            k_folds=5,
+            batch=32,
+            rotation=5,
+            brightness=0.1,
+            weight_decay=0.0001,
+            smoothing=0.1,
+            lrate=0.001,
+            erasure_params=None,
+            max_os_ratio: float = 3.0
+        ):
         """
-        Trains the model(determined by view) using Stratified K-Fold Cross Validation.
+        Trains the model(determined by view) using Stratified Group K-Fold Cross Validation
+        (grouped by SpecimenID).
         """
         # Get view dataset(images and labels)
         view_df = self.subsets[view]
@@ -427,6 +440,8 @@ class TrainingProgram:
         images = view_df[self.image_column].values
         classes = view_df[self.class_column].values
         labels = [self.class_string_dictionary[label] for label in classes]
+
+        groups = view_df["SpecimenID"].values # to prevent data leakage
 
         if erasure_params is not None:
         # Define image training transformations, placeholder for preprocessing
@@ -443,22 +458,42 @@ class TrainingProgram:
                 contrast=0.1,
                 erasing=(0.4, (0.05, 0.25))
             )
-        skf = StratifiedKFold(n_splits=k_folds, shuffle=True)
+        
+        # Stratified Group K-Fold
+        sgkf = StratifiedGroupKFold(
+            n_splits=k_folds,
+            shuffle=True,
+            random_state=7
+        )
 
         all_fold_f1s = []
 
-        for fold, (train_idx, val_idx) in enumerate(skf.split(images, labels)):
+        for fold, (train_idx, val_idx) in enumerate(sgkf.split(images, labels, groups=groups)):
             print(f"\nFold {fold+1}/{k_folds}:")
 
-            train_x = [images[i] for i in train_idx]
-            train_y = [labels[i] for i in train_idx]
-            val_x = [images[i] for i in val_idx]
-            val_y = [labels[i] for i in val_idx]
+            # Split the data
+            train_df = view_df.iloc[train_idx].copy()
+            val_df = view_df.iloc[val_idx].copy()
 
+            # Sanity Check for data leakage
+            assert set(train_df["SpecimenID"]).isdisjoint(
+                set(val_df["SpecimenID"])
+            ), "Specimen leakage detected!"
+
+            train_x = train_df[self.image_column].values
+            train_y = [
+                self.class_string_dictionary[label]
+                for label in train_df[self.class_column].values
+            ]
+
+            val_x = val_df[self.image_column].values
+            val_y = [
+                self.class_string_dictionary[label]
+                for label in val_df[self.class_column].values
+            ]
+
+            # Optional: apply augmentation to training only 
             if self.augment:
-                # Build train dataframe for augmenter
-                train_df = view_df.iloc[train_idx].copy()
-
                 # Use DataAugmenter to augment rare classes
                 augmenter = DataAugmenter(
                     dataframe=train_df,
@@ -469,8 +504,11 @@ class TrainingProgram:
 
                 # Extract augmented train data
                 train_x = augmented_df[self.image_column].values
-                train_y = [self.class_string_dictionary[label] for label in augmented_df[self.class_column].values]
+                train_y = [
+                    self.class_string_dictionary[label] for label in augmented_df[self.class_column].values
+                ]
 
+            # Create Datasets / Loaders
             train_dataset = ImageDataset(train_x, train_y, transform=self.train_transformations[view])
             val_dataset = ImageDataset(val_x, val_y, transform=self.transformations[view])
             train_loader = self.get_train_loader(train_dataset, np.array(train_y), batch, max_os_ratio=max_os_ratio)
@@ -481,8 +519,14 @@ class TrainingProgram:
             self.models[view] = self.load_model()
 
             self.training_evaluation_resnet(
-                num_epochs, train_loader, val_loader, view,
-                train_y=train_y, weight_decay=weight_decay, smoothing=smoothing, lrate=lrate
+                num_epochs,
+                train_loader,
+                val_loader,
+                view,
+                train_y=train_y,
+                weight_decay=weight_decay,
+                smoothing=smoothing,
+                lrate=lrate
             )
 
             fold_f1 = self.model_accuracies.get(view, 0.0)
