@@ -663,7 +663,7 @@ class TrainingProgram:
         max_os_ratio = trial.suggest_float('max_os_ratio', 1.0, 5.0, step=0.5)
 
         # --- DATA AUGMENTATION: GEOMETRIC and PHOTOMETRIC ---
-        #    Encourage invariance to pose and lighting
+        #    Encourage invariance to anlge and lighting of image
         rotation = trial.suggest_int("rotation", 0, 20)
         brightness = trial.suggest_float("brightness", 0.0, 0.3)
 
@@ -693,21 +693,41 @@ class TrainingProgram:
         classes = view_df[self.class_column].values
         labels = [self.class_string_dictionary[label] for label in classes]
 
-        skf = StratifiedKFold(n_splits=k_folds, shuffle=True, random_state=21)
+        groups = view_df["SpecimenID"].values # to prevent data leakage
+
+        sgkf = StratifiedGroupKFold(
+            n_splits=k_folds,
+            shuffle=True,
+            random_state=7
+        )
 
         all_f1_scores = []
         all_best_epochs = []
 
-        for train_idx, val_idx in skf.split(images, labels):
-            train_x = [images[i] for i in train_idx]
-            train_y = [labels[i] for i in train_idx]
-            val_x = [images[i] for i in val_idx]
-            val_y = [labels[i] for i in val_idx]
+        for fold_idx, (train_idx, val_idx) in enumerate(sgkf.split(images, labels, groups=groups)):
+            # Split dataframes
+            train_df = view_df.iloc[train_idx].copy()
+            val_df = view_df.iloc[val_idx].copy()
 
+            # Data Leakage Assertion
+            assert set(train_df["SpecimenID"]).isdisjoint(
+                set(val_df["SpecimenID"])
+            ), f"Specimen leakage detected in fold {fold_idx}"
+
+            train_x = train_df[self.image_column].values
+            train_y = [
+                self.class_string_dictionary[label]
+                for label in train_df[self.class_column].values
+            ]
+
+            val_x = val_df[self.image_column].values
+            val_y = [
+                self.class_string_dictionary[label]
+                for label in val_df[self.class_column].values
+            ]
+
+            # Optional: apply augmentation to training only 
             if self.augment:
-                # Build train dataframe for augmenter
-                train_df = view_df.iloc[train_idx].copy()
-
                 # Use DataAugmenter to augment rare classes
                 augmenter = DataAugmenter(
                     dataframe=train_df,
@@ -718,14 +738,18 @@ class TrainingProgram:
 
                 # Extract augmented train data
                 train_x = augmented_df[self.image_column].values
-                train_y = [self.class_string_dictionary[label] for label in augmented_df[self.class_column].values]
+                train_y = [
+                    self.class_string_dictionary[label] for label in augmented_df[self.class_column].values
+                ]
 
+            # Create Datasets and Loaders
             train_dataset = ImageDataset(train_x, train_y, transform=self.train_transformations[view])
             val_dataset = ImageDataset(val_x, val_y, transform=self.transformations[view])
             train_loader = self.get_train_loader(
                 train_dataset, np.array(train_y), batch_size, max_os_ratio=max_os_ratio)
             val_loader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False)
 
+            # Model Training
             self.models[view] = self.load_model()
             f1, best_epoch = self.hyperparameter_training_evaluation(
                 num_epochs=num_epochs,
@@ -738,7 +762,7 @@ class TrainingProgram:
                 smoothing=smoothing,
                 optimizer_type="adam",
                 trial=trial,
-                fold_idx=len(all_f1_scores)
+                fold_idx=fold_idx
             )
             all_f1_scores.append(f1)
             all_best_epochs.append(best_epoch)
