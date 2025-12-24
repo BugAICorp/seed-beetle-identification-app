@@ -878,6 +878,11 @@ class TrainingProgram:
         Returns:
             dict: containing predictions, labels, and uncertainties.
         """
+        if not hasattr(self, "train_test_indices") or view not in self.train_test_indices:
+            raise ValueError(
+                f"No stored train/test split found for view '{view}'. Make sure to call train_resnet_model() first."
+            )
+
         # Get test indices
         test_x = self.train_test_indices[view]["test_x"]
         test_y = self.train_test_indices[view]["test_y"]
