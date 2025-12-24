@@ -13,7 +13,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from PIL import Image
 from sklearn.metrics import confusion_matrix, f1_score
-from sklearn.model_selection import train_test_split, StratifiedKFold
+from sklearn.model_selection import train_test_split, StratifiedKFold, StratifiedGroupKFold
 from sklearn.utils.class_weight import compute_class_weight
 import torch
 import torch.nn.functional as F
@@ -196,18 +196,27 @@ class TrainingProgram:
         Gets train and test split for given dataframe
         Returns: List of train and test data
         """
-        # image_binaries = df[self.image_column].values
+        # Labels and groups
         classes = df[self.class_column].values
         labels = [self.class_string_dictionary[label] for label in classes]
-        # Split by index for safe DataFrame reconstruction
-        indices = np.arange(len(df))
-        train_idx, test_idx = train_test_split(
-            indices, test_size=0.2, stratify=labels, random_state=42
+        groups = df["SpecimenID"].values # for data leakage prevention
+
+        # Split by index for safe DataFrame reconstruction using stratifeid group split
+        splitter = StratifiedGroupKFold(
+            n_splits=5,
+            shuffle=True,
+            random_state=7
         )
+
+        train_idx, test_idx = next(
+            splitter.split(X=df, y=labels, groups=groups)
+        )
+
         # Create train/test DataFrames
         train_df = df.iloc[train_idx].copy()
         test_df = df.iloc[test_idx].copy()
 
+        # Optional: apply augmentation to training only 
         if self.augment:
             augmenter = DataAugmenter(
                 dataframe=train_df,
