@@ -358,7 +358,7 @@ if __name__ == "__main__":
             "or all options?")
         print("\t0 = Threshold Sweep (in-distribution)\n" \
             "\t1 = Calculate MC Predictions (in-distribution)\n" \
-            "\t2 = ID vs OOD entropy threshold analysis (out-of-distribution\n"\
+            "\t2 = ID vs OOD entropy threshold analysis (out-of-distribution)\n"\
             "\t3 = All of the Above")
         user_input = int(input("Enter the number of your choice: "))
         if user_input == 0:
