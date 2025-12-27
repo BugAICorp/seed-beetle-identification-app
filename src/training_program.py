@@ -865,7 +865,7 @@ class TrainingProgram:
             elif isinstance(m, torch.nn.BatchNorm2d):
                 m.eval()        # freeze batchnorm
 
-    def evaluate_uncertainty(self, view, n_samples=30, batch_size=32, threshold=None):
+    def evaluate_uncertainty(self, view, n_samples=30, batch_size=32, threshold=None, override_dataframe=None):
         """
         Evaluate model uncertainty on the test split using Monte Carlo Dropout.
 
@@ -874,23 +874,43 @@ class TrainingProgram:
             n_samples (int): number of MC dropout forward passes.
             batch_size (int): batch size for evaluation.
             threshold (float, optional): uncertainty cutoff. If set, only keep predictions below this.
+            override_dataframe (pd.DataFrame): If provided, method evaluates uncertainty on this dataframe
+                instead of the stored test split (used for OOD analysis).
 
         Returns:
             dict: containing predictions, labels, and uncertainties.
         """
-        if not hasattr(self, "train_test_indices") or view not in self.train_test_indices:
-            raise ValueError(
-                f"No stored train/test split found for view '{view}'. Make sure to call train_resnet_model() first."
-            )
+        # Select evaluation data
+        if override_dataframe is not None:
+            df = override_dataframe
 
-        # Get test indices
-        test_x = self.train_test_indices[view]["test_x"]
-        test_y = self.train_test_indices[view]["test_y"]
+            # Filter by view
+            df = df[df["View"].str.lower() == view.lower()]
+            if len(df) == 0:
+                raise ValueError(f"No samples found for view '{view}' in override_dataframe.")
 
-        test_dataset = ImageDataset(test_x, test_y, transform=self.transformations[view])
-        test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False)
+            # Extract images
+            x = df["Image"].tolist()
 
+            # Dummy labels (not used for OOD metrics)
+            y = np.zeros(len(x), dtype=int)
 
+            test_dataset = ImageDataset(x, y, transform=self.transformations[view])
+            test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False)
+        else:
+            if not hasattr(self, "train_test_indices") or view not in self.train_test_indices:
+                raise ValueError(
+                    f"No stored train/test split found for view '{view}'. Make sure to call train_resnet_model() first."
+                )
+
+            # Get test indices
+            test_x = self.train_test_indices[view]["test_x"]
+            test_y = self.train_test_indices[view]["test_y"]
+
+            test_dataset = ImageDataset(test_x, test_y, transform=self.transformations[view])
+            test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False)
+
+        # MC Dropout evaluation
         all_preds, all_labels, all_confidences, all_uncertainties = [], [], [], []
 
         self.models[view].eval()  # reset model first
