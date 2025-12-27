@@ -183,6 +183,142 @@ def evaluate_mc_predictions(trainer, view, n_samples=30, batch_size=32, title_pr
         "combined_certainty": cert_corr,
     }
 
+def evaluate_ood_entropy_from_dataframe(
+    trainer,
+    ood_df,
+    view,
+    n_samples=30,
+    batch_size=32,
+    title_prefix=""
+):
+    """
+    Runs MC Dropout on OOD images using a dataframe filtered by exclude_classes=True.
+    """
+
+    # Filter by view
+    df_view = ood_df[ood_df["View"].str.lower() == view.lower()]
+    if len(df_view) == 0:
+        print(f"No OOD images for view {view}")
+        return None
+
+    results = trainer.evaluate_uncertainty(
+        view=view,
+        n_samples=n_samples,
+        batch_size=batch_size,
+        threshold=None,
+        override_dataframe=df_view
+    )
+
+    entropies = np.array(results["all_uncertainties"])
+
+    # Save CSV
+    out_dir = Path("mc_dropout_results")
+    out_dir.mkdir(exist_ok=True)
+
+    df_out = pd.DataFrame({"entropy": entropies})
+    csv_path = out_dir / f"ood_entropy_{title_prefix.lower()}_{view}.csv"
+    df_out.to_csv(csv_path, index=False)
+
+    print(f"OOD entropy CSV saved to {csv_path.resolve()}")
+
+    return entropies
+
+def evaluate_id_vs_ood_entropy_thresholds(
+    trainer,
+    id_view,
+    ood_df,
+    thresholds,
+    n_samples=30,
+    batch_size=32,
+    title_prefix=""
+):
+    """
+    Compare ID vs OOD entropy distributions and evaluate entropy thresholds.
+    This function Saves a CSV of threshold metrics, an ID vs OOD entropy histogram,
+    and a threshold tradeoff plot.
+
+    Returns:
+        pd.DataFrame with columns:
+        [threshold, id_accept, ood_reject]
+    """
+
+    # Calculate in-distribution entropies
+    id_results = trainer.evaluate_uncertainty(
+        view=id_view,
+        n_samples=n_samples,
+        batch_size=batch_size,
+        threshold=None
+    )
+    id_entropy = np.asarray(id_results["all_uncertainties"])
+
+    # OOD entropy
+    ood_entropy = evaluate_ood_entropy_from_dataframe(
+        trainer,
+        ood_df,
+        view=id_view,
+        n_samples=n_samples,
+        batch_size=batch_size,
+        title_prefix=title_prefix
+    )
+
+    if ood_entropy is None or len(ood_entropy) == 0:
+        print("Skipping OOD threshold evaluation (no OOD samples).")
+        return None
+
+    # Preform a threshold sweep
+    rows = []
+    for t in thresholds:
+        rows.append({
+            "threshold": t,
+            "id_accept": (id_entropy < t).mean(),      # ID true accept rate
+            "ood_reject": (ood_entropy >= t).mean()    # OOD true reject rate
+        })
+
+    df_thresh = pd.DataFrame(rows)
+
+    # Save results to a CSV
+    out_dir = Path("mc_dropout_results")
+    out_dir.mkdir(exist_ok=True)
+
+    csv_path = out_dir / f"id_vs_ood_thresholds_{title_prefix.lower()}_{id_view}.csv"
+    df_thresh.to_csv(csv_path, index=False)
+    print(f"ID vs OOD threshold CSV saved to {csv_path.resolve()}")
+
+    # Plot ID vs OOD entropy
+    plt.figure(figsize=(8, 6))
+    plt.hist(id_entropy, bins=50, density=True, alpha=0.6, label="In-Distribution")
+    plt.hist(ood_entropy, bins=50, density=True, alpha=0.6, label="OOD")
+    plt.xlabel("Entropy")
+    plt.ylabel("Density")
+    plt.title(f"ID vs OOD Entropy ({title_prefix} – {id_view.upper()})")
+    plt.legend()
+    plt.grid(alpha=0.3)
+
+    entropy_plot = Path("mc_dropout_graphs") / f"id_vs_ood_entropy_{title_prefix.lower()}_{id_view}.png"
+    entropy_plot.parent.mkdir(exist_ok=True)
+    plt.savefig(entropy_plot, dpi=300)
+    plt.close()
+
+    # Plot the threshold tradeoff
+    plt.figure(figsize=(8, 6))
+    plt.plot(df_thresh["threshold"], df_thresh["id_accept"], label="ID Accept Rate")
+    plt.plot(df_thresh["threshold"], df_thresh["ood_reject"], label="OOD Reject Rate")
+
+    plt.xlabel("Entropy Threshold")
+    plt.ylabel("Rate")
+    plt.title(f"Entropy Threshold Tradeoff ({title_prefix} – {id_view.upper()})")
+    plt.legend()
+    plt.grid(alpha=0.3)
+
+    tradeoff_plot = Path("mc_dropout_graphs") / f"id_vs_ood_threshold_tradeoff_{title_prefix.lower()}_{id_view}.png"
+    tradeoff_plot.parent.mkdir(exist_ok=True)
+    plt.savefig(tradeoff_plot, dpi=300)
+    plt.close()
+
+    print(f"Entropy plots saved to {entropy_plot.parent.resolve()}")
+
+    return df_thresh
+
 if __name__ == "__main__":
     while True:
         print("\nWhich model architecture would you like to use?")
@@ -217,10 +353,13 @@ if __name__ == "__main__":
         print("Invalid Input. Please enter 0, 1, 2, or 3.")
 
     while True:
-        print("\nWould you like to preform a threshold sweep, calculate MC predictions, or both?")
-        print("\t0 = Threshold Sweep\n" \
-            "\t1 = Calculate MC Predictions\n" \
-            "\t2 = Both")
+        print("\nWould you like to preform a threshold sweep(in-distribution), " \
+            "analyze MC predictions(in-distribution), run ID vs OOD entropy threshold analysis, "\
+            "or all options?")
+        print("\t0 = Threshold Sweep (in-distribution)\n" \
+            "\t1 = Calculate MC Predictions (in-distribution)\n" \
+            "\t2 = ID vs OOD entropy threshold analysis (out-of-distribution)"\
+            "\t3 = All of the Above")
         user_input = int(input("Enter the number of your choice: "))
         if user_input == 0:
             experiment = 0
@@ -230,6 +369,9 @@ if __name__ == "__main__":
             break
         if user_input == 2:
             experiment = 2
+            break
+        if user_input == 3:
+            experiment = 3
             break
         print("Invalid Input. Please enter 0, 1, or 2.")
 
@@ -246,10 +388,21 @@ if __name__ == "__main__":
     # Final cleanup: remove cropped dataset
     beetle_cropper.cleanup(globals.cropped_dataset)
 
-    # Read converted data
+    # Read converted data (In-Distibution)
     dbr = DatabaseReader(
         database=globals.training_database, class_file_path=globals.class_list, create_other=False)
     df = dbr.get_dataframe()
+    print(f"In-distribution images loaded:{len(df)}")
+
+    # Read out-of-distribution data (classes not in training set)
+    ood_reader = DatabaseReader(
+        database=globals.training_database,
+        class_file_path=globals.class_list,
+        exclude_classes=True,
+        create_other=False
+    )
+    ood_df = ood_reader.get_dataframe()
+    print(f"OOD images loaded: {len(ood_df)}")
 
     # Display how many images we have for each angle
     print("Number of Images for Each Angle in the Original Dataset:")
@@ -269,22 +422,33 @@ if __name__ == "__main__":
     )
 
     # Training
-    threshold_list = np.linspace(0, 1, 101)  # 0.0 to 1.0 in 0.1 steps
+    threshold_list = np.linspace(0, 1, 101)  # 0.0 to 1.0 in 0.01 steps
     all_results = {}
     # Species CAUD
     hyperparameters = import_params(globals.species_caud_hypers)
     species_tp.train_resnet_model(**hyperparameters)
 
     # Species CAUD MC Dropout
-    if experiment in (0, 2):
+    if experiment in (0, 3):
         print("\nRunning Monte Carlo Dropout uncertainty evaluation for species CAUD view...")
         all_results["species_caud"] = evaluate_thresholds(
             species_tp, view="caud", thresholds=threshold_list, n_samples=20, batch_size=16, title_prefix="Species"
         )
-    if experiment in (1, 2):
-        print("\nRunning Monte Carlo Dropout prediction calculation for CAUD view...")
+    if experiment in (1, 3):
+        print("\nRunning Monte Carlo Dropout prediction analysis for CAUD view...")
         _ = evaluate_mc_predictions(
             species_tp, view="caud", n_samples=20, batch_size=16, title_prefix="Species"
+        )
+    if experiment in (2, 3):
+        print("\nRunning ID vs OOD entropy threshold analysis for species CAUD view...")
+        _ = evaluate_id_vs_ood_entropy_thresholds(
+            trainer=species_tp,
+            id_view="caud",
+            ood_df=ood_df,
+            thresholds=np.linspace(0, 1, 101),
+            n_samples=20,
+            batch_size=16,
+            title_prefix="Species"
         )
 
     # Species DORS
@@ -292,15 +456,26 @@ if __name__ == "__main__":
     species_tp.train_resnet_model(**hyperparameters)
 
     # Species DORS MC Dropout
-    if experiment in (0, 2):
+    if experiment in (0, 3):
         print("\nRunning Monte Carlo Dropout uncertainty evaluation for species DORS view...")
         all_results["species_dors"] = evaluate_thresholds(
             species_tp, view="dors", thresholds=threshold_list, n_samples=20, batch_size=16, title_prefix="Species"
         )
-    if experiment in (1, 2):
-        print("\nRunning Monte Carlo Dropout prediction calculation for DORS view...")
+    if experiment in (1, 3):
+        print("\nRunning Monte Carlo Dropout prediction analysis for DORS view...")
         _ = evaluate_mc_predictions(
             species_tp, view="dors", n_samples=20, batch_size=16, title_prefix="Species"
+        )
+    if experiment in (2, 3):
+        print("\nRunning ID vs OOD entropy threshold analysis for species DORS view...")
+        _ = evaluate_id_vs_ood_entropy_thresholds(
+            trainer=species_tp,
+            id_view="dors",
+            ood_df=ood_df,
+            thresholds=np.linspace(0, 1, 101),
+            n_samples=20,
+            batch_size=16,
+            title_prefix="Species"
         )
 
     # Species FRON
@@ -308,31 +483,52 @@ if __name__ == "__main__":
     species_tp.train_resnet_model(**hyperparameters)
 
     # Species FRON MC Dropout
-    if experiment in (0, 2):
+    if experiment in (0, 3):
         print("\nRunning Monte Carlo Dropout uncertainty evaluation for species FRON view...")
         all_results["species_fron"] = evaluate_thresholds(
             species_tp, view="fron", thresholds=threshold_list, n_samples=20, batch_size=16, title_prefix="Species"
         )
-    if experiment in (1, 2):
-        print("\nRunning Monte Carlo Dropout prediction calculation for FRON view...")
+    if experiment in (1, 3):
+        print("\nRunning Monte Carlo Dropout prediction analysis for FRON view...")
         _ = evaluate_mc_predictions(
             species_tp, view="fron", n_samples=20, batch_size=16, title_prefix="Species"
         )
-
+    if experiment in (2, 3):
+        print("\nRunning ID vs OOD entropy threshold analysis for species FRON view...")
+        _ = evaluate_id_vs_ood_entropy_thresholds(
+            trainer=species_tp,
+            id_view="fron",
+            ood_df=ood_df,
+            thresholds=np.linspace(0, 1, 101),
+            n_samples=20,
+            batch_size=16,
+            title_prefix="Species"
+        )
     # Species LATE
     hyperparameters = import_params(globals.species_late_hypers)
     species_tp.train_resnet_model(**hyperparameters)
 
     # Species LATE MC Dropout
-    if experiment in (0, 2):
+    if experiment in (0, 3):
         print("\nRunning Monte Carlo Dropout uncertainty evaluation for species LATE view...")
         all_results["species_late"] = evaluate_thresholds(
             species_tp, view="late", thresholds=threshold_list, n_samples=20, batch_size=64, title_prefix="Species"
         )
-    if experiment in (1, 2):
-        print("\nRunning Monte Carlo Dropout prediction calculation for LATE view...")
+    if experiment in (1, 3):
+        print("\nRunning Monte Carlo Dropout prediction analysis for LATE view...")
         _ = evaluate_mc_predictions(
-            species_tp, view="late", n_samples=20, batch_size=16, title_prefix="Species"
+            species_tp, view="late", n_samples=20, batch_size=64, title_prefix="Species"
+        )
+    if experiment in (2, 3):
+        print("\nRunning ID vs OOD entropy threshold analysis for species LATE view...")
+        _ = evaluate_id_vs_ood_entropy_thresholds(
+            trainer=species_tp,
+            id_view="late",
+            ood_df=ood_df,
+            thresholds=np.linspace(0, 1, 101),
+            n_samples=20,
+            batch_size=64,
+            title_prefix="Species"
         )
 
     # Run training with dataframe
@@ -345,15 +541,26 @@ if __name__ == "__main__":
     hyperparameters = import_params(globals.genus_caud_hypers)
     genus_tp.train_resnet_model(**hyperparameters)
     # Genus CAUD MC Dropout
-    if experiment in (0, 2):
+    if experiment in (0, 3):
         print("\nRunning Monte Carlo Dropout uncertainty evaluation for genus CAUD view...")
         all_results["genus_caud"] = evaluate_thresholds(
             genus_tp, view="caud", thresholds=threshold_list, n_samples=20, batch_size=16, title_prefix="Genus"
         )
-    if experiment in (1, 2):
-        print("\nRunning Monte Carlo Dropout prediction calculation for CAUD view...")
+    if experiment in (1, 3):
+        print("\nRunning Monte Carlo Dropout prediction analysis for genus CAUD view...")
         _ = evaluate_mc_predictions(
             genus_tp, view="caud", n_samples=20, batch_size=16, title_prefix="Genus"
+        )
+    if experiment in (2, 3):
+        print("\nRunning ID vs OOD entropy threshold analysis for genus CAUD view...")
+        _ = evaluate_id_vs_ood_entropy_thresholds(
+            trainer=genus_tp,
+            id_view="caud",
+            ood_df=ood_df,
+            thresholds=np.linspace(0, 1, 101),
+            n_samples=20,
+            batch_size=16,
+            title_prefix="Genus"
         )
 
     # Genus DORS
@@ -361,15 +568,26 @@ if __name__ == "__main__":
     genus_tp.train_resnet_model(**hyperparameters)
 
     # Genus DORS MC Dropout
-    if experiment in (0, 2):
+    if experiment in (0, 3):
         print("\nRunning Monte Carlo Dropout uncertainty evaluation for genus DORS view...")
         all_results["genus_dors"] = evaluate_thresholds(
             genus_tp, view="dors", thresholds=threshold_list, n_samples=20, batch_size=32, title_prefix="Genus"
         )
-    if experiment in (1, 2):
-        print("\nRunning Monte Carlo Dropout prediction calculation for DORS view...")
+    if experiment in (1, 3):
+        print("\nRunning Monte Carlo Dropout prediction analysis for genus DORS view...")
         _ = evaluate_mc_predictions(
-            genus_tp, view="dors", n_samples=20, batch_size=16, title_prefix="Genus"
+            genus_tp, view="dors", n_samples=20, batch_size=32, title_prefix="Genus"
+        )
+    if experiment in (2, 3):
+        print("\nRunning ID vs OOD entropy threshold analysis for genus DORS view...")
+        _ = evaluate_id_vs_ood_entropy_thresholds(
+            trainer=genus_tp,
+            id_view="dors",
+            ood_df=ood_df,
+            thresholds=np.linspace(0, 1, 101),
+            n_samples=20,
+            batch_size=32,
+            title_prefix="Genus"
         )
 
     # Genus FRON
@@ -377,15 +595,26 @@ if __name__ == "__main__":
     genus_tp.train_resnet_model(**hyperparameters)
 
     # Genus FRON MC Dropout
-    if experiment in (0, 2):
+    if experiment in (0, 3):
         print("\nRunning Monte Carlo Dropout uncertainty evaluation for genus FRON view...")
         all_results["genus_fron"] = evaluate_thresholds(
             genus_tp, view="fron", thresholds=threshold_list, n_samples=20, batch_size=64, title_prefix="Genus"
         )
-    if experiment in (1, 2):
-        print("\nRunning Monte Carlo Dropout prediction calculation for FRON view...")
+    if experiment in (1, 3):
+        print("\nRunning Monte Carlo Dropout prediction analysis for genus FRON view...")
         _ = evaluate_mc_predictions(
-            genus_tp, view="fron", n_samples=20, batch_size=16, title_prefix="Genus"
+            genus_tp, view="fron", n_samples=20, batch_size=64, title_prefix="Genus"
+        )
+    if experiment in (2, 3):
+        print("\nRunning ID vs OOD entropy threshold analysis for genus FRON view...")
+        _ = evaluate_id_vs_ood_entropy_thresholds(
+            trainer=genus_tp,
+            id_view="fron",
+            ood_df=ood_df,
+            thresholds=np.linspace(0, 1, 101),
+            n_samples=20,
+            batch_size=64,
+            title_prefix="Genus"
         )
 
     # Genus LATE
@@ -393,13 +622,24 @@ if __name__ == "__main__":
     genus_tp.train_resnet_model(**hyperparameters)
 
     # Genus LATE MC Dropout
-    if experiment in (0, 2):
+    if experiment in (0, 3):
         print("\nRunning Monte Carlo Dropout uncertainty evaluation for genus LATE view...")
         all_results["genus_late"] = evaluate_thresholds(
             genus_tp, view="late", thresholds=threshold_list, n_samples=20, batch_size=32, title_prefix="Genus"
         )
-    if experiment in (1, 2):
-        print("\nRunning Monte Carlo Dropout prediction calculation for LATE view...")
+    if experiment in (1, 3):
+        print("\nRunning Monte Carlo Dropout prediction analysis for genus LATE view...")
         _ = evaluate_mc_predictions(
-            genus_tp, view="late", n_samples=20, batch_size=16, title_prefix="Genus"
+            genus_tp, view="late", n_samples=20, batch_size=32, title_prefix="Genus"
+        )
+    if experiment in (2, 3):
+        print("\nRunning ID vs OOD entropy threshold analysis for genus LATE view...")
+        _ = evaluate_id_vs_ood_entropy_thresholds(
+            trainer=genus_tp,
+            id_view="late",
+            ood_df=ood_df,
+            thresholds=np.linspace(0, 1, 101),
+            n_samples=20,
+            batch_size=32,
+            title_prefix="Genus"
         )
