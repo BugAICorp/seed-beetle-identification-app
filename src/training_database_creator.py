@@ -65,7 +65,7 @@ class TrainingDataConverter:
             table.commit()
             print(f"Inserted Image UniqueID: {image_data[2]} with Filename: {filename}")
         except sqlite3.IntegrityError:
-            pass
+            print(f"WARNING! Duplicate image dropped: {image_data[2]}")
         finally:
             table.close()
 
@@ -77,16 +77,16 @@ class TrainingDataConverter:
         name_parts = name.split(' ')
         if len(name_parts) != 5:
             return None
-        cur_index= len(name_parts)-1
-        view = name_parts[cur_index][:name_parts[cur_index].find('.')]
-        cur_index -= 2
-        unique_id = name_parts[cur_index] + view
-        specimen_id = name_parts[cur_index]
-        cur_index -= 1
-        print(name_parts[cur_index - 1][name_parts[cur_index - 1].find('/')+1:] + " " + name_parts[cur_index])
-        species = name_parts[cur_index - 1][name_parts[cur_index - 1].find('/')+1:] + " " + name_parts[cur_index]
-        cur_index -= 1
-        genus = name_parts[cur_index][name_parts[cur_index].find('/')+1:]
+
+        genus = name_parts[0]
+        species = f"{genus} {name_parts[1]}"
+        specimen_id = name_parts[2]
+        image_type = name_parts[3]
+        view = name_parts[4].split('.')[0].upper()
+
+        unique_id = f"{specimen_id}_{image_type}_{view}"
+
+        print(species)
 
         return (genus, species, unique_id, view, specimen_id)
 
