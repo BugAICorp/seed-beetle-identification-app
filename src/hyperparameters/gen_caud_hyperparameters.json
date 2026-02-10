@@ -1,16 +1,16 @@
 {
     "num_epochs": 20,
     "view": "caud",
-    "batch": 16,
+    "batch": 32,
     "rotation": 10,
-    "brightness": 0.1462847736327197,
-    "weight_decay": 0.0001,
-    "smoothing": 0.1,
-    "lrate": 0.00004409398823911199,
+    "brightness": 0.1,
+    "weight_decay": 0.000001,
+    "smoothing": 0.03920099411348554,
+    "lrate": 0.0000437453082507756353,
     "erasure_params": {
-        "p": 0.117534992000064,
-        "min": 0.08054270560117567,
-        "max": 0.2983577819330524
+        "p": 0.03303920960755109,
+        "min": 0.02,
+        "max": 0.2
     },
-    "max_os_ratio": 5.0
+    "max_os_ratio": 1.0
 }

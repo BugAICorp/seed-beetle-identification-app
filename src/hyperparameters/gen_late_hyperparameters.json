@@ -3,14 +3,14 @@
     "view": "late",
     "batch": 32,
     "rotation": 10,
-    "brightness": 0.04304050259182124,
-    "weight_decay": 0.0001,
-    "smoothing": 0.1,
-    "lrate": 0.00001826137626671228,
+    "brightness": 0.1,
+    "weight_decay": 0.000001,
+    "smoothing": 0.1340735150787589,
+    "lrate": 0.00011402947327443482,
     "erasure_params": {
-        "p": 0.30535724516213314,
-        "min": 0.011359991265195598,
-        "max": 0.31162030351760406
+        "p": 0.5368631108991618,
+        "min": 0.02,
+        "max": 0.2
     },
-    "max_os_ratio": 3.0
+    "max_os_ratio": 2.0
 }
