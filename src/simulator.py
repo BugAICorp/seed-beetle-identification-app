@@ -251,7 +251,7 @@ if __name__ == '__main__':
             results = species_tp.evaluate_uncertainty(
                 view="caud",
                 n_samples=20,
-                batch_size=16,
+                batch_size=32,
                 threshold=0.02
             )
 
@@ -264,13 +264,13 @@ if __name__ == '__main__':
 
         if show_plots:
             species_tp.create_f1_scores_bar_plot(
-                "caud", batch_size=16, plot_save_path="species_caud_plot.png", plot=True)
+                "caud", batch_size=32, plot_save_path="species_caud_plot.png", plot=True)
             if recall:
                 species_tp.create_confusion_matrix(
-                    "caud", batch_size=16, plot_save_path="species_caud_matrix_recall.png", plot=True, normalize=True)
+                    "caud", batch_size=32, plot_save_path="species_caud_matrix_recall.png", plot=True, normalize=True)
             if raw_counts:
                 species_tp.create_confusion_matrix(
-                    "caud", batch_size=16, plot_save_path="species_caud_matrix_counts.png", plot=True, normalize=False)
+                    "caud", batch_size=32, plot_save_path="species_caud_matrix_counts.png", plot=True, normalize=False)
 
     if train_dors:
         hyperparameters = import_params(globals.species_dors_hypers)
@@ -281,7 +281,7 @@ if __name__ == '__main__':
             results = species_tp.evaluate_uncertainty(
                 view="dors",
                 n_samples=20,
-                batch_size=16,
+                batch_size=32,
                 threshold=0.02
             )
 
@@ -293,13 +293,13 @@ if __name__ == '__main__':
 
         if show_plots:
             species_tp.create_f1_scores_bar_plot(
-                "dors", batch_size=16, plot_save_path="species_dors_plot.png", plot=True)
+                "dors", batch_size=32, plot_save_path="species_dors_plot.png", plot=True)
             if recall:
                 species_tp.create_confusion_matrix(
-                    "dors", batch_size=16, plot_save_path="species_dors_matrix_recall.png", plot=True, normalize=True)
+                    "dors", batch_size=32, plot_save_path="species_dors_matrix_recall.png", plot=True, normalize=True)
             if raw_counts:
                 species_tp.create_confusion_matrix(
-                    "dors", batch_size=16, plot_save_path="species_dors_matrix_counts.png", plot=True, normalize=False)
+                    "dors", batch_size=32, plot_save_path="species_dors_matrix_counts.png", plot=True, normalize=False)
 
     if train_fron:
         hyperparameters = import_params(globals.species_fron_hypers)
@@ -310,7 +310,7 @@ if __name__ == '__main__':
             results = species_tp.evaluate_uncertainty(
                 view="fron",
                 n_samples=20,
-                batch_size=16,
+                batch_size=32,
                 threshold=0.02
             )
 
@@ -322,13 +322,13 @@ if __name__ == '__main__':
 
         if show_plots:
             species_tp.create_f1_scores_bar_plot(
-                "fron", batch_size=16, plot_save_path="species_fron_plot.png", plot=True)
+                "fron", batch_size=32, plot_save_path="species_fron_plot.png", plot=True)
             if recall:
                 species_tp.create_confusion_matrix(
-                    "fron", batch_size=16, plot_save_path="species_fron_matrix_recall.png", plot=True, normalize=True)
+                    "fron", batch_size=32, plot_save_path="species_fron_matrix_recall.png", plot=True, normalize=True)
             if raw_counts:
                 species_tp.create_confusion_matrix(
-                    "fron", batch_size=16, plot_save_path="species_fron_matrix_counts.png", plot=True, normalize=False)
+                    "fron", batch_size=32, plot_save_path="species_fron_matrix_counts.png", plot=True, normalize=False)
 
     if train_late:
         hyperparemeters = import_params(globals.species_late_hypers)
@@ -389,7 +389,7 @@ if __name__ == '__main__':
             results = genus_tp.evaluate_uncertainty(
                 view="caud",
                 n_samples=20,
-                batch_size=16,
+                batch_size=32,
                 threshold=0.02
             )
 
@@ -401,13 +401,13 @@ if __name__ == '__main__':
 
         if show_plots:
             genus_tp.create_f1_scores_bar_plot(
-                "caud", batch_size=16, plot_save_path="genus_caud_plot.png", plot=True)
+                "caud", batch_size=32, plot_save_path="genus_caud_plot.png", plot=True)
             if recall:
                 genus_tp.create_confusion_matrix(
-                    "caud", batch_size=16, plot_save_path="genus_caud_matrix_recall.png", plot=True, normalize=True)
+                    "caud", batch_size=32, plot_save_path="genus_caud_matrix_recall.png", plot=True, normalize=True)
             if raw_counts:
                 genus_tp.create_confusion_matrix(
-                    "caud", batch_size=16, plot_save_path="genus_caud_matrix_counts.png", plot=True, normalize=False)
+                    "caud", batch_size=32, plot_save_path="genus_caud_matrix_counts.png", plot=True, normalize=False)
 
     if train_dors:
         hyperparameters = import_params(globals.genus_dors_hypers)
@@ -447,7 +447,7 @@ if __name__ == '__main__':
             results = genus_tp.evaluate_uncertainty(
                 view="fron",
                 n_samples=20,
-                batch_size=64,
+                batch_size=32,
                 threshold=0.02
             )
 
@@ -459,13 +459,13 @@ if __name__ == '__main__':
 
         if show_plots:
             genus_tp.create_f1_scores_bar_plot(
-                "fron", batch_size=64, plot_save_path="genus_fron_plot.png", plot=True)
+                "fron", batch_size=32, plot_save_path="genus_fron_plot.png", plot=True)
             if recall:
                 genus_tp.create_confusion_matrix(
-                    "fron", batch_size=64, plot_save_path="genus_fron_matrix_recall.png", plot=True, normalize=True)
+                    "fron", batch_size=32, plot_save_path="genus_fron_matrix_recall.png", plot=True, normalize=True)
             if raw_counts:
                 genus_tp.create_confusion_matrix(
-                    "fron", batch_size=64, plot_save_path="genus_fron_matrix_counts.png", plot=True, normalize=False)
+                    "fron", batch_size=32, plot_save_path="genus_fron_matrix_counts.png", plot=True, normalize=False)
 
     if train_late:
         hyperparameters = import_params(globals.genus_late_hypers)
