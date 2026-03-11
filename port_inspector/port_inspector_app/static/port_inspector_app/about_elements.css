@@ -83,6 +83,7 @@ p {
 }
 .text-list-classes {
     display: flex;
+    flex-direction: column;
     font-size: 0.95rem;
     font-family: 'Roboto mono', monospace;
     background-color: whitesmoke;
@@ -92,6 +93,12 @@ p {
     width: 50%;
     box-sizing: border-box;
     align-items: center;
+}
+.text-list-classes a{
+    color: black;
+}
+.text-list-classes a:visited{
+    color: lightblue;
 }
 .paragraph-header {
     font-family: 'Roboto mono', monospace;
