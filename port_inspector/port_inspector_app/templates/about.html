@@ -54,14 +54,14 @@
       <p class="text-list-classes">
         {% for class in valid_classes %}
           {% if forloop.counter|divisibleby:2 %}
-            •{{ class.genus }} {{ class.species }}<br>
+            <a href="/static/{{ class.genus }}_{{ class.species}}.pdf" target="_blank">•{{ class.genus }} {{ class.species }}</a>
           {% endif %}
         {% endfor %}
       </p>
       <p class="text-list-classes">
         {% for class in valid_classes %}
           {% if not forloop.counter|divisibleby:2 %}
-            •{{ class.genus }} {{ class.species }}<br>
+            <a href="/static/{{ class.genus }}_{{ class.species}}.pdf" target="_blank">•{{ class.genus }} {{ class.species }}</a>
           {% endif %}
         {% endfor %}
       </p>
