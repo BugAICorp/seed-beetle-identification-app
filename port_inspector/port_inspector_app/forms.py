@@ -8,6 +8,7 @@ from django.forms import inlineformset_factory
 from django.forms.widgets import ClearableFileInput
 from PIL import Image
 from PIL import UnidentifiedImageError
+from django_recaptcha.fields import ReCaptchaField
 import io
 
 User = get_user_model()
@@ -55,13 +56,15 @@ class ResetPasswordForm(forms.ModelForm):
 class UserRegisterForm(forms.ModelForm):
     password = forms.CharField(label='Password')
     confirm_password = forms.CharField(label='Confirm Password')
+    captcha = ReCaptchaField()
 
     class Meta:
         model = User
         fields = [
             'name',
             'email',
-            'password'
+            'password',
+            'captcha'
         ]
 
     def clean(self, *args, **kwargs):
