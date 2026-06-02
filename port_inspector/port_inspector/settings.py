@@ -201,5 +201,8 @@ CELERY_WORKER_PREFETCH_MULTIPLIER = 1
 CELERY_TASK_TIME_LIMIT = 600
 
 #ReCaptcha Settings (replace with google provided keys in for deploy)
-RECAPTCHA_PUBLIC_KEY = 'MyRecaptchaKey123'
-RECAPTCHA_PRIVATE_KEY = 'MyRecaptchaPrivateKey456'
+#RECAPTCHA_PUBLIC_KEY =
+#RECAPTCHA_PRIVATE_KEY =
+
+# Delete this for production 
+SILENCED_SYSTEM_CHECKS = ['django_recaptcha.recaptcha_test_key_error']
